@@ -4,25 +4,46 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   TextField, Select, MenuItem, InputAdornment, Tabs, Tab,
 } from '@mui/material';
-import { Search, TrendingUp, TrendingDown } from '@mui/icons-material';
+import { Search, TrendingUp, TrendingDown, AccountBalance } from '@mui/icons-material';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-  PieChart, Pie, Cell, BarChart, Bar,
+  PieChart, Pie, Cell,
 } from 'recharts';
 import { useFinances } from '../hooks/useFinances';
-import { formatCurrency, formatDate, formatDateShort, formatNumber, formatPercent } from '../lib/formatters';
+import { formatCurrency, formatDateShort, formatNumber, formatPercent } from '../lib/formatters';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
 import ErrorMessage from '../components/common/ErrorMessage';
 
-const CATEGORIES = ['Food & Dining', 'Shopping', 'Transportation', 'Entertainment', 'Bills & Utilities', 'Health', 'Travel', 'Education', 'Personal', 'Income', 'Transfer', 'Other'];
+const CATEGORIES = ['Food & Dining', 'Groceries', 'Shopping', 'Transportation', 'Entertainment', 'Bills & Utilities', 'Health & Medical', 'Travel', 'Subscriptions', 'Personal', 'Gifts', 'Education', 'Income', 'Transfer', 'Credit Card Payment', 'Investment', 'Other'];
 const CHART_COLORS = ['#5B8DEF', '#764ba2', '#4CAF50', '#FF9800', '#F44336', '#90CAF9', '#FFB74D', '#81C784', '#E57373', '#64B5F6', '#CE93D8', '#A5D6A7'];
 
 const FinancesPage: React.FC = () => {
-  const { accounts, transactions, holdings, netWorth, monthlySpending, loading, error, updateTransactionCategory, refetch } = useFinances();
+  const { accounts, transactions, holdings, netWorth, loading, error, updateTransactionCategory, refetch } = useFinances();
   const [tab, setTab] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
+  const [accountFilter, setAccountFilter] = useState<string>('all');
 
   const currentNetWorth = netWorth.length > 0 ? netWorth[0] : null;
+
+  // Build account lookup map for displaying card names on transactions
+  const accountMap = useMemo(() => {
+    const map: Record<string, { name: string; institution: string; last_four: string }> = {};
+    accounts.forEach(a => {
+      map[a.id] = { name: a.account_name, institution: a.institution, last_four: a.last_four };
+    });
+    return map;
+  }, [accounts]);
+
+  // Short card label for transaction rows
+  const getCardLabel = (accountId: string): string => {
+    const acct = accountMap[accountId];
+    if (!acct) return '';
+    if (acct.last_four) return `${acct.institution} •${acct.last_four}`;
+    // Shorten long account names
+    const name = acct.name;
+    if (name.length > 25) return name.slice(0, 22) + '…';
+    return name;
+  };
 
   const netWorthChart = useMemo(() => {
     return netWorth.slice().reverse().map(n => ({
@@ -40,19 +61,58 @@ const FinancesPage: React.FC = () => {
     return grouped;
   }, [accounts]);
 
+  // Only show latest snapshot holdings, grouped by account
+  const latestSnapshotDate = useMemo(() => {
+    if (holdings.length === 0) return null;
+    return holdings.reduce((max, h) => h.snapshot_date > max ? h.snapshot_date : max, holdings[0].snapshot_date);
+  }, [holdings]);
+
+  const latestHoldings = useMemo(() => {
+    if (!latestSnapshotDate) return [];
+    return holdings.filter(h => h.snapshot_date === latestSnapshotDate);
+  }, [holdings, latestSnapshotDate]);
+
+  const holdingsByAccount = useMemo(() => {
+    const grouped: Record<string, typeof latestHoldings> = {};
+    latestHoldings.forEach(h => {
+      const acct = accountMap[h.account_id];
+      const label = acct ? `${acct.institution} — ${acct.name}` : 'Unknown Account';
+      if (!grouped[label]) grouped[label] = [];
+      grouped[label].push(h);
+    });
+    return grouped;
+  }, [latestHoldings, accountMap]);
+
+  const totalPortfolio = latestHoldings.reduce((sum, h) => sum + (h.current_value || 0), 0);
+
+  // Card accounts for filtering transactions
+  const cardAccounts = useMemo(() => {
+    return accounts.filter(a => a.is_active && (
+      a.account_type === 'credit' || a.account_type === 'checking' || a.account_type === 'savings' ||
+      a.account_subtype?.toLowerCase().includes('credit') ||
+      a.account_subtype?.toLowerCase().includes('checking')
+    ));
+  }, [accounts]);
+
   const filteredTransactions = useMemo(() => {
-    if (!searchTerm) return transactions;
-    const term = searchTerm.toLowerCase();
-    return transactions.filter(t =>
-      (t.description || '').toLowerCase().includes(term) ||
-      (t.merchant_name || '').toLowerCase().includes(term) ||
-      (t.custom_category || t.empower_category || '').toLowerCase().includes(term)
-    );
-  }, [transactions, searchTerm]);
+    let filtered = transactions;
+    if (accountFilter !== 'all') {
+      filtered = filtered.filter(t => t.account_id === accountFilter);
+    }
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(t =>
+        (t.description || '').toLowerCase().includes(term) ||
+        (t.merchant_name || '').toLowerCase().includes(term) ||
+        (t.custom_category || t.empower_category || '').toLowerCase().includes(term)
+      );
+    }
+    return filtered;
+  }, [transactions, searchTerm, accountFilter]);
 
   const spendingByCategory = useMemo(() => {
     const cats: Record<string, number> = {};
-    transactions.filter(t => t.amount > 0).forEach(t => {
+    transactions.filter(t => t.amount > 0 && !['Transfer', 'Credit Card Payment'].includes(t.custom_category || '')).forEach(t => {
       const cat = t.custom_category || t.empower_category || 'Uncategorized';
       cats[cat] = (cats[cat] || 0) + t.amount;
     });
@@ -61,33 +121,31 @@ const FinancesPage: React.FC = () => {
       .sort((a, b) => b.value - a.value);
   }, [transactions]);
 
-  const totalPortfolio = holdings.reduce((sum, h) => sum + (h.current_value || 0), 0);
-
   if (loading) return <LoadingSkeleton variant="card" count={4} />;
   if (error) return <ErrorMessage message={error} onRetry={refetch} />;
 
   return (
     <Box>
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: { xs: 2, sm: 2.5, md: 3 } }}>
         <Typography variant="h4" fontWeight={700}>Finances</Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>Net worth, investments, and spending</Typography>
       </Box>
 
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3, '& .MuiTab-root': { textTransform: 'none', fontWeight: 600 } }}>
+      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3 }}>
         <Tab label="Overview" />
         <Tab label="Investments" />
         <Tab label="Transactions" />
         <Tab label="Spending" />
       </Tabs>
 
-      {/* Overview Tab */}
+      {/* ═══════════════ Overview Tab ═══════════════ */}
       {tab === 0 && (
         <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
           <Grid size={{ xs: 12, md: 4 }}>
             <Card>
               <CardContent sx={{ textAlign: 'center' }}>
                 <Typography variant="overline" color="text.secondary">Net Worth</Typography>
-                <Typography variant="h4" fontWeight={700} sx={{ color: '#5B8DEF', my: 1 }}>
+                <Typography variant="h3" fontWeight={700} sx={{ color: '#5B8DEF', my: 1 }}>
                   {currentNetWorth ? formatCurrency(currentNetWorth.net_worth) : '--'}
                 </Typography>
                 {currentNetWorth && (
@@ -116,7 +174,7 @@ const FinancesPage: React.FC = () => {
                     <XAxis dataKey="date" stroke="#7d8590" fontSize={12} />
                     <YAxis stroke="#7d8590" fontSize={12} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
                     <Tooltip contentStyle={{ backgroundColor: '#121821', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }} formatter={(v: number) => formatCurrency(v)} />
-                    <Line type="monotone" dataKey="value" stroke="#5B8DEF" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="value" stroke="#5B8DEF" strokeWidth={2} dot={{ r: 4, fill: '#5B8DEF' }} />
                   </LineChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -136,8 +194,9 @@ const FinancesPage: React.FC = () => {
                           <Typography variant="body2" fontWeight={600}>{a.account_name}</Typography>
                           <Typography variant="caption" color="text.secondary">{a.account_subtype} {a.last_four ? `•••${a.last_four}` : ''}</Typography>
                         </Box>
-                        <Typography variant="body1" fontWeight={700} sx={{ color: a.is_asset ? '#4CAF50' : '#F44336' }}>
-                          {formatCurrency(a.current_balance)}
+                        <Typography variant="body1" fontWeight={700} sx={{ color: a.current_balance >= 0 ? '#4CAF50' : '#F44336' }}>
+                          {formatCurrency(Math.abs(a.current_balance))}
+                          {a.current_balance < 0 && <Typography component="span" variant="caption" color="error.main"> owed</Typography>}
                         </Typography>
                       </Box>
                     ))}
@@ -149,64 +208,82 @@ const FinancesPage: React.FC = () => {
         </Grid>
       )}
 
-      {/* Investments Tab */}
+      {/* ═══════════════ Investments Tab ═══════════════ */}
       {tab === 1 && (
         <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
+          {/* Total portfolio value */}
           <Grid size={{ xs: 12 }}>
-            <Card sx={{ '&:hover': { transform: 'none' } }}>
+            <Card>
               <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="h6">Portfolio</Typography>
-                  <Typography variant="h5" fontWeight={700} color="#5B8DEF">{formatCurrency(totalPortfolio)}</Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Box>
+                    <Typography variant="overline" color="text.secondary">Total Portfolio</Typography>
+                    <Typography variant="h4" fontWeight={700} color="#5B8DEF">{formatCurrency(totalPortfolio)}</Typography>
+                  </Box>
+                  {latestSnapshotDate && (
+                    <Chip label={`As of ${formatDateShort(latestSnapshotDate)}`} size="small" variant="outlined" />
+                  )}
                 </Box>
-                <TableContainer>
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Ticker</TableCell>
-                        <TableCell>Description</TableCell>
-                        <TableCell align="right">Shares</TableCell>
-                        <TableCell align="right">Price</TableCell>
-                        <TableCell align="right">Value</TableCell>
-                        <TableCell align="right">Gain/Loss</TableCell>
-                        <TableCell align="right">Allocation</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {holdings.map(h => (
-                        <TableRow key={h.id}>
-                          <TableCell><Typography fontWeight={600}>{h.ticker || '--'}</Typography></TableCell>
-                          <TableCell><Typography variant="body2" color="text.secondary">{h.description}</Typography></TableCell>
-                          <TableCell align="right">{h.quantity ? formatNumber(h.quantity, 2) : '--'}</TableCell>
-                          <TableCell align="right">{h.current_price ? formatCurrency(h.current_price) : '--'}</TableCell>
-                          <TableCell align="right">{formatCurrency(h.current_value)}</TableCell>
-                          <TableCell align="right">
-                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5 }}>
-                              {h.gain_loss >= 0 ? <TrendingUp sx={{ fontSize: 16, color: '#4CAF50' }} /> : <TrendingDown sx={{ fontSize: 16, color: '#F44336' }} />}
-                              <Typography variant="body2" sx={{ color: h.gain_loss >= 0 ? '#4CAF50' : '#F44336' }}>
-                                {formatCurrency(Math.abs(h.gain_loss))} ({formatPercent(Math.abs(h.gain_loss_pct))})
-                              </Typography>
-                            </Box>
-                          </TableCell>
-                          <TableCell align="right">{totalPortfolio > 0 ? formatPercent((h.current_value / totalPortfolio) * 100) : '--'}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
               </CardContent>
             </Card>
           </Grid>
+
+          {/* Holdings grouped by account */}
+          {Object.entries(holdingsByAccount).map(([accountLabel, acctHoldings]) => {
+            const acctTotal = acctHoldings.reduce((s, h) => s + (h.current_value || 0), 0);
+            return (
+              <Grid size={{ xs: 12 }} key={accountLabel}>
+                <Card sx={{ '&:hover': { transform: 'none' } }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <AccountBalance sx={{ color: '#5B8DEF', fontSize: 20 }} />
+                        <Typography variant="h6">{accountLabel}</Typography>
+                      </Box>
+                      <Typography variant="h6" fontWeight={700} color="#5B8DEF">{formatCurrency(acctTotal)}</Typography>
+                    </Box>
+                    <TableContainer>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Ticker</TableCell>
+                            <TableCell>Description</TableCell>
+                            <TableCell align="right">Shares</TableCell>
+                            <TableCell align="right">Price</TableCell>
+                            <TableCell align="right">Value</TableCell>
+                            <TableCell align="right">Allocation</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {acctHoldings.sort((a, b) => (b.current_value || 0) - (a.current_value || 0)).map(h => (
+                            <TableRow key={h.id}>
+                              <TableCell><Typography fontWeight={600}>{h.ticker || '--'}</Typography></TableCell>
+                              <TableCell><Typography variant="body2" color="text.secondary">{h.description}</Typography></TableCell>
+                              <TableCell align="right">{h.quantity ? formatNumber(h.quantity, 2) : '--'}</TableCell>
+                              <TableCell align="right">{h.current_price ? formatCurrency(h.current_price) : '--'}</TableCell>
+                              <TableCell align="right"><Typography fontWeight={600}>{formatCurrency(h.current_value)}</Typography></TableCell>
+                              <TableCell align="right">{totalPortfolio > 0 ? formatPercent((h.current_value / totalPortfolio) * 100) : '--'}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </CardContent>
+                </Card>
+              </Grid>
+            );
+          })}
         </Grid>
       )}
 
-      {/* Transactions Tab */}
+      {/* ═══════════════ Transactions Tab ═══════════════ */}
       {tab === 2 && (
         <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
           <Grid size={{ xs: 12 }}>
             <Card sx={{ '&:hover': { transform: 'none' } }}>
               <CardContent>
-                <Box sx={{ mb: 2 }}>
+                {/* Search + Filter row */}
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
                   <TextField
                     fullWidth
                     placeholder="Search transactions..."
@@ -215,35 +292,53 @@ const FinancesPage: React.FC = () => {
                     InputProps={{ startAdornment: <InputAdornment position="start"><Search sx={{ color: 'text.secondary' }} /></InputAdornment> }}
                     size="small"
                   />
-                </Box>
+                  <Select
+                    value={accountFilter}
+                    onChange={(e) => setAccountFilter(e.target.value)}
+                    size="small"
+                    sx={{ minWidth: 200, '& .MuiSelect-select': { py: 1 } }}
+                  >
+                    <MenuItem value="all">All Accounts</MenuItem>
+                    {accounts.filter(a => a.is_active).map(a => (
+                      <MenuItem key={a.id} value={a.id}>
+                        {a.institution} {a.last_four ? `•${a.last_four}` : `— ${a.account_name.slice(0, 20)}`}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </Stack>
+
                 <TableContainer sx={{ maxHeight: 600 }}>
                   <Table size="small" stickyHeader>
                     <TableHead>
                       <TableRow>
                         <TableCell>Date</TableCell>
                         <TableCell>Description</TableCell>
+                        <TableCell>Card</TableCell>
                         <TableCell align="right">Amount</TableCell>
                         <TableCell>Category</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {filteredTransactions.slice(0, 100).map(t => (
+                      {filteredTransactions.slice(0, 200).map(t => (
                         <TableRow key={t.id} sx={{ '&:hover': { bgcolor: 'rgba(255,255,255,0.03)' } }}>
                           <TableCell><Typography variant="body2">{formatDateShort(t.date)}</Typography></TableCell>
                           <TableCell>
                             <Typography variant="body2" fontWeight={500}>{t.merchant_name || t.description}</Typography>
                             {t.merchant_name && t.description !== t.merchant_name && (
-                              <Typography variant="caption" color="text.secondary">{t.description}</Typography>
+                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>{t.description}</Typography>
                             )}
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="caption" color="text.secondary">{getCardLabel(t.account_id)}</Typography>
                           </TableCell>
                           <TableCell align="right">
                             <Typography variant="body2" fontWeight={600} sx={{ color: t.amount < 0 ? '#4CAF50' : '#e6edf3' }}>
-                              {formatCurrency(Math.abs(t.amount))}
+                              {t.amount < 0 ? '+' : '-'}{formatCurrency(Math.abs(t.amount))}
                             </Typography>
                           </TableCell>
                           <TableCell>
                             {t.custom_category ? (
-                              <Chip label={t.custom_category} size="small" variant="outlined" />
+                              <Chip label={t.custom_category} size="small" variant="outlined" onClick={() => {/* TODO: allow re-categorize */}} />
                             ) : t.empower_category ? (
                               <Chip label={t.empower_category} size="small" variant="outlined" sx={{ opacity: 0.7 }} />
                             ) : (
@@ -254,7 +349,7 @@ const FinancesPage: React.FC = () => {
                                 onChange={(e) => updateTransactionCategory(t.id, e.target.value as string)}
                                 sx={{ minWidth: 140, '& .MuiSelect-select': { py: 0.5, fontSize: '0.75rem' } }}
                               >
-                                <MenuItem value="" disabled><em>Categorize...</em></MenuItem>
+                                <MenuItem value="" disabled><em>Categorize…</em></MenuItem>
                                 {CATEGORIES.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
                               </Select>
                             )}
@@ -270,7 +365,7 @@ const FinancesPage: React.FC = () => {
         </Grid>
       )}
 
-      {/* Spending Tab */}
+      {/* ═══════════════ Spending Tab ═══════════════ */}
       {tab === 3 && (
         <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
           <Grid size={{ xs: 12, md: 6 }}>

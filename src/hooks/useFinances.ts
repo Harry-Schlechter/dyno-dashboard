@@ -40,6 +40,7 @@ export interface InvestmentHolding {
   gain_loss: number;
   gain_loss_pct: number;
   asset_class: string;
+  snapshot_date: string;
 }
 
 export interface NetWorthSnapshot {
