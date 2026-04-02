@@ -136,10 +136,10 @@ THE BIG ONE. Full financial dashboard.
 ## Pages to Port from PersonalOS (keep exact functionality + styling)
 
 ### 9. Planner (/planner)
-Port PlannerPage.tsx from personalos/packages/web/src/pages/PlannerPage.tsx. Keep the same functionality and styling. Adapt imports to new project structure.
+Port PlannerPage.tsx from ~/repos/personalos/packages/web/src/pages/PlannerPage.tsx. Keep the same functionality and styling. Adapt imports to new project structure.
 
 ### 10. Calendar (/calendar)
-Port CalendarPage.tsx from personalos. Same deal — keep functionality, adapt imports.
+Port CalendarPage.tsx from ~/repos/personalos/packages/web/src/pages/CalendarPage.tsx. Same deal — keep functionality, adapt imports.
 
 ## Navigation
 - Left sidebar nav (collapsible on mobile)
