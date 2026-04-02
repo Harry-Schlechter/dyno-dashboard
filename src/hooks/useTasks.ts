@@ -18,7 +18,7 @@ export interface Task {
 export const useTasks = () => {
   const result = useSupabase<Task>({
     table: 'tasks',
-    order: { column: 'created_at', ascending: false },
+    order: { column: 'due_date', ascending: true },
   });
 
   const completeTask = useCallback(async (id: string) => {
