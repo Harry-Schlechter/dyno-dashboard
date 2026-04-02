@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Box, Typography, Grid, Card, CardContent, Chip, Stack, Alert } from '@mui/material';
 import { Bedtime, Restaurant, FitnessCenter, SentimentSatisfied, WaterDrop } from '@mui/icons-material';
+import { format } from 'date-fns';
 import { useSleep } from '../hooks/useSleep';
 import { useNutrition } from '../hooks/useNutrition';
 import { useWorkouts } from '../hooks/useWorkouts';
@@ -11,6 +12,14 @@ import { formatNumber, getToday } from '../lib/formatters';
 import ScoreRing from '../components/common/ScoreRing';
 import StatCard from '../components/common/StatCard';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
+
+const getGreeting = (): string => {
+  const hour = new Date().getHours();
+  if (hour >= 4 && hour < 12) return 'Good Morning';
+  if (hour >= 12 && hour < 18) return 'Good Afternoon';
+  if (hour >= 18 && hour < 22) return 'Good Evening';
+  return 'Good Night';
+};
 
 const HomePage: React.FC = () => {
   const { lastNight, data: sleepData, loading: sleepLoading } = useSleep('7d');
@@ -48,13 +57,32 @@ const HomePage: React.FC = () => {
 
   return (
     <Box>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h3" fontWeight={700}>Dashboard</Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>Here's how you're doing today</Typography>
+      {/* Greeting Header — gradient text like personalos */}
+      <Box sx={{ mb: 3, mt: -1 }}>
+        <Typography
+          variant="h3"
+          sx={{
+            fontWeight: 700,
+            background: (theme: any) =>
+              `linear-gradient(135deg, ${theme.palette.primary.main} 0%, color-mix(in srgb, ${theme.palette.primary.main} 70%, #a855f7) 100%)`,
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}
+        >
+          {getGreeting()}, Harry
+        </Typography>
+        <Typography
+          variant="body1"
+          color="text.secondary"
+          sx={{ mt: 0.5, fontSize: '1rem', fontWeight: 500 }}
+        >
+          {format(new Date(), 'EEEE, MMMM d, yyyy')}
+        </Typography>
       </Box>
 
-      {/* Life Score */}
-      <Grid container spacing={3}>
+      {/* Life Score + Breakdown */}
+      <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
         <Grid size={{ xs: 12, md: 4 }}>
           <Card sx={{ textAlign: 'center', py: 3 }}>
             <CardContent>
@@ -70,7 +98,7 @@ const HomePage: React.FC = () => {
         </Grid>
 
         <Grid size={{ xs: 12, md: 8 }}>
-          <Card sx={{ '&:hover': { transform: 'none' } }}>
+          <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>Score Breakdown</Typography>
               <Grid container spacing={2}>

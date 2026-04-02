@@ -94,7 +94,7 @@ const CalendarPage: React.FC = () => {
       {/* Page Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
         <Box>
-          <Typography variant="h3" fontWeight={700}>Calendar</Typography>
+          <Typography variant="h4" fontWeight={700}>Calendar</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
             {totalEventsThisMonth} event{totalEventsThisMonth !== 1 ? 's' : ''} in {format(month, 'MMMM')}
           </Typography>

@@ -60,7 +60,7 @@ const TasksPage: React.FC = () => {
       {/* Page header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 4, flexWrap: 'wrap', gap: 2 }}>
         <Box>
-          <Typography variant="h3" fontWeight={700} sx={{ mb: 1.5 }}>
+          <Typography variant="h4" fontWeight={700} sx={{ mb: 1.5 }}>
             Tasks
           </Typography>
           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>

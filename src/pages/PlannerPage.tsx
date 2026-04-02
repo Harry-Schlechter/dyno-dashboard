@@ -45,7 +45,7 @@ const PlannerPage: React.FC = () => {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Box>
-          <Typography variant="h3" fontWeight={700}>Planner</Typography>
+          <Typography variant="h4" fontWeight={700}>Planner</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
             {format(weekStart, 'MMM d')} — {format(endOfWeek(weekStart, { weekStartsOn: 1 }), 'MMM d, yyyy')}
           </Typography>

@@ -29,7 +29,7 @@ const NutritionPage: React.FC = () => {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Box>
-          <Typography variant="h3" fontWeight={700}>Nutrition</Typography>
+          <Typography variant="h4" fontWeight={700}>Nutrition</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>Track your daily intake and macro targets</Typography>
         </Box>
         <ToggleButtonGroup value={range} exclusive onChange={(_, v) => v && setRange(v)} size="small">
@@ -39,7 +39,7 @@ const NutritionPage: React.FC = () => {
         </ToggleButtonGroup>
       </Box>
 
-      <Grid container spacing={3}>
+      <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
         {/* Today's Macros */}
         <Grid size={{ xs: 12, md: 6 }}>
           <Card>

@@ -36,7 +36,7 @@ const WorkoutsPage: React.FC = () => {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Box>
-          <Typography variant="h3" fontWeight={700}>Workouts</Typography>
+          <Typography variant="h4" fontWeight={700}>Workouts</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>Your training log and progress</Typography>
         </Box>
         <ToggleButtonGroup value={range} exclusive onChange={(_, v) => v && setRange(v)} size="small">
@@ -46,7 +46,7 @@ const WorkoutsPage: React.FC = () => {
         </ToggleButtonGroup>
       </Box>
 
-      <Grid container spacing={3}>
+      <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
         {/* Volume Trend */}
         {volumeData.length > 0 && (
           <Grid size={{ xs: 12 }}>

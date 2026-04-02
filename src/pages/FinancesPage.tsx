@@ -69,7 +69,7 @@ const FinancesPage: React.FC = () => {
   return (
     <Box>
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h3" fontWeight={700}>Finances</Typography>
+        <Typography variant="h4" fontWeight={700}>Finances</Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>Net worth, investments, and spending</Typography>
       </Box>
 
@@ -82,12 +82,12 @@ const FinancesPage: React.FC = () => {
 
       {/* Overview Tab */}
       {tab === 0 && (
-        <Grid container spacing={3}>
+        <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
           <Grid size={{ xs: 12, md: 4 }}>
             <Card>
               <CardContent sx={{ textAlign: 'center' }}>
                 <Typography variant="overline" color="text.secondary">Net Worth</Typography>
-                <Typography variant="h3" fontWeight={700} sx={{ color: '#5B8DEF', my: 1 }}>
+                <Typography variant="h4" fontWeight={700} sx={{ color: '#5B8DEF', my: 1 }}>
                   {currentNetWorth ? formatCurrency(currentNetWorth.net_worth) : '--'}
                 </Typography>
                 {currentNetWorth && (
@@ -151,7 +151,7 @@ const FinancesPage: React.FC = () => {
 
       {/* Investments Tab */}
       {tab === 1 && (
-        <Grid container spacing={3}>
+        <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
           <Grid size={{ xs: 12 }}>
             <Card sx={{ '&:hover': { transform: 'none' } }}>
               <CardContent>
@@ -202,7 +202,7 @@ const FinancesPage: React.FC = () => {
 
       {/* Transactions Tab */}
       {tab === 2 && (
-        <Grid container spacing={3}>
+        <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
           <Grid size={{ xs: 12 }}>
             <Card sx={{ '&:hover': { transform: 'none' } }}>
               <CardContent>
@@ -272,7 +272,7 @@ const FinancesPage: React.FC = () => {
 
       {/* Spending Tab */}
       {tab === 3 && (
-        <Grid container spacing={3}>
+        <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
           <Grid size={{ xs: 12, md: 6 }}>
             <Card sx={{ '&:hover': { transform: 'none' } }}>
               <CardContent>

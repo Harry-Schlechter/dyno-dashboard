@@ -62,7 +62,7 @@ const JournalPage: React.FC = () => {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Box>
-          <Typography variant="h3" fontWeight={700}>Journal & Mood</Typography>
+          <Typography variant="h4" fontWeight={700}>Journal & Mood</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>Journal entries and mood tracking</Typography>
         </Box>
         <ToggleButtonGroup value={range} exclusive onChange={(_, v) => v && setRange(v)} size="small">
@@ -72,7 +72,7 @@ const JournalPage: React.FC = () => {
         </ToggleButtonGroup>
       </Box>
 
-      <Grid container spacing={3}>
+      <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
         {/* Calendar */}
         <Grid size={{ xs: 12, md: 6 }}>
           <Card>

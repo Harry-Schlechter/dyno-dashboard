@@ -29,7 +29,7 @@ const ContactsPage: React.FC = () => {
     return (
       <Box>
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h3" fontWeight={700}>Contacts</Typography>
+          <Typography variant="h4" fontWeight={700}>Contacts</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>Stay connected with the people who matter</Typography>
         </Box>
         <Card sx={{ textAlign: 'center', py: 8 }}>
@@ -65,10 +65,10 @@ const ContactsPage: React.FC = () => {
   return (
     <Box>
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h3" fontWeight={700}>Contacts</Typography>
+        <Typography variant="h4" fontWeight={700}>Contacts</Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>Stay connected with the people who matter</Typography>
       </Box>
-      <Grid container spacing={3}>
+      <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
         {contacts.map(contact => {
           const overdue = isOverdue(contact);
           const birthdayDays = getUpcomingBirthday(contact);

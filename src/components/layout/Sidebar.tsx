@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Drawer,
   List,
+  ListItem,
   ListItemButton,
   ListItemIcon,
   ListItemText,
@@ -27,19 +28,19 @@ import {
   Menu as MenuIcon,
 } from '@mui/icons-material';
 
-const DRAWER_WIDTH = 260;
+const DRAWER_WIDTH = 200;
 
 const navItems = [
-  { label: 'Home', path: '/', icon: <Home /> },
-  { label: 'Nutrition', path: '/nutrition', icon: <Restaurant /> },
-  { label: 'Workouts', path: '/workouts', icon: <FitnessCenter /> },
-  { label: 'Sleep', path: '/sleep', icon: <Bedtime /> },
-  { label: 'Finances', path: '/finances', icon: <AccountBalance /> },
-  { label: 'Tasks', path: '/tasks', icon: <CheckCircle /> },
-  { label: 'Journal', path: '/journal', icon: <Book /> },
-  { label: 'Contacts', path: '/contacts', icon: <People /> },
-  { label: 'Planner', path: '/planner', icon: <ViewTimeline /> },
-  { label: 'Calendar', path: '/calendar', icon: <CalendarMonth /> },
+  { label: 'Home', path: '/', icon: Home },
+  { label: 'Nutrition', path: '/nutrition', icon: Restaurant },
+  { label: 'Workouts', path: '/workouts', icon: FitnessCenter },
+  { label: 'Sleep', path: '/sleep', icon: Bedtime },
+  { label: 'Finances', path: '/finances', icon: AccountBalance },
+  { label: 'Tasks', path: '/tasks', icon: CheckCircle },
+  { label: 'Journal', path: '/journal', icon: Book },
+  { label: 'Contacts', path: '/contacts', icon: People },
+  { label: 'Planner', path: '/planner', icon: ViewTimeline },
+  { label: 'Calendar', path: '/calendar', icon: CalendarMonth },
 ];
 
 interface SidebarProps {
@@ -60,32 +61,70 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, onOpen }) => {
   };
 
   const drawerContent = (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ p: 3, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-        <Typography variant="h5" sx={{ fontSize: '1.5rem' }}>🦕</Typography>
-        <Box>
-          <Typography variant="h6" fontWeight={700} sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            Dyno
-          </Typography>
-          <Typography variant="caption" color="text.secondary">Life Dashboard</Typography>
-        </Box>
+    <Box sx={{ overflow: 'auto', px: 1.5, pt: 2.5 }}>
+      {/* Branding */}
+      <Box sx={{ mb: 3, px: 0.5 }}>
+        <Typography
+          variant="h5"
+          sx={{
+            fontWeight: 700,
+            background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}
+        >
+          Dyno 🦕
+        </Typography>
       </Box>
-      <Divider sx={{ borderColor: 'rgba(255,255,255,0.06)' }} />
-      <List sx={{ px: 1.5, py: 2, flex: 1 }}>
+
+      <Divider sx={{ mb: 2, opacity: 0.1 }} />
+
+      <List sx={{ py: 0 }}>
         {navItems.map((item) => {
           const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
+          const Icon = item.icon;
+
           return (
-            <ListItemButton
-              key={item.path}
-              selected={isActive}
-              onClick={() => handleNav(item.path)}
-              sx={{ mb: 0.5, borderRadius: 2, px: 2, py: 1 }}
-            >
-              <ListItemIcon sx={{ minWidth: 40, color: isActive ? '#5B8DEF' : 'text.secondary' }}>
-                {item.icon}
-              </ListItemIcon>
-              <ListItemText primary={item.label} primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: isActive ? 600 : 400 }} />
-            </ListItemButton>
+            <ListItem key={item.path} disablePadding sx={{ mb: 0.5 }}>
+              <ListItemButton
+                selected={isActive}
+                onClick={() => handleNav(item.path)}
+                sx={{
+                  borderRadius: '12px',
+                  py: 1,
+                  px: 1.5,
+                  minHeight: 0,
+                  '&.Mui-selected': {
+                    backgroundColor: `${theme.palette.primary.main}2E`,
+                    color: 'primary.main',
+                    '&:hover': {
+                      backgroundColor: `${theme.palette.primary.main}38`,
+                    },
+                    '& .MuiListItemIcon-root': {
+                      color: 'primary.main',
+                    },
+                  },
+                }}
+              >
+                <ListItemIcon
+                  sx={{
+                    minWidth: 32,
+                    color: isActive ? 'primary.main' : 'text.secondary',
+                    '& .MuiSvgIcon-root': { fontSize: '1.25rem' },
+                  }}
+                >
+                  <Icon />
+                </ListItemIcon>
+                <ListItemText
+                  primary={item.label}
+                  primaryTypographyProps={{
+                    fontWeight: isActive ? 600 : 500,
+                    fontSize: '0.9375rem',
+                  }}
+                />
+              </ListItemButton>
+            </ListItem>
           );
         })}
       </List>
@@ -97,7 +136,17 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, onOpen }) => {
       <>
         <IconButton
           onClick={onOpen}
-          sx={{ position: 'fixed', top: 12, left: 12, zIndex: 1200, color: 'text.primary' }}
+          aria-label="Open navigation menu"
+          sx={{
+            display: { xs: 'block', md: 'none' },
+            position: 'fixed',
+            top: 16,
+            left: 16,
+            zIndex: theme.zIndex.drawer - 1,
+            backgroundColor: 'background.paper',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+            '&:hover': { backgroundColor: 'background.paper' },
+          }}
         >
           <MenuIcon />
         </IconButton>
@@ -109,9 +158,9 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, onOpen }) => {
           sx={{
             '& .MuiDrawer-paper': {
               width: DRAWER_WIDTH,
-              backgroundColor: 'rgba(18, 24, 33, 0.95)',
-              backdropFilter: 'blur(20px)',
-              borderRight: '1px solid rgba(255,255,255,0.06)',
+              boxSizing: 'border-box',
+              borderRight: '1px solid rgba(255,255,255,0.05)',
+              backgroundColor: 'background.default',
             },
           }}
         >
@@ -129,10 +178,9 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, onOpen }) => {
         flexShrink: 0,
         '& .MuiDrawer-paper': {
           width: DRAWER_WIDTH,
-          backgroundColor: 'rgba(18, 24, 33, 0.95)',
-          backdropFilter: 'blur(20px)',
-          borderRight: '1px solid rgba(255,255,255,0.06)',
           boxSizing: 'border-box',
+          borderRight: '1px solid rgba(255,255,255,0.05)',
+          backgroundColor: 'background.default',
         },
       }}
     >

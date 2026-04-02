@@ -34,7 +34,7 @@ const SleepPage: React.FC = () => {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Box>
-          <Typography variant="h3" fontWeight={700}>Sleep</Typography>
+          <Typography variant="h4" fontWeight={700}>Sleep</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>Sleep quality and patterns</Typography>
         </Box>
         <ToggleButtonGroup value={range} exclusive onChange={(_, v) => v && setRange(v)} size="small">
@@ -44,7 +44,7 @@ const SleepPage: React.FC = () => {
         </ToggleButtonGroup>
       </Box>
 
-      <Grid container spacing={3}>
+      <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
         {/* Last Night */}
         {lastNight && (
           <Grid size={{ xs: 12, md: 6 }}>
@@ -54,7 +54,7 @@ const SleepPage: React.FC = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 3 }}>
                   <ScoreRing value={lastNight.quality} maxValue={5} size={100} strokeWidth={8} color="#5B8DEF" label="Quality" />
                   <Box>
-                    <Typography variant="h3" fontWeight={700}>{lastNight.hours.toFixed(1)}h</Typography>
+                    <Typography variant="h4" fontWeight={700}>{lastNight.hours.toFixed(1)}h</Typography>
                     <Typography variant="body2" color="text.secondary">{formatDate(lastNight.date)}</Typography>
                   </Box>
                 </Box>
