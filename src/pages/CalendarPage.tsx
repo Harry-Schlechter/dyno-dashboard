@@ -1,455 +1,429 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
-  Box, Typography, Grid, Card, CardContent, IconButton, Stack,
-  Dialog, DialogTitle, DialogContent,
+  Box, Typography, Card, CardContent, IconButton, Stack, Drawer, Chip, Divider,
+  Tooltip,
 } from '@mui/material';
-import { ChevronLeft, ChevronRight, Close, FitnessCenter, Restaurant, Book, CheckCircle } from '@mui/icons-material';
+import {
+  ChevronLeft, ChevronRight, Close, FitnessCenter, Restaurant, Bedtime, AttachMoney,
+  Event as EventIcon,
+} from '@mui/icons-material';
+import {
+  format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths, isToday,
+  parseISO, isSameDay,
+} from 'date-fns';
 import { useSupabase } from '../hooks/useSupabase';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths, isToday } from 'date-fns';
+import { useLifeScore } from '../hooks/useLifeScore';
+import { useFinances } from '../hooks/useFinances';
+import { isRealSpend } from '../lib/finance';
+import { formatCurrency } from '../lib/formatters';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
 
 interface CalendarEvent {
-  type: 'workout' | 'meal' | 'journal' | 'task';
+  id: string;
   title: string;
-  color: string;
+  description: string | null;
+  location: string | null;
+  start_time: string;
+  end_time: string;
+  all_day: boolean;
+  category: string | null;
+  color: string | null;
+  source: string;
+  source_calendar_name: string | null;
+  status: string | null;
 }
 
-const TYPE_COLORS: Record<string, string> = {
-  workout: '#FF9800',
-  meal: '#4CAF50',
-  journal: '#5B8DEF',
-  task: '#764ba2',
+const colorForScore = (score: number | null): string => {
+  if (score === null) return 'rgba(255,255,255,0.04)';
+  if (score >= 85) return 'rgba(76,175,80,0.55)';
+  if (score >= 70) return 'rgba(76,175,80,0.30)';
+  if (score >= 55) return 'rgba(91,141,239,0.30)';
+  if (score >= 40) return 'rgba(255,152,0,0.30)';
+  return 'rgba(244,67,54,0.30)';
+};
+
+const colorForCategory = (category: string | null): string => {
+  switch (category) {
+    case 'work':       return '#5B8DEF';
+    case 'fitness':    return '#FF9800';
+    case 'social':     return '#4CAF50';
+    case 'travel':     return '#764ba2';
+    case 'medical':    return '#F44336';
+    case 'networking': return '#90CAF9';
+    default:           return '#7d8590';
+  }
 };
 
 const CalendarPage: React.FC = () => {
-  const [month, setMonth] = useState(new Date());
-  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [cursor, setCursor] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  const monthStart = format(startOfMonth(month), 'yyyy-MM-dd');
-  const monthEnd = format(endOfMonth(month), 'yyyy-MM-dd');
+  const monthStart = useMemo(() => startOfMonth(cursor), [cursor]);
+  const monthEnd = useMemo(() => endOfMonth(cursor), [cursor]);
+  const days = useMemo(() => eachDayOfInterval({ start: monthStart, end: monthEnd }), [monthStart, monthEnd]);
+  const startWeekday = getDay(monthStart); // 0 = Sun
 
-  const { data: workouts, loading: wLoading } = useSupabase<{ id: string; date: string; name: string }>({
-    table: 'workouts',
-    select: 'id,date,name',
-    filters: { date: { gte: monthStart } },
+  const monthStartStr = format(monthStart, 'yyyy-MM-dd');
+  const monthEndStr = format(monthEnd, 'yyyy-MM-dd');
+
+  // Calendar events for the month
+  const { data: events, loading: eventsLoading, error: eventsError } = useSupabase<CalendarEvent>({
+    table: 'calendar_events',
+    order: { column: 'start_time', ascending: true },
+    filters: { start_time: { gte: monthStartStr } },
+    limit: 500,
   });
+  const calendarTableMissing = !!eventsError && (eventsError.toLowerCase().includes('not find') || eventsError.toLowerCase().includes('schema cache'));
 
-  const { data: meals, loading: mLoading } = useSupabase<{ id: string; date: string; meal_type: string; description: string }>({
-    table: 'meals',
-    select: 'id,date,meal_type,description',
-    filters: { date: { gte: monthStart } },
+  // Lightweight per-day stats (sleep, workout count, meals, real spend)
+  const { data: sleep, loading: sleepLoading } = useSupabase<{ date: string; hours: number | null; went_to_bed_at: string | null; woke_up_at: string | null }>({
+    table: 'sleep', order: { column: 'date', ascending: false }, limit: 500,
   });
-
-  const { data: logs, loading: lLoading } = useSupabase<{ id: string; date: string; journal: string; mood: number }>({
-    table: 'daily_logs',
-    select: 'id,date,journal,mood',
-    filters: { date: { gte: monthStart } },
+  const { data: workouts, loading: workoutsLoading } = useSupabase<{ date: string; name: string | null; duration_min: number | null }>({
+    table: 'workouts', order: { column: 'date', ascending: false }, limit: 500,
   });
-
-  const { data: tasks, loading: tLoading } = useSupabase<{ id: string; due_date: string; title: string; status: string }>({
-    table: 'tasks',
-    select: 'id,due_date,title,status',
+  const { data: meals, loading: mealsLoading } = useSupabase<{ date: string; meal_type: string | null; description: string | null; calories: number | null; protein_g: number | null }>({
+    table: 'meals', order: { column: 'date', ascending: false }, limit: 1000,
   });
+  const { transactions, loading: finLoading } = useFinances();
 
-  const loading = wLoading || mLoading || lLoading || tLoading;
+  const { dailyScoreOn, loading: scoreLoading } = useLifeScore();
 
-  const calendarDays = useMemo(() => {
-    const start = startOfMonth(month);
-    const end = endOfMonth(month);
-    return { days: eachDayOfInterval({ start, end }), startPad: getDay(start) };
-  }, [month]);
-
-  const eventsByDate = useMemo(() => {
-    const map: Record<string, CalendarEvent[]> = {};
-    const addEvent = (date: string, event: CalendarEvent) => {
-      if (!map[date]) map[date] = [];
-      map[date].push(event);
-    };
-
-    workouts.forEach(w => addEvent(w.date, { type: 'workout', title: w.name, color: '#FF9800' }));
-    meals.filter(m => m.meal_type !== 'breakfast').forEach(m => addEvent(m.date, { type: 'meal', title: `${m.meal_type}: ${m.description}`, color: '#4CAF50' }));
-    logs.filter(l => l.journal).forEach(l => addEvent(l.date, { type: 'journal', title: 'Journal entry', color: '#5B8DEF' }));
-    tasks.filter(t => t.due_date).forEach(t => addEvent(t.due_date, { type: 'task', title: t.title, color: t.status === 'completed' ? '#4CAF50' : '#764ba2' }));
-
+  // Pre-compute scores for visible days
+  const scoresByDay = useMemo(() => {
+    const map = new Map<string, number | null>();
+    for (const d of days) {
+      const key = format(d, 'yyyy-MM-dd');
+      map.set(key, dailyScoreOn(key));
+    }
     return map;
-  }, [workouts, meals, logs, tasks]);
+  }, [days, dailyScoreOn]);
 
-  const totalEventsThisMonth = useMemo(() => {
-    return Object.values(eventsByDate).reduce((sum, events) => sum + events.length, 0);
-  }, [eventsByDate]);
+  // Group events by date (start_time local date)
+  const eventsByDay = useMemo(() => {
+    const map = new Map<string, CalendarEvent[]>();
+    for (const e of events) {
+      const key = format(parseISO(e.start_time), 'yyyy-MM-dd');
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(e);
+    }
+    return map;
+  }, [events]);
 
-  const selectedEvents = selectedDay ? (eventsByDate[selectedDay] || []) : [];
+  const loading = eventsLoading || sleepLoading || workoutsLoading || mealsLoading || finLoading || scoreLoading;
+  if (loading) return <LoadingSkeleton variant="card" count={2} />;
 
-  if (loading) return <LoadingSkeleton variant="chart" />;
-
-  const typeIcons: Record<string, React.ReactNode> = {
-    workout: <FitnessCenter sx={{ fontSize: 18 }} />,
-    meal: <Restaurant sx={{ fontSize: 18 }} />,
-    journal: <Book sx={{ fontSize: 18 }} />,
-    task: <CheckCircle sx={{ fontSize: 18 }} />,
-  };
+  // Pad start of grid with blanks so day-1 lands on the correct weekday
+  const padding = Array.from({ length: startWeekday });
 
   return (
     <Box>
-      {/* Page Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
         <Box>
-          <Typography variant="h4" fontWeight={700}>Calendar</Typography>
+          <Typography variant="h4" fontWeight={700}>{format(cursor, 'MMMM yyyy')}</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            {totalEventsThisMonth} event{totalEventsThisMonth !== 1 ? 's' : ''} in {format(month, 'MMMM')}
+            Daily life scores, events, workouts, meals, and spend
           </Typography>
         </Box>
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            bgcolor: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(255,255,255,0.06)',
-            borderRadius: 3,
-            px: 1.5,
-            py: 0.5,
-          }}
-        >
-          <IconButton
-            onClick={() => setMonth(prev => subMonths(prev, 1))}
-            size="small"
-            sx={{
-              color: 'text.secondary',
-              '&:hover': { color: '#5B8DEF', bgcolor: 'rgba(91, 141, 239, 0.1)' },
-              transition: 'all 0.2s',
-            }}
-          >
-            <ChevronLeft fontSize="small" />
+        <Stack direction="row" spacing={0.5}>
+          <IconButton onClick={() => setCursor(subMonths(cursor, 1))}><ChevronLeft /></IconButton>
+          <IconButton onClick={() => setCursor(new Date())} sx={{ fontSize: 13, px: 1.5 }}>
+            <Typography variant="caption">Today</Typography>
           </IconButton>
-          <Typography
-            variant="subtitle2"
-            fontWeight={600}
-            sx={{ minWidth: 140, textAlign: 'center', userSelect: 'none' }}
-          >
-            {format(month, 'MMMM yyyy')}
-          </Typography>
-          <IconButton
-            onClick={() => setMonth(prev => addMonths(prev, 1))}
-            size="small"
-            sx={{
-              color: 'text.secondary',
-              '&:hover': { color: '#5B8DEF', bgcolor: 'rgba(91, 141, 239, 0.1)' },
-              transition: 'all 0.2s',
-            }}
-          >
-            <ChevronRight fontSize="small" />
-          </IconButton>
-        </Box>
+          <IconButton onClick={() => setCursor(addMonths(cursor, 1))}><ChevronRight /></IconButton>
+        </Stack>
       </Box>
 
-      {/* Legend Strip */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 3,
-          mb: 2.5,
-          px: 2,
-          py: 1.25,
-          bgcolor: 'rgba(255,255,255,0.02)',
-          border: '1px solid rgba(255,255,255,0.05)',
-          borderRadius: 2.5,
-          backdropFilter: 'blur(8px)',
-        }}
-      >
-        {[
-          { label: 'Workout', color: TYPE_COLORS.workout },
-          { label: 'Meal', color: TYPE_COLORS.meal },
-          { label: 'Journal', color: TYPE_COLORS.journal },
-          { label: 'Task', color: TYPE_COLORS.task },
-        ].map(item => (
-          <Box key={item.label} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Box
-              sx={{
-                width: 10,
-                height: 10,
-                borderRadius: '50%',
-                bgcolor: item.color,
-                boxShadow: `0 0 6px ${item.color}66`,
-              }}
-            />
-            <Typography variant="caption" color="text.secondary" fontWeight={500} letterSpacing="0.02em">
-              {item.label}
+      {calendarTableMissing && (
+        <Card sx={{ mb: 2, bgcolor: 'rgba(91,141,239,0.06)', border: '1px solid rgba(91,141,239,0.25)' }}>
+          <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
+            <Typography variant="caption" color="text.secondary">
+              No <code>calendar_events</code> table yet. Run <code>migrations/005_calendar_events.sql</code> in Supabase, then have your AI agent sync Google Calendar to it.
             </Typography>
-          </Box>
-        ))}
-      </Box>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Calendar Card */}
       <Card sx={{ '&:hover': { transform: 'none' } }}>
-        <CardContent sx={{ p: { xs: 1.5, sm: 2.5 } }}>
-          <Grid container spacing="4px">
-            {/* Day Headers */}
+        <CardContent>
+          {/* Weekday header */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 0.5, mb: 0.75 }}>
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
-              <Grid size={{ xs: 12 / 7 }} key={d}>
-                <Typography
-                  variant="overline"
-                  color="text.secondary"
-                  textAlign="center"
-                  display="block"
-                  fontWeight={700}
-                  sx={{ pb: 1.5, fontSize: '0.7rem', letterSpacing: '0.1em' }}
-                >
-                  {d}
-                </Typography>
-              </Grid>
+              <Typography key={d} variant="caption" color="text.secondary" sx={{ textAlign: 'center', fontWeight: 600, letterSpacing: 1 }}>
+                {d}
+              </Typography>
             ))}
+          </Box>
 
-            {/* Padding cells */}
-            {Array.from({ length: calendarDays.startPad }).map((_, i) => (
-              <Grid size={{ xs: 12 / 7 }} key={`pad-${i}`}>
-                <Box sx={{ minHeight: { xs: 70, sm: 90 } }} />
-              </Grid>
-            ))}
-
-            {/* Day Cells */}
-            {calendarDays.days.map(day => {
-              const dateStr = format(day, 'yyyy-MM-dd');
-              const events = eventsByDate[dateStr] || [];
-              const today = isToday(day);
-              const hasEvents = events.length > 0;
-              const uniqueTypes = [...new Set(events.map(e => e.type))];
-              const displayEvents = events.slice(0, 2);
-              const extraCount = events.length - 2;
-
+          {/* Day grid */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 0.5 }}>
+            {padding.map((_, i) => <Box key={`pad-${i}`} />)}
+            {days.map(d => {
+              const key = format(d, 'yyyy-MM-dd');
+              const score = scoresByDay.get(key) ?? null;
+              const dayEvents = eventsByDay.get(key) ?? [];
+              const today = isToday(d);
               return (
-                <Grid size={{ xs: 12 / 7 }} key={dateStr}>
-                  <Box
-                    onClick={() => hasEvents && setSelectedDay(dateStr)}
-                    sx={{
-                      minHeight: { xs: 70, sm: 90 },
-                      p: 1,
-                      borderRadius: 2,
-                      cursor: hasEvents ? 'pointer' : 'default',
-                      bgcolor: today
-                        ? 'rgba(91, 141, 239, 0.08)'
-                        : hasEvents
-                          ? 'rgba(255,255,255,0.04)'
-                          : 'rgba(255,255,255,0.02)',
-                      border: today
-                        ? '1px solid rgba(91, 141, 239, 0.35)'
-                        : '1px solid rgba(255,255,255,0.04)',
-                      '&:hover': hasEvents
-                        ? {
-                            bgcolor: 'rgba(91, 141, 239, 0.08)',
-                            borderColor: 'rgba(91, 141, 239, 0.2)',
-                          }
-                        : {},
-                      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                    }}
-                  >
-                    {/* Day Number */}
-                    <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 0.5 }}>
-                      <Box
-                        sx={{
-                          width: today ? 26 : 'auto',
-                          height: today ? 26 : 'auto',
-                          borderRadius: '50%',
-                          bgcolor: today ? '#5B8DEF' : 'transparent',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <Typography
-                          variant="body2"
-                          fontWeight={today ? 700 : 500}
-                          color={today ? '#fff' : 'text.primary'}
-                          sx={{ fontSize: 12, lineHeight: 1 }}
-                        >
-                          {format(day, 'd')}
-                        </Typography>
-                      </Box>
-                    </Box>
-
-                    {/* Event Dots */}
-                    {uniqueTypes.length > 0 && (
-                      <Stack direction="row" spacing={0.5} sx={{ mb: 0.5 }}>
-                        {uniqueTypes.map(type => {
-                          const event = events.find(e => e.type === type)!;
-                          return (
-                            <Box
-                              key={type}
-                              sx={{
-                                width: 8,
-                                height: 8,
-                                borderRadius: '50%',
-                                bgcolor: event.color,
-                                transition: 'box-shadow 0.2s',
-                                '.MuiBox-root:hover &': {
-                                  boxShadow: `0 0 8px ${event.color}AA`,
-                                },
-                              }}
-                            />
-                          );
-                        })}
-                      </Stack>
+                <Box
+                  key={key}
+                  onClick={() => setSelectedDate(d)}
+                  sx={{
+                    minHeight: 90,
+                    p: 0.75,
+                    borderRadius: 1.5,
+                    cursor: 'pointer',
+                    bgcolor: colorForScore(score),
+                    border: today ? '2px solid #5B8DEF' : '1px solid rgba(255,255,255,0.04)',
+                    transition: 'transform 0.1s, border-color 0.1s',
+                    '&:hover': { transform: 'translateY(-1px)', borderColor: 'rgba(255,255,255,0.2)' },
+                  }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                    <Typography variant="caption" fontWeight={today ? 700 : 500}>{format(d, 'd')}</Typography>
+                    {score !== null && (
+                      <Typography variant="caption" sx={{ fontSize: '0.65rem', fontWeight: 700, opacity: 0.85 }}>
+                        {Math.round(score)}
+                      </Typography>
                     )}
-
-                    {/* Truncated Event Titles */}
-                    <Box sx={{ flex: 1, overflow: 'hidden', display: { xs: 'none', sm: 'block' } }}>
-                      {displayEvents.map((event, idx) => (
-                        <Typography
-                          key={idx}
-                          sx={{
-                            fontSize: '0.6rem',
-                            lineHeight: 1.3,
-                            color: 'text.secondary',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            mb: 0.25,
-                          }}
-                        >
-                          {event.title}
-                        </Typography>
+                  </Box>
+                  {dayEvents.length > 0 && (
+                    <Stack spacing={0.25} sx={{ mt: 0.5 }}>
+                      {dayEvents.slice(0, 3).map(e => (
+                        <Tooltip key={e.id} title={`${e.title}${e.location ? ` · ${e.location}` : ''}`}>
+                          <Box sx={{
+                            display: 'flex', alignItems: 'center', gap: 0.5,
+                            bgcolor: `${colorForCategory(e.category)}22`,
+                            borderLeft: `2px solid ${colorForCategory(e.category)}`,
+                            px: 0.5, py: 0.1, borderRadius: 0.5,
+                          }}>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                fontSize: '0.6rem',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                textDecoration: e.status === 'cancelled' ? 'line-through' : 'none',
+                                opacity: e.status === 'cancelled' ? 0.5 : 1,
+                              }}
+                            >
+                              {e.all_day ? '' : `${format(parseISO(e.start_time), 'h:mma').toLowerCase()} `}
+                              {e.title}
+                            </Typography>
+                          </Box>
+                        </Tooltip>
                       ))}
-                      {extraCount > 0 && (
-                        <Typography
-                          sx={{
-                            fontSize: '0.58rem',
-                            color: '#5B8DEF',
-                            fontWeight: 600,
-                          }}
-                        >
-                          +{extraCount} more
+                      {dayEvents.length > 3 && (
+                        <Typography variant="caption" sx={{ fontSize: '0.6rem', opacity: 0.6 }}>
+                          +{dayEvents.length - 3} more
                         </Typography>
                       )}
-                    </Box>
-                  </Box>
-                </Grid>
+                    </Stack>
+                  )}
+                </Box>
               );
             })}
-          </Grid>
+          </Box>
+
+          {/* Legend */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2, pt: 1.5, borderTop: '1px solid rgba(255,255,255,0.06)', flexWrap: 'wrap', gap: 1 }}>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Typography variant="caption" color="text.secondary">Life Score:</Typography>
+              <ScoreSwatch label="85+" color={colorForScore(90)} />
+              <ScoreSwatch label="70+" color={colorForScore(75)} />
+              <ScoreSwatch label="55+" color={colorForScore(60)} />
+              <ScoreSwatch label="40+" color={colorForScore(45)} />
+              <ScoreSwatch label="<40" color={colorForScore(20)} />
+              <ScoreSwatch label="no data" color={colorForScore(null)} />
+            </Stack>
+          </Box>
         </CardContent>
       </Card>
 
-      {/* Day Detail Dialog */}
-      <Dialog
-        open={!!selectedDay}
-        onClose={() => setSelectedDay(null)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            bgcolor: 'rgba(18, 24, 33, 0.98)',
-            backdropFilter: 'blur(24px)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: 4,
-            boxShadow: '0 24px 64px rgba(0, 0, 0, 0.7)',
-          },
-        }}
-      >
-        {selectedDay && (
-          <>
-            <DialogTitle
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                pb: 1.5,
-                borderBottom: '1px solid rgba(255,255,255,0.06)',
-              }}
-            >
-              <Box>
-                <Typography variant="overline" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-                  {format(new Date(selectedDay + 'T12:00:00'), 'EEEE')}
-                </Typography>
-                <Typography variant="h5" fontWeight={700}>
-                  {format(new Date(selectedDay + 'T12:00:00'), 'MMMM d, yyyy')}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {selectedEvents.length} event{selectedEvents.length !== 1 ? 's' : ''}
-                </Typography>
-              </Box>
-              <IconButton
-                onClick={() => setSelectedDay(null)}
-                size="small"
-                sx={{
-                  mt: 0.5,
-                  color: 'text.secondary',
-                  '&:hover': { color: 'text.primary', bgcolor: 'rgba(255,255,255,0.06)' },
-                }}
-              >
-                <Close fontSize="small" />
-              </IconButton>
-            </DialogTitle>
-            <DialogContent sx={{ pt: 2.5, pb: 3 }}>
-              <Stack spacing={1.5}>
-                {selectedEvents.map((event, i) => (
-                  <Box
-                    key={i}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 2,
-                      p: 2,
-                      borderRadius: 2.5,
-                      bgcolor: 'rgba(255,255,255,0.03)',
-                      border: '1px solid rgba(255,255,255,0.05)',
-                      borderLeft: `3px solid ${event.color}`,
-                      transition: 'all 0.2s',
-                      '&:hover': {
-                        bgcolor: 'rgba(255,255,255,0.05)',
-                        borderColor: 'rgba(255,255,255,0.08)',
-                        borderLeftColor: event.color,
-                      },
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        color: event.color,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: 36,
-                        height: 36,
-                        borderRadius: 2,
-                        bgcolor: `${event.color}18`,
-                        flexShrink: 0,
-                      }}
-                    >
-                      {typeIcons[event.type]}
-                    </Box>
-                    <Box sx={{ minWidth: 0, flex: 1 }}>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        textTransform="capitalize"
-                        fontWeight={600}
-                        letterSpacing="0.04em"
-                      >
-                        {event.type}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        fontWeight={500}
-                        sx={{
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {event.title}
-                      </Typography>
-                    </Box>
-                  </Box>
-                ))}
-              </Stack>
-            </DialogContent>
-          </>
-        )}
-      </Dialog>
+      <DayDrawer
+        date={selectedDate}
+        onClose={() => setSelectedDate(null)}
+        events={selectedDate ? eventsByDay.get(format(selectedDate, 'yyyy-MM-dd')) ?? [] : []}
+        score={selectedDate ? scoresByDay.get(format(selectedDate, 'yyyy-MM-dd')) ?? null : null}
+        sleep={sleep}
+        workouts={workouts}
+        meals={meals}
+        transactions={transactions}
+      />
     </Box>
   );
 };
+
+const ScoreSwatch: React.FC<{ label: string; color: string }> = ({ label, color }) => (
+  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}>
+    <Box sx={{ width: 14, height: 14, borderRadius: 0.5, bgcolor: color, border: '1px solid rgba(255,255,255,0.08)' }} />
+    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>{label}</Typography>
+  </Box>
+);
+
+interface DayDrawerProps {
+  date: Date | null;
+  onClose: () => void;
+  events: CalendarEvent[];
+  score: number | null;
+  sleep: Array<{ date: string; hours: number | null; went_to_bed_at: string | null; woke_up_at: string | null }>;
+  workouts: Array<{ date: string; name: string | null; duration_min: number | null }>;
+  meals: Array<{ date: string; meal_type: string | null; description: string | null; calories: number | null; protein_g: number | null }>;
+  transactions: any[];
+}
+
+const DayDrawer: React.FC<DayDrawerProps> = ({ date, onClose, events, score, sleep, workouts, meals, transactions }) => {
+  if (!date) return null;
+  const key = format(date, 'yyyy-MM-dd');
+
+  const sleepRow = sleep.find(s => s.date === key);
+  const dayWorkouts = workouts.filter(w => w.date === key);
+  const dayMeals = meals.filter(m => m.date === key);
+  const dayCals = dayMeals.reduce((s, m) => s + (m.calories ?? 0), 0);
+  const dayProtein = dayMeals.reduce((s, m) => s + (m.protein_g ?? 0), 0);
+  const dayTxs = transactions.filter((t: any) => t.date === key && isRealSpend(t));
+  const daySpend = dayTxs.reduce((s: number, t: any) => s + Math.abs(t.amount), 0);
+
+  const scoreColor = score === null ? '#7d8590' : score >= 80 ? '#4CAF50' : score >= 60 ? '#5B8DEF' : score >= 40 ? '#FF9800' : '#F44336';
+
+  return (
+    <Drawer
+      anchor="right"
+      open={!!date}
+      onClose={onClose}
+      PaperProps={{ sx: { width: { xs: '100%', sm: 460 }, bgcolor: '#0d1117' } }}
+    >
+      <Box sx={{ p: 2.5 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+          <Box>
+            <Typography variant="h6">{format(date, 'EEEE')}</Typography>
+            <Typography variant="body2" color="text.secondary">{format(date, 'MMMM d, yyyy')}</Typography>
+          </Box>
+          <IconButton onClick={onClose}><Close /></IconButton>
+        </Box>
+
+        {/* Life Score */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2.5, p: 2, borderRadius: 2, bgcolor: `${scoreColor}11`, border: `1px solid ${scoreColor}33` }}>
+          <Box>
+            <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1 }}>Life Score</Typography>
+            <Typography variant="h3" fontWeight={700} sx={{ color: scoreColor, lineHeight: 1 }}>
+              {score === null ? '—' : Math.round(score)}
+            </Typography>
+          </Box>
+          <Typography variant="body2" color="text.secondary" sx={{ ml: 'auto' }}>
+            {score === null ? 'No data for this day' : score >= 80 ? 'Crushing it' : score >= 60 ? 'Solid' : score >= 40 ? 'Room to grow' : 'Rough day'}
+          </Typography>
+        </Box>
+
+        {/* Calendar events */}
+        <Section icon={<EventIcon sx={{ color: '#5B8DEF' }} />} label="Events">
+          {events.length === 0 ? (
+            <Empty>No calendar events</Empty>
+          ) : (
+            <Stack spacing={0.75}>
+              {events.map(e => (
+                <Box key={e.id} sx={{
+                  p: 1.25, borderRadius: 1.5,
+                  bgcolor: `${colorForCategory(e.category)}11`,
+                  borderLeft: `3px solid ${colorForCategory(e.category)}`,
+                }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap' }}>
+                    <Typography variant="body2" fontWeight={600} sx={{ textDecoration: e.status === 'cancelled' ? 'line-through' : 'none' }}>
+                      {e.title}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {e.all_day ? 'All day' : `${format(parseISO(e.start_time), 'h:mma').toLowerCase()}–${format(parseISO(e.end_time), 'h:mma').toLowerCase()}`}
+                    </Typography>
+                  </Box>
+                  {e.location && <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>{e.location}</Typography>}
+                  {e.category && <Chip label={e.category} size="small" sx={{ height: 16, fontSize: '0.6rem', mt: 0.25, bgcolor: 'transparent', border: '1px solid rgba(255,255,255,0.1)' }} />}
+                </Box>
+              ))}
+            </Stack>
+          )}
+        </Section>
+
+        <Section icon={<Bedtime sx={{ color: '#764ba2' }} />} label="Sleep">
+          {sleepRow?.hours == null ? <Empty>Not logged</Empty> : (
+            <Typography variant="body2">
+              {sleepRow.hours.toFixed(1)}h
+              {sleepRow.went_to_bed_at && sleepRow.woke_up_at && (
+                <Typography component="span" variant="caption" color="text.secondary">
+                  {' '}· {format(parseISO(sleepRow.went_to_bed_at), 'h:mma').toLowerCase()}–{format(parseISO(sleepRow.woke_up_at), 'h:mma').toLowerCase()}
+                </Typography>
+              )}
+            </Typography>
+          )}
+        </Section>
+
+        <Section icon={<FitnessCenter sx={{ color: '#FF9800' }} />} label="Workouts">
+          {dayWorkouts.length === 0 ? <Empty>No workouts</Empty> : (
+            <Stack spacing={0.5}>
+              {dayWorkouts.map((w, i) => (
+                <Typography key={i} variant="body2">
+                  {w.name}
+                  {w.duration_min && <Typography component="span" variant="caption" color="text.secondary"> · {w.duration_min}min</Typography>}
+                </Typography>
+              ))}
+            </Stack>
+          )}
+        </Section>
+
+        <Section icon={<Restaurant sx={{ color: '#5B8DEF' }} />} label="Meals">
+          {dayMeals.length === 0 ? <Empty>Nothing logged</Empty> : (
+            <>
+              <Typography variant="body2" sx={{ mb: 0.75 }}>
+                {dayMeals.length} meals · {Math.round(dayCals)} cal · {Math.round(dayProtein)}g protein
+              </Typography>
+              <Stack spacing={0.4}>
+                {dayMeals.map((m, i) => (
+                  <Typography key={i} variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                    {m.meal_type && <strong style={{ textTransform: 'capitalize', color: '#fff' }}>{m.meal_type}: </strong>}
+                    {m.description || '(no description)'}
+                  </Typography>
+                ))}
+              </Stack>
+            </>
+          )}
+        </Section>
+
+        <Section icon={<AttachMoney sx={{ color: '#4CAF50' }} />} label="Spend">
+          {dayTxs.length === 0 ? <Empty>$0</Empty> : (
+            <>
+              <Typography variant="body2" sx={{ mb: 0.75 }}>
+                {formatCurrency(daySpend)} · {dayTxs.length} txn{dayTxs.length === 1 ? '' : 's'}
+              </Typography>
+              <Stack spacing={0.4}>
+                {dayTxs.map((t: any) => (
+                  <Box key={t.id} sx={{ display: 'flex', justifyContent: 'space-between', gap: 1 }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {t.merchant_name || t.description}
+                    </Typography>
+                    <Typography variant="caption" fontWeight={600}>{formatCurrency(Math.abs(t.amount))}</Typography>
+                  </Box>
+                ))}
+              </Stack>
+            </>
+          )}
+        </Section>
+      </Box>
+    </Drawer>
+  );
+};
+
+const Section: React.FC<{ icon: React.ReactNode; label: string; children: React.ReactNode }> = ({ icon, label, children }) => (
+  <>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2, mb: 1 }}>
+      {icon}
+      <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.2 }}>{label}</Typography>
+    </Box>
+    {children}
+    <Divider sx={{ mt: 1.5, opacity: 0.3 }} />
+  </>
+);
+
+const Empty: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <Typography variant="caption" color="text.secondary">{children}</Typography>
+);
 
 export default CalendarPage;

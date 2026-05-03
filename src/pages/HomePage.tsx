@@ -1,16 +1,13 @@
-import React, { useMemo } from 'react';
-import { Box, Typography, Grid, Card, CardContent, Chip, Stack, Alert } from '@mui/material';
-import { Bedtime, Restaurant, FitnessCenter, SentimentSatisfied, WaterDrop } from '@mui/icons-material';
+import React from 'react';
+import { Box, Typography, Grid, Card, CardContent, Stack, Chip, Alert } from '@mui/material';
 import { format } from 'date-fns';
-import { useSleep } from '../hooks/useSleep';
-import { useNutrition } from '../hooks/useNutrition';
-import { useWorkouts } from '../hooks/useWorkouts';
-import { useDailyLogs } from '../hooks/useDailyLogs';
-import { useSupabase } from '../hooks/useSupabase';
-import { calculateLifeScore, getScoreColor, getScoreLabel } from '../lib/scores';
-import { formatNumber, getToday } from '../lib/formatters';
-import ScoreRing from '../components/common/ScoreRing';
-import StatCard from '../components/common/StatCard';
+import { useLifeScore } from '../hooks/useLifeScore';
+import LifeScoreTile from '../components/home/LifeScoreTile';
+import NetWorthWidget from '../components/home/NetWorthWidget';
+import SleepWidget from '../components/home/SleepWidget';
+import MealsCaloriesWidget from '../components/home/MealsCaloriesWidget';
+import WeekSpendWidget from '../components/home/WeekSpendWidget';
+import DailySummaryStrip from '../components/home/DailySummaryStrip';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
 
 const getGreeting = (): string => {
@@ -22,150 +19,155 @@ const getGreeting = (): string => {
 };
 
 const HomePage: React.FC = () => {
-  const { lastNight, data: sleepData, loading: sleepLoading } = useSleep('7d');
-  const { todayMacros, dailyMacros, loading: nutritionLoading } = useNutrition('7d');
-  const { workouts, loading: workoutsLoading } = useWorkouts('7d');
-  const { today: todayLog, data: logs, loading: logsLoading } = useDailyLogs('7d');
-  const { data: hydrationData } = useSupabase<{ date: string; total_oz: number }>({ table: 'daily_hydration', isView: true });
-
-  const loading = sleepLoading || nutritionLoading || workoutsLoading || logsLoading;
-
-  const todayStr = getToday();
-  const todayWorkout = workouts.find(w => w.date === todayStr);
-  const todayHydration = hydrationData.find(h => h.date === todayStr);
-
-  const lifeScore = useMemo(() => {
-    return calculateLifeScore({
-      sleep: lastNight ? { hours: lastNight.hours, quality: lastNight.quality } : undefined,
-      nutrition: todayMacros.total_calories > 0 ? { calories: todayMacros.total_calories, protein: todayMacros.total_protein } : undefined,
-      exerciseDone: !!todayWorkout,
-      mood: todayLog?.mood,
-      hydration: todayHydration?.total_oz,
-      journalDone: !!todayLog?.journal,
-    });
-  }, [lastNight, todayMacros, todayWorkout, todayLog, todayHydration]);
-
-  const missing: string[] = [];
-  if (!lastNight || lastNight.date !== todayStr) missing.push('Sleep');
-  if (todayMacros.total_calories === 0) missing.push('Meals');
-  if (!todayWorkout) missing.push('Workout');
-  if (!todayLog?.mood) missing.push('Mood');
-  if (!todayHydration) missing.push('Hydration');
-  if (!todayLog?.journal) missing.push('Journal');
+  const { results, loading, error, goalsTableMissing } = useLifeScore();
 
   if (loading) return <LoadingSkeleton variant="card" count={4} />;
 
   return (
     <Box>
-      {/* Greeting Header — gradient text like personalos */}
-      <Box sx={{ mb: 3, mt: -1 }}>
-        <Typography
-          variant="h3"
-          sx={{
-            fontWeight: 700,
-            background: (theme: any) =>
-              `linear-gradient(135deg, ${theme.palette.primary.main} 0%, color-mix(in srgb, ${theme.palette.primary.main} 70%, #a855f7) 100%)`,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-          }}
-        >
-          {getGreeting()}, Harry
-        </Typography>
-        <Typography
-          variant="body1"
-          color="text.secondary"
-          sx={{ mt: 0.5, fontSize: '1rem', fontWeight: 500 }}
-        >
+      {/* Header */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h4" fontWeight={700}>{getGreeting()}, Harry</Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
           {format(new Date(), 'EEEE, MMMM d, yyyy')}
         </Typography>
       </Box>
 
-      {/* Life Score + Breakdown */}
-      <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Card sx={{ textAlign: 'center', py: 3 }}>
-            <CardContent>
-              <Typography variant="overline" color="text.secondary">Life Score</Typography>
-              <Box sx={{ my: 2 }}>
-                <ScoreRing value={lifeScore.total} size={160} strokeWidth={12} color={getScoreColor(lifeScore.total)} />
-              </Box>
-              <Typography variant="h6" sx={{ color: getScoreColor(lifeScore.total) }}>
-                {getScoreLabel(lifeScore.total)}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
+      {goalsTableMissing && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          The <code>goals</code> table doesn't exist yet. Run{' '}
+          <code>migrations/001_goals.sql</code> in Supabase to enable Life Score, then have your
+          AI agent populate it.
+        </Alert>
+      )}
 
-        <Grid size={{ xs: 12, md: 8 }}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>Score Breakdown</Typography>
-              <Grid container spacing={2}>
-                {[
-                  { label: 'Sleep', value: lifeScore.sleep, max: 20, color: '#5B8DEF' },
-                  { label: 'Nutrition', value: lifeScore.nutrition, max: 20, color: '#4CAF50' },
-                  { label: 'Exercise', value: lifeScore.exercise, max: 20, color: '#FF9800' },
-                  { label: 'Mood', value: lifeScore.mood, max: 15, color: '#764ba2' },
-                  { label: 'Hydration', value: lifeScore.hydration, max: 15, color: '#90CAF9' },
-                  { label: 'Journal', value: lifeScore.journal, max: 10, color: '#E57373' },
-                ].map((item) => (
-                  <Grid size={{ xs: 4, sm: 2 }} key={item.label}>
-                    <ScoreRing value={item.value} maxValue={item.max} size={70} strokeWidth={6} color={item.color} label={item.label} />
-                  </Grid>
-                ))}
-              </Grid>
-            </CardContent>
-          </Card>
-        </Grid>
+      {error && !goalsTableMissing && (
+        <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>
+      )}
 
-        {/* Today's Snapshot */}
-        <Grid size={{ xs: 12 }}>
-          <Typography variant="overline" sx={{ letterSpacing: 1.5 }}>Today's Snapshot</Typography>
+      {/* 4 Life Score tiles */}
+      <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.5, display: 'block', mb: 1 }}>
+        Life Score
+      </Typography>
+      <Grid container spacing={2.5} sx={{ mb: 4 }}>
+        <Grid size={{ xs: 6, md: 3 }}>
+          <LifeScoreTile result={results[0]} emphasized />
         </Grid>
-        <Grid size={{ xs: 6, sm: 4, md: 2 }}>
-          <StatCard title="Sleep" value={lastNight ? `${lastNight.hours.toFixed(1)}h` : '--'} subtitle={lastNight ? `Quality: ${lastNight.quality}/5` : 'Not logged'} color="#5B8DEF" icon={<Bedtime />} />
+        <Grid size={{ xs: 6, md: 3 }}>
+          <LifeScoreTile result={results[1]} />
         </Grid>
-        <Grid size={{ xs: 6, sm: 4, md: 2 }}>
-          <StatCard title="Calories" value={todayMacros.total_calories ? formatNumber(todayMacros.total_calories) : '--'} subtitle="/ 2,250 target" color="#4CAF50" icon={<Restaurant />} />
+        <Grid size={{ xs: 6, md: 3 }}>
+          <LifeScoreTile result={results[2]} />
         </Grid>
-        <Grid size={{ xs: 6, sm: 4, md: 2 }}>
-          <StatCard title="Protein" value={todayMacros.total_protein ? `${formatNumber(todayMacros.total_protein)}g` : '--'} subtitle="/ 170g target" color="#FF9800" icon={<Restaurant />} />
+        <Grid size={{ xs: 6, md: 3 }}>
+          <LifeScoreTile result={results[3]} />
         </Grid>
-        <Grid size={{ xs: 6, sm: 4, md: 2 }}>
-          <StatCard title="Workout" value={todayWorkout ? '✓' : '—'} subtitle={todayWorkout?.name || 'Not logged'} color={todayWorkout ? '#4CAF50' : '#7d8590'} icon={<FitnessCenter />} />
-        </Grid>
-        <Grid size={{ xs: 6, sm: 4, md: 2 }}>
-          <StatCard title="Mood" value={todayLog?.mood ? `${todayLog.mood}/5` : '--'} subtitle={todayLog?.energy ? `Energy: ${todayLog.energy}/5` : ''} color="#764ba2" icon={<SentimentSatisfied />} />
-        </Grid>
-        <Grid size={{ xs: 6, sm: 4, md: 2 }}>
-          <StatCard title="Hydration" value={todayHydration ? `${formatNumber(todayHydration.total_oz)} oz` : '--'} subtitle="/ 100 oz target" color="#90CAF9" icon={<WaterDrop />} />
-        </Grid>
+      </Grid>
 
-        {/* Missing Today */}
-        {missing.length > 0 && (
-          <Grid size={{ xs: 12 }}>
-            <Alert severity="info" sx={{ borderRadius: 3, bgcolor: 'rgba(91, 141, 239, 0.08)', border: '1px solid rgba(91, 141, 239, 0.2)' }}>
-              <Typography variant="subtitle2" gutterBottom>Missing today:</Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                {missing.map(m => <Chip key={m} label={m} size="small" variant="outlined" />)}
-              </Stack>
-            </Alert>
-          </Grid>
-        )}
+      {/* Yesterday at a glance — single-line strip */}
+      <Box sx={{ mb: 3 }}>
+        <DailySummaryStrip />
+      </Box>
 
-        {/* 7-Day Trends */}
-        <Grid size={{ xs: 12 }}>
-          <Typography variant="overline" sx={{ letterSpacing: 1.5 }}>7-Day Trends</Typography>
+      {/* Yesterday's daily-goal breakdown — surface what drove the daily score */}
+      {results[0].goalScores.length > 0 && (
+        <Card sx={{ mb: 3, '&:hover': { transform: 'none' } }}>
+          <CardContent>
+            <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.5 }}>
+              Yesterday's goals
+            </Typography>
+            <Stack spacing={1.5} sx={{ mt: 1 }}>
+              {results[0].goalScores.map(gs => {
+                const score = gs.score;
+                const color = score === null
+                  ? '#7d8590'
+                  : score >= 80 ? '#4CAF50' : score >= 60 ? '#5B8DEF' : score >= 40 ? '#FF9800' : '#F44336';
+                const targetLabel = (() => {
+                  switch (gs.goal.target_type) {
+                    case 'min': return `≥ ${gs.goal.target_value}`;
+                    case 'max': return `≤ ${gs.goal.target_value}`;
+                    case 'band': return `${gs.goal.target_value}–${gs.goal.target_max}`;
+                  }
+                })();
+                const isAbsolved = !!gs.absolvedBy?.length;
+                const isContextOnly = !!gs.goal.score_only_for_absolution;
+                return (
+                  <Box key={gs.goal.id} sx={{ opacity: isAbsolved || isContextOnly ? 0.55 : 1 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', mb: 0.25 }}>
+                      <Box sx={{ display: 'flex', gap: 1, alignItems: 'baseline', flexWrap: 'wrap' }}>
+                        <Typography variant="body2" fontWeight={500}>{gs.goal.label}</Typography>
+                        <Typography variant="caption" color="text.secondary">target {targetLabel}</Typography>
+                        {isAbsolved && (
+                          <Chip
+                            label={`absolved by ${gs.absolvedBy!.join(', ')}`}
+                            size="small"
+                            sx={{ height: 16, fontSize: '0.6rem', bgcolor: 'rgba(91,141,239,0.12)', color: '#5B8DEF', border: '1px solid rgba(91,141,239,0.3)' }}
+                          />
+                        )}
+                        {isContextOnly && (
+                          <Chip
+                            label="context only"
+                            size="small"
+                            sx={{ height: 16, fontSize: '0.6rem', bgcolor: 'rgba(125,133,144,0.15)', color: 'text.secondary' }}
+                          />
+                        )}
+                      </Box>
+                      <Stack direction="row" spacing={1.5} alignItems="baseline">
+                        <Typography variant="caption" color="text.secondary">
+                          {gs.actual !== null ? gs.actual.toLocaleString(undefined, { maximumFractionDigits: 1 }) : 'no data'}
+                        </Typography>
+                        {score !== null && (
+                          <Chip
+                            label={`${Math.round(score)}`}
+                            size="small"
+                            sx={{
+                              height: 20, fontSize: '0.7rem', fontWeight: 700,
+                              color, bgcolor: `${color}22`, border: `1px solid ${color}44`,
+                            }}
+                          />
+                        )}
+                      </Stack>
+                    </Box>
+                    <Box
+                      sx={{
+                        height: 4, borderRadius: 2,
+                        bgcolor: 'rgba(255,255,255,0.05)',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          height: '100%',
+                          width: `${Math.min(100, score ?? 0)}%`,
+                          bgcolor: color,
+                          transition: 'width 0.4s',
+                        }}
+                      />
+                    </Box>
+                  </Box>
+                );
+              })}
+            </Stack>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Net worth + contextual widgets */}
+      <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.5, display: 'block', mb: 1 }}>
+        At a glance
+      </Typography>
+      <Grid container spacing={2.5}>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <NetWorthWidget />
         </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <StatCard title="Sleep Hours" value={lastNight ? `${lastNight.hours.toFixed(1)}h` : '--'} trend={sleepData.slice().reverse()} trendKey="hours" color="#5B8DEF" />
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <SleepWidget />
         </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <StatCard title="Calories" value={todayMacros.total_calories ? formatNumber(todayMacros.total_calories) : '--'} trend={dailyMacros.slice().reverse()} trendKey="total_calories" color="#4CAF50" />
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <MealsCaloriesWidget />
         </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <StatCard title="Mood" value={todayLog?.mood ? `${todayLog.mood}/5` : '--'} trend={logs.slice().reverse()} trendKey="mood" color="#764ba2" />
+        <Grid size={{ xs: 12, sm: 12, md: 2 }}>
+          <WeekSpendWidget />
         </Grid>
       </Grid>
     </Box>

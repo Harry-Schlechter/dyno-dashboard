@@ -21,8 +21,6 @@ import {
   Bedtime,
   AccountBalance,
   CheckCircle,
-  Book,
-  People,
   CalendarMonth,
   ViewTimeline,
   Menu as MenuIcon,
@@ -37,9 +35,6 @@ const navItems = [
   { label: 'Sleep', path: '/sleep', icon: Bedtime },
   { label: 'Finances', path: '/finances', icon: AccountBalance },
   { label: 'Tasks', path: '/tasks', icon: CheckCircle },
-  { label: 'Journal', path: '/journal', icon: Book },
-  { label: 'Contacts', path: '/contacts', icon: People },
-  { label: 'Planner', path: '/planner', icon: ViewTimeline },
   { label: 'Calendar', path: '/calendar', icon: CalendarMonth },
 ];
 

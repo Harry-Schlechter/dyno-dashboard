@@ -4,7 +4,6 @@ interface ScoreInputs {
   exerciseDone: boolean;
   mood?: number;
   hydration?: number; // oz
-  journalDone: boolean;
 }
 
 interface ScoreBreakdown {
@@ -13,7 +12,6 @@ interface ScoreBreakdown {
   exercise: number;
   mood: number;
   hydration: number;
-  journal: number;
   total: number;
 }
 
@@ -41,16 +39,13 @@ export const calculateLifeScore = (inputs: ScoreInputs): ScoreBreakdown => {
   // Exercise (0-20)
   const exerciseScore = inputs.exerciseDone ? 20 : 0;
 
-  // Mood (0-15): 1-5 scale
-  const moodScore = inputs.mood ? Math.min(15, (inputs.mood / 5) * 15) : 0;
+  // Mood (0-20): 1-5 scale
+  const moodScore = inputs.mood ? Math.min(20, (inputs.mood / 5) * 20) : 0;
 
-  // Hydration (0-15)
-  const hydrationScore = inputs.hydration ? Math.min(15, (inputs.hydration / HYDRATION_TARGET) * 15) : 0;
+  // Hydration (0-20)
+  const hydrationScore = inputs.hydration ? Math.min(20, (inputs.hydration / HYDRATION_TARGET) * 20) : 0;
 
-  // Journal (0-10)
-  const journalScore = inputs.journalDone ? 10 : 0;
-
-  const total = Math.round(sleepScore + nutritionScore + exerciseScore + moodScore + hydrationScore + journalScore);
+  const total = Math.round(sleepScore + nutritionScore + exerciseScore + moodScore + hydrationScore);
 
   return {
     sleep: Math.round(sleepScore),
@@ -58,7 +53,6 @@ export const calculateLifeScore = (inputs: ScoreInputs): ScoreBreakdown => {
     exercise: Math.round(exerciseScore),
     mood: Math.round(moodScore),
     hydration: Math.round(hydrationScore),
-    journal: Math.round(journalScore),
     total: Math.min(100, total),
   };
 };

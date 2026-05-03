@@ -1,111 +1,297 @@
-import React, { useState } from 'react';
-import { Box, Typography, Grid, Card, CardContent, Chip, Stack, ToggleButton, ToggleButtonGroup, LinearProgress } from '@mui/material';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { useNutrition } from '../hooks/useNutrition';
-import { formatNumber, formatDateShort } from '../lib/formatters';
+import React, { useMemo, useState } from 'react';
+import {
+  Box, Typography, Grid, Card, CardContent, Stack, ToggleButton, ToggleButtonGroup, Chip,
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, LinearProgress,
+} from '@mui/material';
+import { LocalFireDepartment, Whatshot } from '@mui/icons-material';
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, Cell,
+} from 'recharts';
+import { format, subDays } from 'date-fns';
+import { useSupabase } from '../hooks/useSupabase';
+import { formatDateShort } from '../lib/formatters';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
-import ErrorMessage from '../components/common/ErrorMessage';
 
-const CALORIE_TARGET = 2250;
+type Window = '7d' | '30d' | '90d';
+const WINDOW_DAYS: Record<Window, number> = { '7d': 7, '30d': 30, '90d': 90 };
+
 const PROTEIN_TARGET = 170;
 
+interface Meal {
+  id: string;
+  date: string;
+  meal_type: string | null;
+  description: string | null;
+  calories: number | null;
+  protein_g: number | null;
+  carbs_g: number | null;
+  fat_g: number | null;
+}
+
 const NutritionPage: React.FC = () => {
-  const [range, setRange] = useState<'7d' | '30d' | '90d'>('30d');
-  const { todayMeals, todayMacros, dailyMacros, loading, error, refetch } = useNutrition(range);
+  const [win, setWin] = useState<Window>('30d');
+  const { data, loading } = useSupabase<Meal>({
+    table: 'meals',
+    order: { column: 'date', ascending: false },
+    limit: 1000,
+  });
+
+  const today = useMemo(() => new Date(), []);
+  const windowStart = useMemo(() => format(subDays(today, WINDOW_DAYS[win] - 1), 'yyyy-MM-dd'), [today, win]);
+  const filtered = useMemo(() => data.filter(m => m.date >= windowStart), [data, windowStart]);
+
+  // Daily aggregates within window
+  const dailyData = useMemo(() => {
+    const map = new Map<string, { date: string; protein: number; calories: number; meals: number }>();
+    for (let i = 0; i < WINDOW_DAYS[win]; i++) {
+      const d = format(subDays(today, i), 'yyyy-MM-dd');
+      map.set(d, { date: d, protein: 0, calories: 0, meals: 0 });
+    }
+    for (const m of filtered) {
+      const day = map.get(m.date);
+      if (!day) continue;
+      day.protein += m.protein_g ?? 0;
+      day.calories += m.calories ?? 0;
+      day.meals += 1;
+    }
+    return [...map.values()].sort((a, b) => a.date.localeCompare(b.date));
+  }, [filtered, today, win]);
+
+  // Streak: consecutive days from today (going back) where protein >= target
+  const streak = useMemo(() => {
+    let count = 0;
+    for (let i = 0; i < dailyData.length; i++) {
+      const day = dailyData[dailyData.length - 1 - i];
+      if (day.meals === 0) break; // no log = streak break (can't tell)
+      if (day.protein >= PROTEIN_TARGET) count++;
+      else break;
+    }
+    return count;
+  }, [dailyData]);
+
+  // Days hitting target / total logged days
+  const compliance = useMemo(() => {
+    const logged = dailyData.filter(d => d.meals > 0);
+    if (logged.length === 0) return { hit: 0, total: 0, pct: 0 };
+    const hit = logged.filter(d => d.protein >= PROTEIN_TARGET).length;
+    return { hit, total: logged.length, pct: (hit / logged.length) * 100 };
+  }, [dailyData]);
+
+  const todayKey = format(today, 'yyyy-MM-dd');
+  const todayData = dailyData.find(d => d.date === todayKey);
+
+  // Days under target (recent)
+  const missedDays = useMemo(() => {
+    return dailyData
+      .filter(d => d.meals > 0 && d.protein < PROTEIN_TARGET)
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, 8);
+  }, [dailyData]);
+
+  // Protein-dense meals leaderboard (g protein per 100 cal, only meals with both fields)
+  const proteinDense = useMemo(() => {
+    return filtered
+      .filter(m => m.protein_g != null && m.calories != null && m.calories > 0 && m.protein_g > 0)
+      .map(m => ({ ...m, density: ((m.protein_g as number) / (m.calories as number)) * 100 }))
+      .sort((a, b) => b.density - a.density)
+      .slice(0, 10);
+  }, [filtered]);
+
+  // Recent meals list (already sorted desc by date in the hook)
+  const recentMeals = useMemo(() => filtered.slice(0, 25), [filtered]);
+
+  const winLabel: Record<Window, string> = { '7d': 'Last 7 days', '30d': 'Last 30 days', '90d': 'Last 90 days' };
 
   if (loading) return <LoadingSkeleton variant="card" count={3} />;
-  if (error) return <ErrorMessage message={error} onRetry={refetch} />;
-
-  const calPct = Math.min(100, (todayMacros.total_calories / CALORIE_TARGET) * 100);
-  const protPct = Math.min(100, (todayMacros.total_protein / PROTEIN_TARGET) * 100);
-
-  const chartData = dailyMacros.slice(0, range === '7d' ? 7 : range === '30d' ? 30 : 90).reverse().map(d => ({
-    date: formatDateShort(d.date),
-    calories: d.total_calories,
-    protein: d.total_protein,
-  }));
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 2 }}>
         <Box>
           <Typography variant="h4" fontWeight={700}>Nutrition</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>Track your daily intake and macro targets</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            Protein target: {PROTEIN_TARGET}g/day
+          </Typography>
         </Box>
-        <ToggleButtonGroup value={range} exclusive onChange={(_, v) => v && setRange(v)} size="small">
-          <ToggleButton value="7d">7D</ToggleButton>
-          <ToggleButton value="30d">30D</ToggleButton>
-          <ToggleButton value="90d">90D</ToggleButton>
+        <ToggleButtonGroup size="small" exclusive value={win} onChange={(_, v) => v && setWin(v)}>
+          <ToggleButton value="7d" sx={{ textTransform: 'none' }}>7d</ToggleButton>
+          <ToggleButton value="30d" sx={{ textTransform: 'none' }}>30d</ToggleButton>
+          <ToggleButton value="90d" sx={{ textTransform: 'none' }}>90d</ToggleButton>
         </ToggleButtonGroup>
       </Box>
 
-      <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
-        {/* Today's Macros */}
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Card>
+      <Grid container spacing={2.5}>
+        {/* Today */}
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Card sx={{ '&:hover': { transform: 'none' }, height: '100%' }}>
             <CardContent>
-              <Typography variant="h6" gutterBottom>Today's Macros</Typography>
-              <Stack spacing={3}>
-                <Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                    <Typography variant="body2">Calories</Typography>
-                    <Typography variant="body2" fontWeight={600}>{formatNumber(todayMacros.total_calories)} / {formatNumber(CALORIE_TARGET)}</Typography>
+              <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.5 }}>Today</Typography>
+              {!todayData || todayData.meals === 0 ? (
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>Nothing logged yet</Typography>
+              ) : (
+                <>
+                  <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mt: 0.5 }}>
+                    <Typography variant="h2" fontWeight={700} sx={{ color: todayData.protein >= PROTEIN_TARGET ? '#4CAF50' : '#5B8DEF', lineHeight: 1 }}>
+                      {Math.round(todayData.protein)}
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary">/ {PROTEIN_TARGET}g protein</Typography>
                   </Box>
-                  <LinearProgress variant="determinate" value={calPct} sx={{ height: 10, borderRadius: 5, bgcolor: 'rgba(255,255,255,0.08)', '& .MuiLinearProgress-bar': { bgcolor: calPct > 100 ? '#F44336' : '#4CAF50', borderRadius: 5 } }} />
-                </Box>
-                <Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                    <Typography variant="body2">Protein</Typography>
-                    <Typography variant="body2" fontWeight={600}>{formatNumber(todayMacros.total_protein)}g / {PROTEIN_TARGET}g</Typography>
-                  </Box>
-                  <LinearProgress variant="determinate" value={protPct} sx={{ height: 10, borderRadius: 5, bgcolor: 'rgba(255,255,255,0.08)', '& .MuiLinearProgress-bar': { bgcolor: '#FF9800', borderRadius: 5 } }} />
-                </Box>
-                <Grid container spacing={2}>
-                  <Grid size={{ xs: 4 }}>
-                    <Box sx={{ textAlign: 'center' }}>
-                      <Typography variant="h5" fontWeight={700} color="#5B8DEF">{formatNumber(todayMacros.total_carbs)}g</Typography>
-                      <Typography variant="caption" color="text.secondary">Carbs</Typography>
+                  <LinearProgress
+                    variant="determinate"
+                    value={Math.min(100, (todayData.protein / PROTEIN_TARGET) * 100)}
+                    sx={{
+                      height: 6, borderRadius: 3, mt: 1.5,
+                      bgcolor: 'rgba(255,255,255,0.05)',
+                      '& .MuiLinearProgress-bar': { bgcolor: todayData.protein >= PROTEIN_TARGET ? '#4CAF50' : '#5B8DEF' },
+                    }}
+                  />
+                  <Stack direction="row" spacing={3} sx={{ mt: 1.5 }}>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">Meals</Typography>
+                      <Typography variant="body2" fontWeight={600}>{todayData.meals}</Typography>
                     </Box>
-                  </Grid>
-                  <Grid size={{ xs: 4 }}>
-                    <Box sx={{ textAlign: 'center' }}>
-                      <Typography variant="h5" fontWeight={700} color="#FF9800">{formatNumber(todayMacros.total_fat)}g</Typography>
-                      <Typography variant="caption" color="text.secondary">Fat</Typography>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">Calories</Typography>
+                      <Typography variant="body2" fontWeight={600}>{Math.round(todayData.calories)}</Typography>
                     </Box>
-                  </Grid>
-                  <Grid size={{ xs: 4 }}>
-                    <Box sx={{ textAlign: 'center' }}>
-                      <Typography variant="h5" fontWeight={700} color="#4CAF50">{formatNumber(todayMacros.total_protein)}g</Typography>
-                      <Typography variant="caption" color="text.secondary">Protein</Typography>
-                    </Box>
-                  </Grid>
-                </Grid>
-              </Stack>
+                  </Stack>
+                </>
+              )}
             </CardContent>
           </Card>
         </Grid>
 
-        {/* Today's Meals */}
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Card>
+        {/* Streak */}
+        <Grid size={{ xs: 6, md: 4 }}>
+          <Card sx={{ '&:hover': { transform: 'none' }, height: '100%' }}>
             <CardContent>
-              <Typography variant="h6" gutterBottom>Today's Meals</Typography>
-              {todayMeals.length === 0 ? (
-                <Typography color="text.secondary">No meals logged today</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <Whatshot sx={{ color: '#FF9800', fontSize: 18 }} />
+                <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.5 }}>Streak</Typography>
+              </Box>
+              <Typography variant="h2" fontWeight={700} sx={{ color: '#FF9800', lineHeight: 1 }}>{streak}</Typography>
+              <Typography variant="caption" color="text.secondary">
+                {streak === 0 ? 'days hitting target' : streak === 1 ? 'day in a row' : 'days in a row'}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Compliance */}
+        <Grid size={{ xs: 6, md: 4 }}>
+          <Card sx={{ '&:hover': { transform: 'none' }, height: '100%' }}>
+            <CardContent>
+              <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.5 }}>
+                {winLabel[win]} compliance
+              </Typography>
+              <Typography variant="h2" fontWeight={700} sx={{ color: '#5B8DEF', lineHeight: 1, mt: 0.5 }}>
+                {Math.round(compliance.pct)}%
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {compliance.hit} of {compliance.total} logged days hit {PROTEIN_TARGET}g
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Daily protein chart */}
+        <Grid size={{ xs: 12 }}>
+          <Card sx={{ '&:hover': { transform: 'none' } }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>Daily protein vs target</Typography>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={dailyData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                  <XAxis dataKey="date" tickFormatter={v => format(new Date(v + 'T00:00:00'), 'MMM d')} stroke="#7d8590" fontSize={10} />
+                  <YAxis stroke="#7d8590" fontSize={10} />
+                  <Tooltip
+                    labelFormatter={v => format(new Date(v + 'T00:00:00'), 'EEE, MMM d')}
+                    formatter={(v: number, name: string) => name === 'protein' ? [`${Math.round(v)}g`, 'Protein'] : [v, name]}
+                    contentStyle={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8 }}
+                  />
+                  <ReferenceLine y={PROTEIN_TARGET} stroke="#FF9800" strokeDasharray="6 4" label={{ value: `Target ${PROTEIN_TARGET}g`, position: 'right', fill: '#FF9800', fontSize: 11 }} />
+                  <Bar dataKey="protein" radius={[4, 4, 0, 0]}>
+                    {dailyData.map((d, i) => (
+                      <Cell key={i} fill={d.meals === 0 ? '#2a2f37' : d.protein >= PROTEIN_TARGET ? '#4CAF50' : '#5B8DEF'} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                Grey bars = no meals logged that day. Green = hit target.
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Days missed */}
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Card sx={{ '&:hover': { transform: 'none' }, height: '100%' }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>Recent days under target</Typography>
+              {missedDays.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">All logged days in this window hit the protein target. 💪</Typography>
               ) : (
-                <Stack spacing={2}>
-                  {todayMeals.map((meal) => (
-                    <Box key={meal.id} sx={{ p: 2, borderRadius: 2, bgcolor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                        <Chip label={meal.meal_type} size="small" color="primary" variant="outlined" />
-                        <Typography variant="body2" fontWeight={600}>{meal.calories} cal</Typography>
+                <Stack spacing={1}>
+                  {missedDays.map(d => {
+                    const pct = (d.protein / PROTEIN_TARGET) * 100;
+                    const short = PROTEIN_TARGET - d.protein;
+                    return (
+                      <Box key={d.date} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 0.5 }}>
+                        <Typography variant="caption" color="text.secondary" sx={{ width: 60 }}>{formatDateShort(d.date)}</Typography>
+                        <Box sx={{ flex: 1 }}>
+                          <LinearProgress
+                            variant="determinate"
+                            value={Math.min(100, pct)}
+                            sx={{
+                              height: 4, borderRadius: 2,
+                              bgcolor: 'rgba(255,255,255,0.04)',
+                              '& .MuiLinearProgress-bar': { bgcolor: pct >= 75 ? '#FF9800' : '#F44336', borderRadius: 2 },
+                            }}
+                          />
+                        </Box>
+                        <Typography variant="caption" sx={{ width: 100, textAlign: 'right' }}>
+                          {Math.round(d.protein)}g <span style={{ color: '#7d8590' }}>(-{Math.round(short)}g)</span>
+                        </Typography>
                       </Box>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>{meal.description}</Typography>
-                      <Stack direction="row" spacing={2}>
-                        <Typography variant="caption" color="text.secondary">P: {meal.protein_g}g</Typography>
-                        <Typography variant="caption" color="text.secondary">C: {meal.carbs_g}g</Typography>
-                        <Typography variant="caption" color="text.secondary">F: {meal.fat_g}g</Typography>
-                      </Stack>
+                    );
+                  })}
+                </Stack>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Protein-dense meals */}
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Card sx={{ '&:hover': { transform: 'none' }, height: '100%' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <LocalFireDepartment sx={{ color: '#F44336', fontSize: 18 }} />
+                <Typography variant="h6">Most protein-dense meals</Typography>
+              </Box>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+                Grams protein per 100 calories — your highest-yield meals
+              </Typography>
+              {proteinDense.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">Need both protein and calories logged for ranking.</Typography>
+              ) : (
+                <Stack spacing={1}>
+                  {proteinDense.map(m => (
+                    <Box key={m.id} sx={{ p: 1, borderRadius: 1.5, bgcolor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                        <Typography variant="body2" fontWeight={500} sx={{ flex: 1, mr: 1 }} noWrap>
+                          {m.description || '(no description)'}
+                        </Typography>
+                        <Chip
+                          label={`${m.density.toFixed(1)}g/100cal`}
+                          size="small"
+                          sx={{ height: 18, fontSize: '0.65rem', bgcolor: 'rgba(244,67,54,0.15)', color: '#F44336' }}
+                        />
+                      </Box>
+                      <Typography variant="caption" color="text.secondary">
+                        {formatDateShort(m.date)} · {m.protein_g}g protein, {m.calories} cal
+                      </Typography>
                     </Box>
                   ))}
                 </Stack>
@@ -114,38 +300,51 @@ const NutritionPage: React.FC = () => {
           </Card>
         </Grid>
 
-        {/* Calorie Trend Chart */}
+        {/* Recent meals */}
         <Grid size={{ xs: 12 }}>
           <Card sx={{ '&:hover': { transform: 'none' } }}>
             <CardContent>
-              <Typography variant="h6" gutterBottom>Calorie Trend</Typography>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                  <XAxis dataKey="date" stroke="#7d8590" fontSize={12} />
-                  <YAxis stroke="#7d8590" fontSize={12} />
-                  <Tooltip contentStyle={{ backgroundColor: '#121821', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }} />
-                  <Bar dataKey="calories" fill="#5B8DEF" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Protein Trend */}
-        <Grid size={{ xs: 12 }}>
-          <Card sx={{ '&:hover': { transform: 'none' } }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>Protein Trend</Typography>
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                  <XAxis dataKey="date" stroke="#7d8590" fontSize={12} />
-                  <YAxis stroke="#7d8590" fontSize={12} />
-                  <Tooltip contentStyle={{ backgroundColor: '#121821', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }} />
-                  <Bar dataKey="protein" fill="#FF9800" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              <Typography variant="h6" gutterBottom>Recent meals</Typography>
+              <TableContainer sx={{ maxHeight: 480 }}>
+                <Table size="small" stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Date</TableCell>
+                      <TableCell>Type</TableCell>
+                      <TableCell>Description</TableCell>
+                      <TableCell align="right">Protein</TableCell>
+                      <TableCell align="right">Calories</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {recentMeals.map(m => (
+                      <TableRow key={m.id}>
+                        <TableCell><Typography variant="caption">{formatDateShort(m.date)}</Typography></TableCell>
+                        <TableCell>
+                          {m.meal_type && (
+                            <Chip label={m.meal_type} size="small" sx={{ height: 18, fontSize: '0.65rem', textTransform: 'capitalize' }} />
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">{m.description || '—'}</Typography>
+                        </TableCell>
+                        <TableCell align="right">
+                          {m.protein_g != null ? (
+                            <Typography variant="body2" fontWeight={600} sx={{ color: '#5B8DEF' }}>
+                              {Math.round(m.protein_g)}g
+                            </Typography>
+                          ) : <Typography variant="caption" color="text.secondary">—</Typography>}
+                        </TableCell>
+                        <TableCell align="right">
+                          <Typography variant="caption" color="text.secondary">
+                            {m.calories != null ? Math.round(m.calories) : '—'}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             </CardContent>
           </Card>
         </Grid>

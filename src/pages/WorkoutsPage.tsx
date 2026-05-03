@@ -1,185 +1,306 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
-  Box, Typography, Grid, Card, CardContent, Chip,
+  Box, Typography, Grid, Card, CardContent, Stack, ToggleButton, ToggleButtonGroup, Chip,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  ToggleButton, ToggleButtonGroup,
 } from '@mui/material';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { useWorkouts } from '../hooks/useWorkouts';
-import { formatDate, formatDuration, formatDateShort } from '../lib/formatters';
+import { SportsBasketball, Terrain, FitnessCenter, DirectionsRun, EmojiEvents } from '@mui/icons-material';
+import {
+  LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  CartesianGrid, ReferenceLine, Cell,
+} from 'recharts';
+import { format, subDays, startOfWeek } from 'date-fns';
+import { useSupabase } from '../hooks/useSupabase';
+import {
+  detectPRs, sessionsForExercise, topExercisesByVolume, SetWithDate, ExerciseSet,
+} from '../lib/lifting';
+import { formatDateShort } from '../lib/formatters';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
-import ErrorMessage from '../components/common/ErrorMessage';
+
+// Activity type matchers — keep in sync with metricResolver.ts
+const isBasketball = (n: string | null) => !!n && /basketball/i.test(n);
+const isClimbing   = (n: string | null) => !!n && /climb|boulder/i.test(n);
+const isSoccer     = (n: string | null) => !!n && /soccer/i.test(n);
+const isLifting    = (n: string | null) => !!n && /push|pull|legs?\b|gym\b|bench|full body|upper|lower|squat|deadlift/i.test(n);
+const isCardioOther = (n: string | null) => !!n && /walk|hike|hiking|run\b|running|cycling|bike/i.test(n);
+
+interface Workout {
+  id: string;
+  date: string;
+  name: string | null;
+  duration_min: number | null;
+  notes: string | null;
+}
+
+const SportWidget: React.FC<{
+  icon: React.ReactNode;
+  label: string;
+  color: string;
+  workouts: Workout[];
+  matcher: (n: string | null) => boolean;
+}> = ({ icon, label, color, workouts, matcher }) => {
+  const today = useMemo(() => new Date(), []);
+  const filt = workouts.filter(w => matcher(w.name));
+
+  const cnt = (days: number) => {
+    const cutoff = format(subDays(today, days - 1), 'yyyy-MM-dd');
+    return filt.filter(w => w.date >= cutoff).length;
+  };
+  const hrs = (days: number) => {
+    const cutoff = format(subDays(today, days - 1), 'yyyy-MM-dd');
+    return filt
+      .filter(w => w.date >= cutoff && w.duration_min)
+      .reduce((s, w) => s + (w.duration_min as number), 0) / 60;
+  };
+
+  return (
+    <Card sx={{ '&:hover': { transform: 'none' }, height: '100%' }}>
+      <CardContent>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+          <Box sx={{ color }}>{icon}</Box>
+          <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.2 }}>{label}</Typography>
+        </Box>
+        <Typography variant="h3" fontWeight={700} sx={{ color, lineHeight: 1 }}>{cnt(7)}</Typography>
+        <Typography variant="caption" color="text.secondary">sessions this week</Typography>
+
+        <Box sx={{ mt: 1.5, pt: 1.5, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap' }}>
+            <Stat label="Last 30d"  value={`${cnt(30)} sess`}  sub={`${hrs(30).toFixed(1)}h`} />
+            <Stat label="Last 90d"  value={`${cnt(90)} sess`}  sub={`${hrs(90).toFixed(1)}h`} />
+            <Stat label="Last year" value={`${cnt(365)} sess`} sub={`${hrs(365).toFixed(1)}h`} />
+          </Stack>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+};
+
+const Stat: React.FC<{ label: string; value: string; sub: string }> = ({ label, value, sub }) => (
+  <Box>
+    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>{label}</Typography>
+    <Typography variant="body2" fontWeight={600}>{value}</Typography>
+    <Typography variant="caption" color="text.secondary">{sub}</Typography>
+  </Box>
+);
 
 const WorkoutsPage: React.FC = () => {
-  const [range, setRange] = useState<'7d' | '30d' | '90d'>('30d');
-  const { workouts, exercises, prs, loading, error, refetch } = useWorkouts(range);
+  const { data: workouts, loading: wLoading } = useSupabase<Workout>({
+    table: 'workouts',
+    order: { column: 'date', ascending: false },
+    limit: 500,
+  });
+  const { data: exercises, loading: eLoading } = useSupabase<ExerciseSet & { workout_id: string }>({
+    table: 'workout_exercises',
+    limit: 2000,
+  });
 
-  const workoutCards = useMemo(() => {
-    return workouts.map(w => ({
-      ...w,
-      exercises: exercises.filter(e => e.workout_id === w.id),
-    }));
+  const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
+
+  // Join exercises to workout dates for analytics
+  const setsWithDate = useMemo<SetWithDate[]>(() => {
+    const dateMap = new Map<string, string>();
+    for (const w of workouts) dateMap.set(w.id, w.date);
+    return exercises
+      .map(s => ({ ...s, date: dateMap.get(s.workout_id) || '' }))
+      .filter(s => s.date) as SetWithDate[];
   }, [workouts, exercises]);
 
-  const volumeData = useMemo(() => {
-    return workouts.slice().reverse().map(w => {
-      const wExercises = exercises.filter(e => e.workout_id === w.id);
-      const volume = wExercises.reduce((sum, e) => sum + (e.weight_lbs || 0) * (e.reps || 0), 0);
-      return { date: formatDateShort(w.date), volume, name: w.name };
+  // Lifting sessions per week (for the sessions trend chart)
+  const liftingTrend = useMemo(() => {
+    const buckets = new Map<string, number>();
+    for (const w of workouts) {
+      if (!isLifting(w.name)) continue;
+      const wkStart = format(startOfWeek(new Date(w.date + 'T00:00:00'), { weekStartsOn: 1 }), 'yyyy-MM-dd');
+      buckets.set(wkStart, (buckets.get(wkStart) ?? 0) + 1);
+    }
+    const arr = [...buckets.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([wk, n]) => ({ week: wk, sessions: n }));
+    // Compute 4-week and 12-week trailing moving averages
+    const out = arr.map((row, i) => {
+      const last4 = arr.slice(Math.max(0, i - 3), i + 1);
+      const last12 = arr.slice(Math.max(0, i - 11), i + 1);
+      return {
+        week: row.week,
+        sessions: row.sessions,
+        ma4: last4.reduce((s, r) => s + r.sessions, 0) / last4.length,
+        ma12: last12.reduce((s, r) => s + r.sessions, 0) / last12.length,
+      };
     });
-  }, [workouts, exercises]);
+    return out;
+  }, [workouts]);
 
+  const topLifts = useMemo(() => topExercisesByVolume(setsWithDate, 8).filter(e => e.sessions >= 3), [setsWithDate]);
+
+  // Default selected exercise = top lift
+  const activeExercise = selectedExercise || topLifts[0]?.exercise || null;
+  const exerciseSessions = useMemo(
+    () => activeExercise ? sessionsForExercise(setsWithDate, activeExercise) : [],
+    [setsWithDate, activeExercise],
+  );
+
+  const recentPRs = useMemo(() => detectPRs(setsWithDate).slice(0, 8), [setsWithDate]);
+
+  const loading = wLoading || eLoading;
   if (loading) return <LoadingSkeleton variant="card" count={3} />;
-  if (error) return <ErrorMessage message={error} onRetry={refetch} />;
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
-        <Box>
-          <Typography variant="h4" fontWeight={700}>Workouts</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>Your training log and progress</Typography>
-        </Box>
-        <ToggleButtonGroup value={range} exclusive onChange={(_, v) => v && setRange(v)} size="small">
-          <ToggleButton value="7d">7D</ToggleButton>
-          <ToggleButton value="30d">30D</ToggleButton>
-          <ToggleButton value="90d">90D</ToggleButton>
-        </ToggleButtonGroup>
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h4" fontWeight={700}>Workouts</Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+          Sport sessions, lifting trends, and personal records
+        </Typography>
       </Box>
 
-      <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
-        {/* Volume Trend */}
-        {volumeData.length > 0 && (
-          <Grid size={{ xs: 12 }}>
-            <Card sx={{ '&:hover': { transform: 'none' } }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Volume Trend (lbs x reps)</Typography>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={volumeData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                    <XAxis dataKey="date" stroke="#7d8590" fontSize={12} />
-                    <YAxis stroke="#7d8590" fontSize={12} />
-                    <Tooltip contentStyle={{ backgroundColor: '#121821', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }} />
-                    <Bar dataKey="volume" fill="#5B8DEF" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
+      {/* Sport widgets */}
+      <Grid container spacing={2.5} sx={{ mb: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <SportWidget icon={<SportsBasketball />} label="Basketball" color="#FF9800" workouts={workouts} matcher={isBasketball} />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <SportWidget icon={<DirectionsRun />} label="Soccer" color="#4CAF50" workouts={workouts} matcher={isSoccer} />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <SportWidget icon={<Terrain />} label="Climbing" color="#5B8DEF" workouts={workouts} matcher={isClimbing} />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <SportWidget icon={<DirectionsRun />} label="Other cardio" color="#90CAF9" workouts={workouts} matcher={isCardioOther} />
+        </Grid>
+      </Grid>
 
-        {/* PRs Table */}
-        {prs.length > 0 && (
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Card sx={{ '&:hover': { transform: 'none' } }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Exercise PRs</Typography>
-                <TableContainer>
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Exercise</TableCell>
-                        <TableCell align="right">Weight</TableCell>
-                        <TableCell align="right">Reps</TableCell>
-                        <TableCell align="right">Date</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {prs.slice(0, 15).map((pr, i) => (
-                        <TableRow key={i}>
-                          <TableCell>{pr.exercise_name}</TableCell>
-                          <TableCell align="right">{pr.max_weight} lbs</TableCell>
-                          <TableCell align="right">{pr.max_reps}</TableCell>
-                          <TableCell align="right">{formatDateShort(pr.date)}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
+      {/* Lifting block */}
+      <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.5, display: 'block', mb: 1 }}>
+        Lifting
+      </Typography>
 
-        {/* Stats */}
-        <Grid size={{ xs: 12, md: prs.length > 0 ? 6 : 12 }}>
-          <Card>
+      <Grid container spacing={2.5}>
+        {/* Sessions trend */}
+        <Grid size={{ xs: 12, md: 8 }}>
+          <Card sx={{ '&:hover': { transform: 'none' } }}>
             <CardContent>
-              <Typography variant="h6" gutterBottom>Summary</Typography>
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 6 }}>
-                  <Box sx={{ textAlign: 'center', p: 2 }}>
-                    <Typography variant="h4" fontWeight={700} color="#5B8DEF">{workouts.length}</Typography>
-                    <Typography variant="caption" color="text.secondary">Workouts</Typography>
-                  </Box>
-                </Grid>
-                <Grid size={{ xs: 6 }}>
-                  <Box sx={{ textAlign: 'center', p: 2 }}>
-                    <Typography variant="h4" fontWeight={700} color="#4CAF50">
-                      {workouts.reduce((sum, w) => sum + (w.duration_min || 0), 0)}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">Total Minutes</Typography>
-                  </Box>
-                </Grid>
-              </Grid>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', mb: 1 }}>
+                <Typography variant="h6">Lifting sessions per week</Typography>
+                <Stack direction="row" spacing={1.5}>
+                  <LegendDot color="#5B8DEF" label="Sessions" />
+                  <LegendDot color="#FF9800" label="4-wk avg" />
+                  <LegendDot color="#4CAF50" label="12-wk avg" />
+                </Stack>
+              </Box>
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart data={liftingTrend}>
+                  <defs>
+                    <linearGradient id="liftGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#5B8DEF" stopOpacity={0.5} />
+                      <stop offset="100%" stopColor="#5B8DEF" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                  <XAxis dataKey="week" tickFormatter={v => format(new Date(v + 'T00:00:00'), 'MMM d')} stroke="#7d8590" fontSize={10} />
+                  <YAxis stroke="#7d8590" fontSize={10} allowDecimals={false} />
+                  <Tooltip
+                    labelFormatter={v => `Week of ${format(new Date(v + 'T00:00:00'), 'MMM d, yyyy')}`}
+                    contentStyle={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8 }}
+                  />
+                  <Area type="monotone" dataKey="sessions" name="Sessions" stroke="#5B8DEF" fill="url(#liftGrad)" strokeWidth={2} />
+                  <Line type="monotone" dataKey="ma4" name="4-wk avg" stroke="#FF9800" strokeWidth={1.5} dot={false} />
+                  <Line type="monotone" dataKey="ma12" name="12-wk avg" stroke="#4CAF50" strokeWidth={1.5} dot={false} />
+                </AreaChart>
+              </ResponsiveContainer>
             </CardContent>
           </Card>
         </Grid>
 
-        {/* Workout History Cards */}
-        <Grid size={{ xs: 12 }}>
-          <Typography variant="overline" sx={{ letterSpacing: 1.5 }}>Recent Workouts</Typography>
+        {/* Recent PRs feed */}
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Card sx={{ '&:hover': { transform: 'none' }, height: '100%' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                <EmojiEvents sx={{ color: '#FFB74D', fontSize: 20 }} />
+                <Typography variant="h6">Recent PRs</Typography>
+              </Box>
+              {recentPRs.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">
+                  No PRs detected yet. Log more sets to start tracking est. 1RM progression.
+                </Typography>
+              ) : (
+                <Stack spacing={1.25}>
+                  {recentPRs.map((pr, i) => (
+                    <Box key={i} sx={{ p: 1.25, borderRadius: 2, bgcolor: 'rgba(255,183,77,0.06)', border: '1px solid rgba(255,183,77,0.18)' }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                        <Typography variant="body2" fontWeight={600}>{pr.exercise}</Typography>
+                        <Typography variant="caption" color="text.secondary">{formatDateShort(pr.date)}</Typography>
+                      </Box>
+                      <Typography variant="caption" sx={{ color: '#FFB74D' }}>
+                        Est. 1RM {Math.round(pr.best1RM)}lb
+                        {pr.improvementPct !== null && ` (+${pr.improvementPct.toFixed(1)}% vs ${Math.round(pr.prevBest1RM!)}lb)`}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                        Top set: {pr.topWeight}lb × {pr.topWeightReps}r
+                      </Typography>
+                    </Box>
+                  ))}
+                </Stack>
+              )}
+            </CardContent>
+          </Card>
         </Grid>
-        {workoutCards.map((w) => (
-          <Grid size={{ xs: 12, md: 6 }} key={w.id}>
-            <Card>
-              <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Box>
-                    <Typography variant="h6" fontWeight={600}>{w.name}</Typography>
-                    <Typography variant="caption" color="text.secondary">{formatDate(w.date)}</Typography>
-                  </Box>
-                  {w.duration_min && <Chip label={formatDuration(w.duration_min)} size="small" variant="outlined" />}
-                </Box>
-                {w.exercises.length > 0 && (
-                  <TableContainer>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Exercise</TableCell>
-                          <TableCell align="right">Set</TableCell>
-                          <TableCell align="right">Reps</TableCell>
-                          <TableCell align="right">Weight</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {w.exercises.map((e) => (
-                          <TableRow key={e.id}>
-                            <TableCell>
-                              {e.exercise_name}
-                              {e.is_pr && <Chip label="PR" size="small" color="warning" sx={{ ml: 1 }} />}
-                            </TableCell>
-                            <TableCell align="right">{e.set_number}</TableCell>
-                            <TableCell align="right">{e.reps}</TableCell>
-                            <TableCell align="right">{e.weight_lbs ? `${e.weight_lbs} lbs` : '-'}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                )}
-                {w.notes && <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>{w.notes}</Typography>}
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-        {workouts.length === 0 && (
-          <Grid size={{ xs: 12 }}>
-            <Typography color="text.secondary">No workouts in this period</Typography>
-          </Grid>
-        )}
+
+        {/* Per-lift progression */}
+        <Grid size={{ xs: 12 }}>
+          <Card sx={{ '&:hover': { transform: 'none' } }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 1, mb: 1.5 }}>
+                <Typography variant="h6">Lift progression</Typography>
+                <Stack direction="row" spacing={0.75} sx={{ flexWrap: 'wrap', gap: 0.75 }}>
+                  {topLifts.map(l => (
+                    <Chip
+                      key={l.exercise}
+                      label={`${l.exercise} (${l.sessions})`}
+                      size="small"
+                      onClick={() => setSelectedExercise(l.exercise)}
+                      sx={{
+                        cursor: 'pointer',
+                        bgcolor: activeExercise === l.exercise ? 'rgba(91,141,239,0.18)' : 'rgba(255,255,255,0.04)',
+                        color: activeExercise === l.exercise ? '#5B8DEF' : 'text.primary',
+                        border: activeExercise === l.exercise ? '1px solid rgba(91,141,239,0.5)' : '1px solid rgba(255,255,255,0.08)',
+                      }}
+                    />
+                  ))}
+                </Stack>
+              </Box>
+
+              {exerciseSessions.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">No sessions logged for this lift yet.</Typography>
+              ) : (
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={exerciseSessions}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                    <XAxis dataKey="date" tickFormatter={v => format(new Date(v + 'T00:00:00'), 'MMM d')} stroke="#7d8590" fontSize={10} />
+                    <YAxis yAxisId="left"  stroke="#7d8590" fontSize={10} label={{ value: 'Est. 1RM (lb)', angle: -90, position: 'insideLeft', fill: '#7d8590', fontSize: 11 }} />
+                    <YAxis yAxisId="right" stroke="#7d8590" fontSize={10} orientation="right" label={{ value: 'Volume (lb)', angle: 90, position: 'insideRight', fill: '#7d8590', fontSize: 11 }} />
+                    <Tooltip
+                      labelFormatter={v => format(new Date(v + 'T00:00:00'), 'MMM d, yyyy')}
+                      formatter={(v: number, name: string) => [Math.round(v), name]}
+                      contentStyle={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8 }}
+                    />
+                    <Line yAxisId="left"  type="monotone" dataKey="best1RM" name="Est. 1RM" stroke="#5B8DEF" strokeWidth={2.5} dot={{ r: 3 }} />
+                    <Line yAxisId="right" type="monotone" dataKey="volume" name="Volume" stroke="#764ba2" strokeWidth={1.5} dot={false} strokeDasharray="4 4" />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
       </Grid>
     </Box>
   );
 };
+
+const LegendDot: React.FC<{ color: string; label: string }> = ({ color, label }) => (
+  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: color }} />
+    <Typography variant="caption" color="text.secondary">{label}</Typography>
+  </Box>
+);
 
 export default WorkoutsPage;

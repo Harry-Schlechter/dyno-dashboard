@@ -62,7 +62,7 @@ export const useFinances = () => {
   const transactions = useSupabase<Transaction>({
     table: 'financial_transactions',
     order: { column: 'date', ascending: false },
-    limit: 200,
+    limit: 2000,
   });
 
   const holdings = useSupabase<InvestmentHolding>({

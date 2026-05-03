@@ -1,176 +1,352 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
-  Box, Typography, Grid, Card, CardContent,
-  ToggleButton, ToggleButtonGroup,
+  Box, Typography, Grid, Card, CardContent, Stack, ToggleButton, ToggleButtonGroup, Chip,
 } from '@mui/material';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area } from 'recharts';
-import { useSleep } from '../hooks/useSleep';
-import { useDailyLogs } from '../hooks/useDailyLogs';
-import { formatDate, formatDateShort, formatTime, formatDuration } from '../lib/formatters';
-import ScoreRing from '../components/common/ScoreRing';
-import StatCard from '../components/common/StatCard';
+import { Bedtime, NightsStay, WbSunny } from '@mui/icons-material';
+import {
+  ScatterChart, Scatter, XAxis, YAxis, ZAxis, Tooltip, ResponsiveContainer,
+  CartesianGrid, ReferenceArea, BarChart, Bar, Cell,
+} from 'recharts';
+import { format, subDays } from 'date-fns';
+import { useSupabase } from '../hooks/useSupabase';
+import {
+  bedtimeMinutes, waketimeMinutes, midpointMinutes, circularStd, circularMean, SleepRow,
+} from '../lib/metricResolver';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
-import ErrorMessage from '../components/common/ErrorMessage';
+
+type Window = '7d' | '30d' | '90d' | '1y';
+const WINDOW_DAYS: Record<Window, number> = { '7d': 7, '30d': 30, '90d': 90, '1y': 365 };
+
+const SLEEP_BANDS = [
+  { min: 0,   max: 4,   label: '<4h disaster',  color: '#7d2424' },
+  { min: 4,   max: 5,   label: '4-5h bad',       color: '#a83838' },
+  { min: 5,   max: 6,   label: '5-6h not great', color: '#cc6633' },
+  { min: 6,   max: 6.5, label: '6-6.5h low mid', color: '#d18a3d' },
+  { min: 6.5, max: 7,   label: '6.5-7h high mid',color: '#c9a93b' },
+  { min: 7,   max: 7.5, label: '7-7.5h better',  color: '#7eb058' },
+  { min: 7.5, max: 8,   label: '7.5-8h good 9/10', color: '#4caf50' },
+  { min: 8,   max: 24,  label: '8h+ great 10/10',  color: '#2e7d32' },
+];
+
+const colorForHours = (h: number | null): string => {
+  if (h === null) return '#444';
+  for (const b of SLEEP_BANDS) if (h >= b.min && h < b.max) return b.color;
+  return '#2e7d32';
+};
+
+const minutesToClock = (m: number | null): string => {
+  if (m === null || isNaN(m)) return '—';
+  const h24 = Math.floor(m / 60) % 24;
+  const min = Math.floor(m % 60);
+  const ampm = h24 < 12 ? 'AM' : 'PM';
+  const h12 = h24 === 0 ? 12 : h24 > 12 ? h24 - 12 : h24;
+  return `${h12}:${min.toString().padStart(2, '0')} ${ampm}`;
+};
+
+const labelForStd = (std: number): { label: string; color: string } => {
+  if (std < 15) return { label: 'rock solid', color: '#2e7d32' };
+  if (std < 30) return { label: 'very consistent', color: '#4caf50' };
+  if (std < 60) return { label: 'decent', color: '#c9a93b' };
+  if (std < 90) return { label: 'inconsistent', color: '#d18a3d' };
+  if (std < 120) return { label: 'bad', color: '#a83838' };
+  return { label: 'chaos', color: '#7d2424' };
+};
 
 const SleepPage: React.FC = () => {
-  const [range, setRange] = useState<'7d' | '30d' | '90d'>('30d');
-  const { data: sleepData, lastNight, averages, loading, error, refetch } = useSleep(range);
-  useDailyLogs(range);
+  const [win, setWin] = useState<Window>('30d');
 
-  const chartData = useMemo(() => {
-    return sleepData.slice().reverse().map(s => ({
-      date: formatDateShort(s.date),
-      hours: s.hours,
-      quality: s.quality,
-      deep: s.deep_sleep_min,
-      rem: s.rem_sleep_min,
-    }));
-  }, [sleepData]);
+  const { data, loading } = useSupabase<SleepRow>({
+    table: 'sleep',
+    order: { column: 'date', ascending: false },
+    limit: 500,
+  });
+
+  const today = useMemo(() => new Date(), []);
+  const windowStart = useMemo(() => format(subDays(today, WINDOW_DAYS[win] - 1), 'yyyy-MM-dd'), [today, win]);
+
+  const filtered = useMemo(
+    () => data.filter(d => d.date >= windowStart).sort((a, b) => a.date.localeCompare(b.date)),
+    [data, windowStart],
+  );
+
+  const lastNight = data[0] ?? null;
+
+  // Per-window stats
+  const stats = useMemo(() => {
+    const rows = filtered.filter(s => s.went_to_bed_at && s.woke_up_at);
+    if (rows.length === 0) {
+      const hoursOnly = filtered.filter(s => s.hours != null);
+      return {
+        n: hoursOnly.length,
+        avgHours: hoursOnly.length ? hoursOnly.reduce((s, r) => s + (r.hours as number), 0) / hoursOnly.length : null,
+        avgBedtime: null, avgWaketime: null, avgMidpoint: null,
+        bedStd: null, wakeStd: null, midStd: null,
+      };
+    }
+    const beds = rows.map(r => bedtimeMinutes(r.went_to_bed_at!));
+    const wakes = rows.map(r => waketimeMinutes(r.woke_up_at!));
+    const mids = rows.map(r => midpointMinutes(r.went_to_bed_at!, r.woke_up_at!));
+    const hours = filtered.filter(s => s.hours != null).map(s => s.hours as number);
+    return {
+      n: rows.length,
+      avgHours: hours.length ? hours.reduce((a, b) => a + b, 0) / hours.length : null,
+      avgBedtime: circularMean(beds),
+      avgWaketime: circularMean(wakes),
+      avgMidpoint: circularMean(mids),
+      bedStd: circularStd(beds),
+      wakeStd: circularStd(wakes),
+      midStd: circularStd(mids),
+    };
+  }, [filtered]);
+
+  // Step-band histogram
+  const histogram = useMemo(() => {
+    const counts = SLEEP_BANDS.map(b => ({ ...b, count: 0 }));
+    for (const r of filtered) {
+      if (r.hours == null) continue;
+      for (const b of counts) {
+        if (r.hours >= b.min && r.hours < b.max) { b.count++; break; }
+      }
+    }
+    return counts;
+  }, [filtered]);
+
+  // Bedtime/wake-time scatter data
+  const scatterData = useMemo(() => {
+    return filtered
+      .filter(r => r.went_to_bed_at && r.woke_up_at)
+      .map(r => {
+        let bed = bedtimeMinutes(r.went_to_bed_at!);
+        // Display 0-6am as 24-30 so the scatter doesn't wrap visually
+        if (bed < 12 * 60) bed += 24 * 60;
+        return {
+          date: r.date,
+          bedtime: bed,
+          waketime: waketimeMinutes(r.woke_up_at!),
+          hours: r.hours,
+        };
+      });
+  }, [filtered]);
+
+  const winLabel: Record<Window, string> = { '7d': 'Last 7 days', '30d': 'Last 30 days', '90d': 'Last 90 days', '1y': 'Last year' };
 
   if (loading) return <LoadingSkeleton variant="card" count={3} />;
-  if (error) return <ErrorMessage message={error} onRetry={refetch} />;
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 2 }}>
         <Box>
           <Typography variant="h4" fontWeight={700}>Sleep</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>Sleep quality and patterns</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            Hours, bedtime, wake-time, and consistency
+          </Typography>
         </Box>
-        <ToggleButtonGroup value={range} exclusive onChange={(_, v) => v && setRange(v)} size="small">
-          <ToggleButton value="7d">7D</ToggleButton>
-          <ToggleButton value="30d">30D</ToggleButton>
-          <ToggleButton value="90d">90D</ToggleButton>
+        <ToggleButtonGroup size="small" exclusive value={win} onChange={(_, v) => v && setWin(v)}>
+          <ToggleButton value="7d" sx={{ textTransform: 'none' }}>7d</ToggleButton>
+          <ToggleButton value="30d" sx={{ textTransform: 'none' }}>30d</ToggleButton>
+          <ToggleButton value="90d" sx={{ textTransform: 'none' }}>90d</ToggleButton>
+          <ToggleButton value="1y" sx={{ textTransform: 'none' }}>1y</ToggleButton>
         </ToggleButtonGroup>
       </Box>
 
-      <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
-        {/* Last Night */}
-        {lastNight && (
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Last Night</Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 3 }}>
-                  <ScoreRing value={lastNight.quality} maxValue={5} size={100} strokeWidth={8} color="#5B8DEF" label="Quality" />
-                  <Box>
-                    <Typography variant="h4" fontWeight={700}>{lastNight.hours.toFixed(1)}h</Typography>
-                    <Typography variant="body2" color="text.secondary">{formatDate(lastNight.date)}</Typography>
+      <Grid container spacing={2.5}>
+        {/* Last night card */}
+        <Grid size={{ xs: 12, md: 5 }}>
+          <Card sx={{ '&:hover': { transform: 'none' }, height: '100%' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <NightsStay sx={{ fontSize: 18, color: '#764ba2' }} />
+                <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.5 }}>Last night</Typography>
+              </Box>
+              {!lastNight || lastNight.hours == null ? (
+                <Typography variant="body2" color="text.secondary">No sleep logged</Typography>
+              ) : (
+                <>
+                  <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+                    <Typography variant="h2" fontWeight={700} sx={{ color: colorForHours(lastNight.hours), lineHeight: 1 }}>
+                      {lastNight.hours.toFixed(1)}
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary">hours</Typography>
                   </Box>
-                </Box>
-                <Grid container spacing={2}>
-                  <Grid size={{ xs: 6 }}>
-                    <Typography variant="caption" color="text.secondary">Bedtime</Typography>
-                    <Typography variant="body1" fontWeight={600}>{lastNight.went_to_bed_at ? formatTime(lastNight.went_to_bed_at) : '--'}</Typography>
-                  </Grid>
-                  <Grid size={{ xs: 6 }}>
-                    <Typography variant="caption" color="text.secondary">Wake Time</Typography>
-                    <Typography variant="body1" fontWeight={600}>{lastNight.woke_up_at ? formatTime(lastNight.woke_up_at) : '--'}</Typography>
-                  </Grid>
-                  <Grid size={{ xs: 4 }}>
-                    <Typography variant="caption" color="text.secondary">Deep</Typography>
-                    <Typography variant="body1" fontWeight={600} color="#5B8DEF">{lastNight.deep_sleep_min ? formatDuration(lastNight.deep_sleep_min) : '--'}</Typography>
-                  </Grid>
-                  <Grid size={{ xs: 4 }}>
-                    <Typography variant="caption" color="text.secondary">REM</Typography>
-                    <Typography variant="body1" fontWeight={600} color="#764ba2">{lastNight.rem_sleep_min ? formatDuration(lastNight.rem_sleep_min) : '--'}</Typography>
-                  </Grid>
-                  <Grid size={{ xs: 4 }}>
-                    <Typography variant="caption" color="text.secondary">Core</Typography>
-                    <Typography variant="body1" fontWeight={600} color="#4CAF50">{lastNight.core_sleep_min ? formatDuration(lastNight.core_sleep_min) : '--'}</Typography>
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
+                  <Stack direction="row" spacing={3} sx={{ mt: 1.5 }}>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">Bedtime</Typography>
+                      <Typography variant="body2" fontWeight={600}>
+                        {lastNight.went_to_bed_at ? minutesToClock(bedtimeMinutes(lastNight.went_to_bed_at)) : '—'}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">Wake</Typography>
+                      <Typography variant="body2" fontWeight={600}>
+                        {lastNight.woke_up_at ? minutesToClock(waketimeMinutes(lastNight.woke_up_at)) : '—'}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">Midpoint</Typography>
+                      <Typography variant="body2" fontWeight={600}>
+                        {(lastNight.went_to_bed_at && lastNight.woke_up_at)
+                          ? minutesToClock(midpointMinutes(lastNight.went_to_bed_at, lastNight.woke_up_at))
+                          : '—'}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                  <Chip
+                    label={SLEEP_BANDS.find(b => lastNight.hours! >= b.min && lastNight.hours! < b.max)?.label || ''}
+                    sx={{
+                      mt: 2, height: 22, fontSize: '0.7rem',
+                      bgcolor: `${colorForHours(lastNight.hours)}33`,
+                      color: colorForHours(lastNight.hours),
+                      border: `1px solid ${colorForHours(lastNight.hours)}66`,
+                    }}
+                  />
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
 
-        {/* Averages */}
-        {averages && (
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Averages ({range})</Typography>
-                <Grid container spacing={2} sx={{ mt: 1 }}>
-                  <Grid size={{ xs: 6 }}>
-                    <StatCard title="Avg Hours" value={averages.hours.toFixed(1) + 'h'} color="#5B8DEF" />
-                  </Grid>
-                  <Grid size={{ xs: 6 }}>
-                    <StatCard title="Avg Quality" value={averages.quality.toFixed(1) + '/5'} color="#764ba2" />
-                  </Grid>
-                  <Grid size={{ xs: 6 }}>
-                    <StatCard title="Avg Deep" value={formatDuration(Math.round(averages.deep))} color="#4CAF50" />
-                  </Grid>
-                  <Grid size={{ xs: 6 }}>
-                    <StatCard title="Avg REM" value={formatDuration(Math.round(averages.rem))} color="#FF9800" />
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
+        {/* Averages table */}
+        <Grid size={{ xs: 12, md: 7 }}>
+          <Card sx={{ '&:hover': { transform: 'none' }, height: '100%' }}>
+            <CardContent>
+              <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.5 }}>
+                Averages — {winLabel[win]}
+              </Typography>
+              <Stack spacing={1.25} sx={{ mt: 1.5 }}>
+                <Row label="Hours slept" value={stats.avgHours !== null ? `${stats.avgHours.toFixed(1)}h` : '—'} />
+                <Row label="Bedtime" value={minutesToClock(stats.avgBedtime)} icon={<Bedtime sx={{ fontSize: 14, color: '#764ba2' }} />} />
+                <Row label="Wake time" value={minutesToClock(stats.avgWaketime)} icon={<WbSunny sx={{ fontSize: 14, color: '#FFB74D' }} />} />
+                <Row label="Midpoint of sleep" value={minutesToClock(stats.avgMidpoint)} />
+                <Row label="Nights with full data" value={`${stats.n}`} />
+              </Stack>
+            </CardContent>
+          </Card>
+        </Grid>
 
-        {/* Sleep Hours Trend */}
+        {/* Consistency block */}
         <Grid size={{ xs: 12 }}>
           <Card sx={{ '&:hover': { transform: 'none' } }}>
             <CardContent>
-              <Typography variant="h6" gutterBottom>Sleep Hours</Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 1, mb: 1 }}>
+                <Typography variant="h6">Consistency</Typography>
+                {stats.bedStd !== null && (
+                  <Chip
+                    label={labelForStd((stats.bedStd + (stats.wakeStd ?? 0)) / 2).label}
+                    sx={{
+                      bgcolor: `${labelForStd((stats.bedStd + (stats.wakeStd ?? 0)) / 2).color}33`,
+                      color: labelForStd((stats.bedStd + (stats.wakeStd ?? 0)) / 2).color,
+                      border: `1px solid ${labelForStd((stats.bedStd + (stats.wakeStd ?? 0)) / 2).color}66`,
+                      height: 24, fontWeight: 600,
+                    }}
+                  />
+                )}
+              </Box>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3} sx={{ mt: 1 }}>
+                <ConsistencyStat label="Bedtime variance"  std={stats.bedStd}  />
+                <ConsistencyStat label="Wake-time variance" std={stats.wakeStd} />
+                <ConsistencyStat label="Midpoint variance"  std={stats.midStd}  />
+              </Stack>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
+                Lower std deviation = more consistent. Sleep researchers consider midpoint variance the cleanest single measure of circadian regularity.
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Step-band histogram */}
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Card sx={{ '&:hover': { transform: 'none' }, height: '100%' }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>Hours by score band</Typography>
               <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={chartData}>
-                  <defs>
-                    <linearGradient id="sleepGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#5B8DEF" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#5B8DEF" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
+                <BarChart data={histogram} layout="vertical" margin={{ left: 20, right: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                  <XAxis dataKey="date" stroke="#7d8590" fontSize={12} />
-                  <YAxis stroke="#7d8590" fontSize={12} domain={[0, 12]} />
-                  <Tooltip contentStyle={{ backgroundColor: '#121821', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }} />
-                  <Area type="monotone" dataKey="hours" stroke="#5B8DEF" fill="url(#sleepGradient)" strokeWidth={2} />
-                </AreaChart>
+                  <XAxis type="number" stroke="#7d8590" fontSize={11} />
+                  <YAxis type="category" dataKey="label" stroke="#7d8590" fontSize={10} width={120} />
+                  <Tooltip
+                    formatter={(v: number) => [`${v} night${v === 1 ? '' : 's'}`, 'Count']}
+                    contentStyle={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8 }}
+                  />
+                  <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+                    {histogram.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                  </Bar>
+                </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
         </Grid>
 
-        {/* Quality Trend */}
+        {/* Bedtime/wake-time scatter */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Card sx={{ '&:hover': { transform: 'none' } }}>
+          <Card sx={{ '&:hover': { transform: 'none' }, height: '100%' }}>
             <CardContent>
-              <Typography variant="h6" gutterBottom>Sleep Quality</Typography>
-              <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={chartData}>
+              <Typography variant="h6" gutterBottom>Bedtime vs wake time</Typography>
+              <ResponsiveContainer width="100%" height={300}>
+                <ScatterChart margin={{ top: 10, right: 10, bottom: 10, left: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                  <XAxis dataKey="date" stroke="#7d8590" fontSize={12} />
-                  <YAxis stroke="#7d8590" fontSize={12} domain={[0, 5]} />
-                  <Tooltip contentStyle={{ backgroundColor: '#121821', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }} />
-                  <Line type="monotone" dataKey="quality" stroke="#764ba2" strokeWidth={2} dot={{ r: 3 }} />
-                </LineChart>
+                  <XAxis
+                    type="number" dataKey="bedtime" name="Bedtime"
+                    domain={[18 * 60, 30 * 60]}
+                    ticks={[18 * 60, 21 * 60, 24 * 60, 27 * 60, 30 * 60]}
+                    tickFormatter={(v: number) => minutesToClock(v % (24 * 60))}
+                    stroke="#7d8590" fontSize={10}
+                  />
+                  <YAxis
+                    type="number" dataKey="waketime" name="Wake time"
+                    domain={[6 * 60, 14 * 60]}
+                    ticks={[6 * 60, 8 * 60, 10 * 60, 12 * 60, 14 * 60]}
+                    tickFormatter={(v: number) => minutesToClock(v)}
+                    stroke="#7d8590" fontSize={10}
+                  />
+                  <ZAxis type="number" dataKey="hours" range={[40, 200]} />
+                  <Tooltip
+                    cursor={{ strokeDasharray: '3 3' }}
+                    formatter={(v: any, name: string) => {
+                      if (name === 'Bedtime' || name === 'Wake time') return [minutesToClock(v % (24 * 60)), name];
+                      if (name === 'hours') return [`${v}h`, 'Hours'];
+                      return [v, name];
+                    }}
+                    labelFormatter={() => ''}
+                    contentStyle={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8 }}
+                  />
+                  <ReferenceArea x1={22 * 60} x2={25 * 60} y1={6 * 60} y2={9 * 60} fill="#4CAF50" fillOpacity={0.06} />
+                  <Scatter data={scatterData} fill="#5B8DEF">
+                    {scatterData.map((d, i) => <Cell key={i} fill={colorForHours(d.hours)} />)}
+                  </Scatter>
+                </ScatterChart>
               </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Sleep Stages */}
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Card sx={{ '&:hover': { transform: 'none' } }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>Sleep Stages</Typography>
-              <ResponsiveContainer width="100%" height={250}>
-                <AreaChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                  <XAxis dataKey="date" stroke="#7d8590" fontSize={12} />
-                  <YAxis stroke="#7d8590" fontSize={12} />
-                  <Tooltip contentStyle={{ backgroundColor: '#121821', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }} />
-                  <Area type="monotone" dataKey="deep" stackId="1" stroke="#5B8DEF" fill="#5B8DEF" fillOpacity={0.3} />
-                  <Area type="monotone" dataKey="rem" stackId="1" stroke="#764ba2" fill="#764ba2" fillOpacity={0.3} />
-                </AreaChart>
-              </ResponsiveContainer>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                Each dot is one night. Green tint = healthy bedtime/wake band (10pm-1am / 6-9am).
+              </Typography>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
+    </Box>
+  );
+};
+
+const Row: React.FC<{ label: string; value: string; icon?: React.ReactNode }> = ({ label, value, icon }) => (
+  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 0.5, borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+      {icon}
+      <Typography variant="body2" color="text.secondary">{label}</Typography>
+    </Box>
+    <Typography variant="body2" fontWeight={600}>{value}</Typography>
+  </Box>
+);
+
+const ConsistencyStat: React.FC<{ label: string; std: number | null }> = ({ label, std }) => {
+  const meta = std !== null ? labelForStd(std) : null;
+  return (
+    <Box sx={{ flex: 1 }}>
+      <Typography variant="caption" color="text.secondary">{label}</Typography>
+      <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+        <Typography variant="h4" fontWeight={700} sx={{ color: meta?.color ?? 'text.secondary' }}>
+          {std !== null ? `${Math.round(std)}` : '—'}
+        </Typography>
+        {std !== null && <Typography variant="caption" color="text.secondary">min</Typography>}
+      </Box>
     </Box>
   );
 };
