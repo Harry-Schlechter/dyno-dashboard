@@ -11,6 +11,8 @@ import { format, subDays } from 'date-fns';
 import { useSupabase } from '../hooks/useSupabase';
 import { formatDateShort } from '../lib/formatters';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
+import AgentVoiceCard from '../components/common/AgentVoiceCard';
+import InsightsFeed from '../components/home/InsightsFeed';
 
 type Window = '7d' | '30d' | '90d';
 const WINDOW_DAYS: Record<Window, number> = { '7d': 7, '30d': 30, '90d': 90 };
@@ -119,6 +121,20 @@ const NutritionPage: React.FC = () => {
           <ToggleButton value="90d" sx={{ textTransform: 'none' }}>90d</ToggleButton>
         </ToggleButtonGroup>
       </Box>
+
+      <Grid container spacing={2.5} sx={{ mb: 2 }}>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <AgentVoiceCard agentId="nutritionist" />
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <InsightsFeed
+            agentId="nutritionist"
+            limit={5}
+            title="Nutrition insights"
+            emptyMessage="Nutritionist is watching macros and meals — nothing flagged yet."
+          />
+        </Grid>
+      </Grid>
 
       <Grid container spacing={2.5}>
         {/* Today */}

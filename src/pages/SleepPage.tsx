@@ -13,6 +13,8 @@ import {
   bedtimeMinutes, waketimeMinutes, midpointMinutes, circularStd, circularMean, SleepRow,
 } from '../lib/metricResolver';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
+import AgentVoiceCard from '../components/common/AgentVoiceCard';
+import InsightsFeed from '../components/home/InsightsFeed';
 
 type Window = '7d' | '30d' | '90d' | '1y';
 const WINDOW_DAYS: Record<Window, number> = { '7d': 7, '30d': 30, '90d': 90, '1y': 365 };
@@ -148,6 +150,20 @@ const SleepPage: React.FC = () => {
           <ToggleButton value="1y" sx={{ textTransform: 'none' }}>1y</ToggleButton>
         </ToggleButtonGroup>
       </Box>
+
+      <Grid container spacing={2.5} sx={{ mb: 2 }}>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <AgentVoiceCard agentId="mental-health" />
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <InsightsFeed
+            agentId="mental-health"
+            limit={5}
+            title="Sleep insights"
+            emptyMessage="Mental health is watching your sleep — nothing flagged yet."
+          />
+        </Grid>
+      </Grid>
 
       <Grid container spacing={2.5}>
         {/* Last night card */}

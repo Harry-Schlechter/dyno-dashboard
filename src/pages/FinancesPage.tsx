@@ -15,6 +15,8 @@ import LoadingSkeleton from '../components/common/LoadingSkeleton';
 import ErrorMessage from '../components/common/ErrorMessage';
 import OnPaceCard from '../components/finance/OnPaceCard';
 import DateRangeFilter, { DateRange, computeRange } from '../components/finance/DateRangeFilter';
+import AgentVoiceCard from '../components/common/AgentVoiceCard';
+import InsightsFeed from '../components/home/InsightsFeed';
 import CategoryPieCard from '../components/finance/CategoryPieCard';
 import SubscriptionsCard from '../components/finance/SubscriptionsCard';
 import CategoryTrendsCard from '../components/finance/CategoryTrendsCard';
@@ -250,6 +252,19 @@ const FinancesPage: React.FC = () => {
       {/* ═══════════════ OVERVIEW ═══════════════ */}
       {tab === 0 && (
         <Grid container spacing={2.5}>
+          {/* Financial advisor voice + insights */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <AgentVoiceCard agentId="financial-advisor" />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <InsightsFeed
+              agentId="financial-advisor"
+              limit={5}
+              title="Financial insights"
+              emptyMessage="Financial advisor is watching spending and net worth — nothing flagged yet."
+            />
+          </Grid>
+
           {/* On Pace — current month savings extrapolation */}
           <Grid size={{ xs: 12 }}>
             <OnPaceCard />

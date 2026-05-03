@@ -10,6 +10,8 @@ import { useSleep } from '../hooks/useSleep';
 import { formatDateShort, formatDate } from '../lib/formatters';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths } from 'date-fns';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
+import AgentVoiceCard from '../components/common/AgentVoiceCard';
+import InsightsFeed from '../components/home/InsightsFeed';
 import ErrorMessage from '../components/common/ErrorMessage';
 
 const moodColors: Record<number, string> = { 1: '#F44336', 2: '#FF9800', 3: '#FFB74D', 4: '#5B8DEF', 5: '#4CAF50' };
@@ -71,6 +73,20 @@ const JournalPage: React.FC = () => {
           <ToggleButton value="90d">90D</ToggleButton>
         </ToggleButtonGroup>
       </Box>
+
+      <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }} sx={{ mb: 2 }}>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <AgentVoiceCard agentId="mental-health" />
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <InsightsFeed
+            agentId="mental-health"
+            limit={5}
+            title="Mood & journal insights"
+            emptyMessage="Mental health is reading your entries — nothing flagged yet."
+          />
+        </Grid>
+      </Grid>
 
       <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
         {/* Calendar */}

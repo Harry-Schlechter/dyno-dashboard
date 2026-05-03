@@ -15,6 +15,8 @@ import {
 } from '../lib/lifting';
 import { formatDateShort } from '../lib/formatters';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
+import AgentVoiceCard from '../components/common/AgentVoiceCard';
+import InsightsFeed from '../components/home/InsightsFeed';
 
 // Activity type matchers — keep in sync with metricResolver.ts
 const isBasketball = (n: string | null) => !!n && /basketball/i.test(n);
@@ -151,6 +153,22 @@ const WorkoutsPage: React.FC = () => {
           Sport sessions, lifting trends, and personal records
         </Typography>
       </Box>
+
+      {/* Trainer voice + insights */}
+      <Grid container spacing={2.5} sx={{ mb: 3 }}>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <AgentVoiceCard agentId="trainer" />
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <InsightsFeed
+            agentId="trainer"
+            kinds={['milestone', 'pattern', 'anomaly', 'recommendation', 'warning']}
+            limit={5}
+            title="Training insights"
+            emptyMessage="Trainer is tracking PRs and volume — nothing notable yet."
+          />
+        </Grid>
+      </Grid>
 
       {/* Sport widgets */}
       <Grid container spacing={2.5} sx={{ mb: 3 }}>
