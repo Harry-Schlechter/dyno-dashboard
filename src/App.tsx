@@ -12,6 +12,7 @@ import TasksPage from './pages/TasksPage';
 import CalendarPage from './pages/CalendarPage';
 import JournalPage from './pages/JournalPage';
 import CorrelationsPage from './pages/CorrelationsPage';
+import SpacesPage from './pages/SpacesPage';
 
 const App: React.FC = () => {
   return (
@@ -29,6 +30,8 @@ const App: React.FC = () => {
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/journal" element={<JournalPage />} />
             <Route path="/correlations" element={<CorrelationsPage />} />
+            <Route path="/spaces" element={<SpacesPage index />} />
+            <Route path="/spaces/:slug" element={<SpacesPage />} />
           </Routes>
         </Layout>
       </BrowserRouter>

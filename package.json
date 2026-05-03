@@ -28,9 +28,11 @@
   },
   "scripts": {
     "start": "react-scripts start",
+    "prebuild": "bash scripts/check-generated.sh",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "check:generated": "bash scripts/check-generated.sh"
   },
   "eslintConfig": {
     "extends": [

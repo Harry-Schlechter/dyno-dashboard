@@ -25,6 +25,7 @@ import {
   ViewTimeline,
   Book,
   Insights,
+  AutoAwesome,
   Menu as MenuIcon,
 } from '@mui/icons-material';
 
@@ -40,6 +41,7 @@ const navItems = [
   { label: 'Tasks', path: '/tasks', icon: CheckCircle },
   { label: 'Calendar', path: '/calendar', icon: CalendarMonth },
   { label: 'Correlations', path: '/correlations', icon: Insights },
+  { label: 'Spaces', path: '/spaces', icon: AutoAwesome },
 ];
 
 interface SidebarProps {
