@@ -15,6 +15,7 @@ import {
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
 import AgentVoiceCard from '../components/common/AgentVoiceCard';
 import InsightsFeed from '../components/home/InsightsFeed';
+import ActivityHeatmap, { HeatmapEntry } from '../components/common/ActivityHeatmap';
 
 type Window = '7d' | '30d' | '90d' | '1y';
 const WINDOW_DAYS: Record<Window, number> = { '7d': 7, '30d': 30, '90d': 90, '1y': 365 };
@@ -72,6 +73,13 @@ const SleepPage: React.FC = () => {
   );
 
   const lastNight = data[0] ?? null;
+
+  const heatmap: HeatmapEntry[] = useMemo(
+    () => data
+      .filter(d => d.hours != null)
+      .map(d => ({ date: d.date, value: d.hours as number, label: `${(d.hours as number).toFixed(1)}h` })),
+    [data],
+  );
 
   // Per-window stats
   const stats = useMemo(() => {
@@ -337,6 +345,24 @@ const SleepPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
+
+        {heatmap.length > 0 && (
+          <Grid size={{ xs: 12 }}>
+            <Card sx={{ '&:hover': { transform: 'none' } }}>
+              <CardContent>
+                <ActivityHeatmap
+                  data={heatmap}
+                  days={84}
+                  fillColor="#5B8DEF"
+                  title="Sleep over the last 12 weeks"
+                  thresholds={[5.5, 6.5, 7.5, 8.5]}
+                  legend="Darker = more hours. Empty = no log."
+                  formatTooltip={(entry, date) => `${date} — ${entry ? entry.label : 'no log'}`}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
       </Grid>
     </Box>
   );

@@ -17,6 +17,7 @@ import { formatDateShort } from '../lib/formatters';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
 import AgentVoiceCard from '../components/common/AgentVoiceCard';
 import InsightsFeed from '../components/home/InsightsFeed';
+import ActivityHeatmap, { HeatmapEntry } from '../components/common/ActivityHeatmap';
 
 // Activity type matchers — keep in sync with metricResolver.ts
 const isBasketball = (n: string | null) => !!n && /basketball/i.test(n);
@@ -96,6 +97,22 @@ const WorkoutsPage: React.FC = () => {
   });
 
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
+
+  // Workout intensity heatmap — duration (or count) per day
+  const workoutHeatmap: HeatmapEntry[] = useMemo(() => {
+    const byDay = new Map<string, { mins: number; count: number }>();
+    for (const w of workouts) {
+      const cur = byDay.get(w.date) ?? { mins: 0, count: 0 };
+      cur.mins += w.duration_min ?? 0;
+      cur.count += 1;
+      byDay.set(w.date, cur);
+    }
+    return Array.from(byDay.entries()).map(([date, { mins, count }]) => ({
+      date,
+      value: mins > 0 ? mins : count * 30, // fall back to ~30min per session if duration unset
+      label: mins > 0 ? `${mins} min · ${count} session${count > 1 ? 's' : ''}` : `${count} session${count > 1 ? 's' : ''}`,
+    }));
+  }, [workouts]);
 
   // Join exercises to workout dates for analytics
   const setsWithDate = useMemo<SetWithDate[]>(() => {
@@ -309,6 +326,23 @@ const WorkoutsPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
+
+        {workoutHeatmap.length > 0 && (
+          <Grid size={{ xs: 12 }}>
+            <Card sx={{ '&:hover': { transform: 'none' } }}>
+              <CardContent>
+                <ActivityHeatmap
+                  data={workoutHeatmap}
+                  days={84}
+                  fillColor="#4CAF50"
+                  title="Training intensity over 12 weeks"
+                  thresholds={[20, 45, 75, 120]}
+                  legend="Darker = more minutes (or sessions). Empty = rest day."
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
       </Grid>
     </Box>
   );

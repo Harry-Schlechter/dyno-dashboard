@@ -10,6 +10,8 @@ import SleepPage from './pages/SleepPage';
 import FinancesPage from './pages/FinancesPage';
 import TasksPage from './pages/TasksPage';
 import CalendarPage from './pages/CalendarPage';
+import JournalPage from './pages/JournalPage';
+import CorrelationsPage from './pages/CorrelationsPage';
 
 const App: React.FC = () => {
   return (
@@ -25,6 +27,8 @@ const App: React.FC = () => {
             <Route path="/finances" element={<FinancesPage />} />
             <Route path="/tasks" element={<TasksPage />} />
             <Route path="/calendar" element={<CalendarPage />} />
+            <Route path="/journal" element={<JournalPage />} />
+            <Route path="/correlations" element={<CorrelationsPage />} />
           </Routes>
         </Layout>
       </BrowserRouter>

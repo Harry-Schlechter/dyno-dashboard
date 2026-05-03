@@ -23,6 +23,8 @@ import {
   CheckCircle,
   CalendarMonth,
   ViewTimeline,
+  Book,
+  Insights,
   Menu as MenuIcon,
 } from '@mui/icons-material';
 
@@ -33,9 +35,11 @@ const navItems = [
   { label: 'Nutrition', path: '/nutrition', icon: Restaurant },
   { label: 'Workouts', path: '/workouts', icon: FitnessCenter },
   { label: 'Sleep', path: '/sleep', icon: Bedtime },
+  { label: 'Journal', path: '/journal', icon: Book },
   { label: 'Finances', path: '/finances', icon: AccountBalance },
   { label: 'Tasks', path: '/tasks', icon: CheckCircle },
   { label: 'Calendar', path: '/calendar', icon: CalendarMonth },
+  { label: 'Correlations', path: '/correlations', icon: Insights },
 ];
 
 interface SidebarProps {

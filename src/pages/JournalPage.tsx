@@ -12,6 +12,7 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths,
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
 import AgentVoiceCard from '../components/common/AgentVoiceCard';
 import InsightsFeed from '../components/home/InsightsFeed';
+import ActivityHeatmap, { HeatmapEntry } from '../components/common/ActivityHeatmap';
 import ErrorMessage from '../components/common/ErrorMessage';
 
 const moodColors: Record<number, string> = { 1: '#F44336', 2: '#FF9800', 3: '#FFB74D', 4: '#5B8DEF', 5: '#4CAF50' };
@@ -22,6 +23,17 @@ const JournalPage: React.FC = () => {
   const { data: sleepData } = useSleep(range);
   const [selectedLog, setSelectedLog] = useState<DailyLog | null>(null);
   const [calMonth, setCalMonth] = useState(new Date());
+
+  // Mood heatmap (1-5 scale → already a great heatmap value)
+  const moodHeatmap: HeatmapEntry[] = useMemo(() => {
+    return logs
+      .filter(l => l.mood != null)
+      .map(l => ({
+        date: l.date,
+        value: l.mood as number,
+        label: `mood ${l.mood}/5${l.journal ? ' — journal logged' : ''}`,
+      }));
+  }, [logs]);
 
   const logsByDate = useMemo(() => {
     const map: Record<string, DailyLog> = {};
@@ -199,6 +211,23 @@ const JournalPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
+
+        {moodHeatmap.length > 0 && (
+          <Grid size={{ xs: 12 }}>
+            <Card sx={{ '&:hover': { transform: 'none' } }}>
+              <CardContent>
+                <ActivityHeatmap
+                  data={moodHeatmap}
+                  days={84}
+                  fillColor="#9C7BFF"
+                  title="Mood over 12 weeks"
+                  thresholds={[1.5, 2.5, 3.5, 4.5]}
+                  legend="Darker = better mood. Empty = no log."
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
       </Grid>
 
       {/* Journal Entry Dialog */}

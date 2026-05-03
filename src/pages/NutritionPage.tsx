@@ -13,6 +13,7 @@ import { formatDateShort } from '../lib/formatters';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
 import AgentVoiceCard from '../components/common/AgentVoiceCard';
 import InsightsFeed from '../components/home/InsightsFeed';
+import ActivityHeatmap, { HeatmapEntry } from '../components/common/ActivityHeatmap';
 
 type Window = '7d' | '30d' | '90d';
 const WINDOW_DAYS: Record<Window, number> = { '7d': 7, '30d': 30, '90d': 90 };
@@ -41,6 +42,19 @@ const NutritionPage: React.FC = () => {
   const today = useMemo(() => new Date(), []);
   const windowStart = useMemo(() => format(subDays(today, WINDOW_DAYS[win] - 1), 'yyyy-MM-dd'), [today, win]);
   const filtered = useMemo(() => data.filter(m => m.date >= windowStart), [data, windowStart]);
+
+  // Protein heatmap — full available history, summed per day, value = % of target.
+  const proteinHeatmap: HeatmapEntry[] = useMemo(() => {
+    const byDay = new Map<string, number>();
+    for (const m of data) {
+      if (m.protein_g != null) byDay.set(m.date, (byDay.get(m.date) ?? 0) + m.protein_g);
+    }
+    return Array.from(byDay.entries()).map(([date, p]) => ({
+      date,
+      value: Math.round((p / PROTEIN_TARGET) * 100),
+      label: `${Math.round(p)}g protein (${Math.round((p / PROTEIN_TARGET) * 100)}% of target)`,
+    }));
+  }, [data]);
 
   // Daily aggregates within window
   const dailyData = useMemo(() => {
@@ -364,6 +378,23 @@ const NutritionPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
+
+        {proteinHeatmap.length > 0 && (
+          <Grid size={{ xs: 12 }}>
+            <Card sx={{ '&:hover': { transform: 'none' } }}>
+              <CardContent>
+                <ActivityHeatmap
+                  data={proteinHeatmap}
+                  days={84}
+                  fillColor="#FF9800"
+                  title="Protein adherence over 12 weeks"
+                  thresholds={[40, 70, 90, 100]}
+                  legend={`Darker = closer to ${PROTEIN_TARGET}g target. Empty = no log.`}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
       </Grid>
     </Box>
   );
