@@ -45,4 +45,14 @@ export const GENERATED_PAGES: GeneratedPageEntry[] = [
     summary: 'Reference example showing the full building-block vocabulary.',
     component: React.lazy(() => import('./sample-trip-positano')),
   },
+  {
+    slug: 'seattle-june-2026',
+    title: 'Seattle — June 2026',
+    emoji: '🏔️',
+    kind: 'trip',
+    author: 'travel-agent',
+    createdAt: '2026-05-03',
+    summary: 'Harry + Sydney · Jun 12–18 · Rainier + Olympic National Parks.',
+    component: React.lazy(() => import('./seattle-june-2026')),
+  },
 ];
