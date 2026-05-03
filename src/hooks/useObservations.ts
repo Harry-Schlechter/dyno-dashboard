@@ -91,6 +91,7 @@ export function useObservations(opts: UseObservationsOptions = {}) {
 
   const react = useCallback(
     async (observationId: string, reaction: FeedbackReaction, note?: string) => {
+      const obs = data.find(o => o.id === observationId);
       const { error: err } = await supabase.from('observation_feedback').insert({
         user_id: USER_ID,
         observation_id: observationId,
@@ -98,8 +99,23 @@ export function useObservations(opts: UseObservationsOptions = {}) {
         note: note ?? null,
       });
       if (err) throw err;
+
+      // Mirror non-trivial reactions into dashboard_feedback so the relevant
+      // persona sees a structured signal in their next session. Skip noise
+      // reactions (plain 'useful') unless there's a note attached.
+      const meaningful: FeedbackReaction[] = ['not_useful', 'wrong', 'acted_on', 'starred'];
+      if (obs && (meaningful.includes(reaction) || note)) {
+        await supabase.from('dashboard_feedback').insert({
+          user_id: USER_ID,
+          agent_id: obs.agent_id,
+          source: 'reaction',
+          kind: 'reaction',
+          body: note ?? `${reaction} on "${obs.title}"`,
+          context: { observation_id: observationId, reaction, observation_title: obs.title },
+        });
+      }
     },
-    []
+    [data]
   );
 
   const dismiss = useCallback(
