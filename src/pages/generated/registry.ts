@@ -36,16 +36,6 @@ export interface GeneratedPageEntry {
 
 export const GENERATED_PAGES: GeneratedPageEntry[] = [
   {
-    slug: 'sample-trip-positano',
-    title: 'Positano — Sample Trip',
-    emoji: '🇮🇹',
-    kind: 'trip',
-    author: 'travel-agent',
-    createdAt: '2026-05-03',
-    summary: 'Reference example showing the full building-block vocabulary.',
-    component: React.lazy(() => import('./sample-trip-positano')),
-  },
-  {
     slug: 'seattle-june-2026',
     title: 'Seattle — June 2026',
     emoji: '🏔️',
