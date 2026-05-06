@@ -1,119 +1,91 @@
 import React, { useMemo, useState } from 'react';
 import {
   Card, CardContent, Typography, Box, Stack, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Chip, Tooltip, ToggleButton, ToggleButtonGroup,
+  TableContainer, TableHead, TableRow, Tooltip, ToggleButton, ToggleButtonGroup, Chip,
 } from '@mui/material';
-import { WarningAmberOutlined, AutoAwesome } from '@mui/icons-material';
+import { WarningAmberOutlined, AutoAwesome, PauseCircleOutline, CancelOutlined } from '@mui/icons-material';
 import { Transaction } from '../../hooks/useFinances';
+import { Subscription, useSubscriptions } from '../../hooks/useSubscriptions';
 import { formatCurrency, formatDateShort } from '../../lib/formatters';
 
 interface Props {
   transactions: Transaction[];
 }
 
-interface MerchantGroup {
-  merchant: string;
-  isAi: boolean;
-  total: number;
-  count: number;
-  avg: number;
-  estMonthly: number;       // estimated monthly cost (count / span_months)
-  lastDate: string;
-  lastAmount: number;
-  txns: Transaction[];
-  flags: string[];          // human-readable flags (duplicates, miscategorized, etc.)
+interface Row {
+  sub: Subscription;
+  monthlyEquivalent: number;
+  recentMatches: Transaction[];
+  lastCharge: Transaction | null;
+  driftFlag: string | null;       // "charged $X, expected $Y"
+  staleFlag: string | null;       // "no charge in N days, expected by D"
 }
 
-const monthsBetween = (startISO: string, endISO: string): number => {
-  const start = new Date(startISO);
-  const end = new Date(endISO);
-  const days = Math.max((end.getTime() - start.getTime()) / 86400000, 1);
-  return days / 30.44;
+const CADENCE_TO_MONTHS: Record<Subscription['cadence'], number> = {
+  weekly: 0.25,
+  monthly: 1,
+  quarterly: 3,
+  yearly: 12,
 };
 
+const matchesPattern = (t: Transaction, pattern: string): boolean => {
+  const p = pattern.toLowerCase();
+  const m = (t.merchant_name || '').toLowerCase();
+  const d = (t.description || '').toLowerCase();
+  return m.includes(p) || d.includes(p);
+};
+
+const daysBetween = (a: string, b: string): number =>
+  Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86400000);
+
 const SubscriptionsCard: React.FC<Props> = ({ transactions }) => {
+  const { subscriptions, loading } = useSubscriptions();
   const [filter, setFilter] = useState<'active' | 'all'>('active');
 
-  const cutoffDate = useMemo(() => {
-    const d = new Date();
-    d.setDate(d.getDate() - 30);
-    return d.toISOString().slice(0, 10);
-  }, []);
+  const todayISO = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
-  const groups = useMemo<MerchantGroup[]>(() => {
-    const subs = transactions.filter(t =>
-      t.custom_category === 'subscriptions' || t.custom_category === 'subscriptions_ai'
-    );
-    if (subs.length === 0) return [];
+  const rows = useMemo<Row[]>(() => {
+    if (!subscriptions) return [];
 
-    // Group by merchant_name (fallback to description)
-    const map = new Map<string, Transaction[]>();
-    for (const t of subs) {
-      const key = (t.merchant_name || t.description || 'Unknown').trim();
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(t);
-    }
+    return subscriptions.map(sub => {
+      const months = CADENCE_TO_MONTHS[sub.cadence];
+      const monthlyEquivalent = sub.expected_amount / months;
 
-    const allDates = subs.map(t => t.date).sort();
-    const spanMonths = allDates.length > 1
-      ? Math.max(monthsBetween(allDates[0], allDates[allDates.length - 1]), 1)
-      : 1;
+      const matches = transactions
+        .filter(t => t.amount < 0 && matchesPattern(t, sub.merchant_pattern))
+        .sort((a, b) => b.date.localeCompare(a.date));
+      const lastCharge = matches[0] || null;
 
-    const groups: MerchantGroup[] = [];
-    for (const [merchant, txns] of map.entries()) {
-      const sorted = [...txns].sort((a, b) => b.date.localeCompare(a.date));
-      const isAi = sorted.every(t => t.custom_category === 'subscriptions_ai');
-      const negTxns = sorted.filter(t => t.amount < 0);
-      const posTxns = sorted.filter(t => t.amount > 0);
-
-      // Real subscription cost = absolute spend on negative-amount rows only
-      const total = negTxns.reduce((s, t) => s + Math.abs(t.amount), 0);
-      const count = negTxns.length;
-      const avg = count > 0 ? total / count : 0;
-      const estMonthly = count > 0 ? total / spanMonths : 0;
-
-      const flags: string[] = [];
-      if (posTxns.length > 0) {
-        flags.push(`miscategorized: ${posTxns.length} positive amount${posTxns.length > 1 ? 's' : ''} (likely investment/refund)`);
-      }
-      // Same-day duplicate check
-      const dateAmtCount = new Map<string, number>();
-      for (const t of negTxns) {
-        const key = `${t.date}|${t.amount}`;
-        dateAmtCount.set(key, (dateAmtCount.get(key) || 0) + 1);
-      }
-      const dupes = [...dateAmtCount.entries()].filter(([_, c]) => c > 1);
-      if (dupes.length > 0) {
-        flags.push(`possible duplicate charge${dupes.length > 1 ? 's' : ''}`);
+      let driftFlag: string | null = null;
+      if (lastCharge) {
+        const charged = Math.abs(lastCharge.amount);
+        const ratio = charged / sub.expected_amount;
+        if (ratio < 0.8 || ratio > 1.2) {
+          driftFlag = `Last charge ${formatCurrency(charged)} vs expected ${formatCurrency(sub.expected_amount)}`;
+        }
       }
 
-      groups.push({
-        merchant,
-        isAi,
-        total,
-        count,
-        avg,
-        estMonthly,
-        lastDate: sorted[0]?.date || '',
-        lastAmount: Math.abs(sorted[0]?.amount || 0),
-        txns: sorted,
-        flags,
-      });
-    }
+      let staleFlag: string | null = null;
+      if (sub.status === 'active' && sub.next_expected_at && sub.next_expected_at < todayISO) {
+        const daysLate = daysBetween(sub.next_expected_at, todayISO);
+        if (daysLate > 3) {
+          staleFlag = `${daysLate}d past expected (${formatDateShort(sub.next_expected_at)})`;
+        }
+      }
 
-    return groups.sort((a, b) => b.estMonthly - a.estMonthly);
-  }, [transactions]);
+      return { sub, monthlyEquivalent, recentMatches: matches, lastCharge, driftFlag, staleFlag };
+    }).sort((a, b) => b.monthlyEquivalent - a.monthlyEquivalent);
+  }, [subscriptions, transactions, todayISO]);
 
-  const visibleGroups = useMemo(() => {
-    if (filter === 'all') return groups;
-    return groups.filter(g => g.lastDate >= cutoffDate);
-  }, [groups, filter, cutoffDate]);
+  const visibleRows = useMemo(() => {
+    if (filter === 'all') return rows;
+    return rows.filter(r => r.sub.status === 'active' || r.sub.status === 'trial');
+  }, [rows, filter]);
 
-  const hiddenCount = groups.length - visibleGroups.length;
-
-  const totalMonthly = visibleGroups.reduce((s, g) => s + g.estMonthly, 0);
-  const aiMonthly = visibleGroups.filter(g => g.isAi).reduce((s, g) => s + g.estMonthly, 0);
-  const otherMonthly = totalMonthly - aiMonthly;
+  const hiddenCount = rows.length - visibleRows.length;
+  const totalMonthly = visibleRows
+    .filter(r => r.sub.status !== 'canceled')
+    .reduce((s, r) => s + r.monthlyEquivalent, 0);
 
   return (
     <Card sx={{ '&:hover': { transform: 'none' } }}>
@@ -128,7 +100,7 @@ const SubscriptionsCard: React.FC<Props> = ({ transactions }) => {
               onChange={(_, v) => v && setFilter(v)}
             >
               <ToggleButton value="active" sx={{ textTransform: 'none', py: 0.25, px: 1 }}>
-                Active (30d)
+                Active
               </ToggleButton>
               <ToggleButton value="all" sx={{ textTransform: 'none', py: 0.25, px: 1 }}>
                 All
@@ -138,69 +110,71 @@ const SubscriptionsCard: React.FC<Props> = ({ transactions }) => {
           <Box sx={{ textAlign: 'right' }}>
             <Typography variant="caption" color="text.secondary">Est. monthly</Typography>
             <Typography variant="h6" fontWeight={700}>{formatCurrency(totalMonthly)}</Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+              {formatCurrency(totalMonthly * 12)}/yr
+            </Typography>
           </Box>
         </Box>
 
-        <Stack direction="row" spacing={3} sx={{ mb: 2 }}>
-          <Box>
-            <Typography variant="caption" color="text.secondary">AI subscriptions</Typography>
-            <Typography variant="body1" fontWeight={600} color="#764ba2">{formatCurrency(aiMonthly)}/mo</Typography>
-          </Box>
-          <Box>
-            <Typography variant="caption" color="text.secondary">Other</Typography>
-            <Typography variant="body1" fontWeight={600}>{formatCurrency(otherMonthly)}/mo</Typography>
-          </Box>
-          <Box>
-            <Typography variant="caption" color="text.secondary">Annualized</Typography>
-            <Typography variant="body1" fontWeight={600}>{formatCurrency(totalMonthly * 12)}/yr</Typography>
-          </Box>
-        </Stack>
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+          Ask the financial-advisor agent on Telegram to add, remove, pause, or update any subscription.
+        </Typography>
 
-        {visibleGroups.length === 0 ? (
+        {loading ? (
+          <Typography variant="body2" color="text.secondary">Loading subscriptions…</Typography>
+        ) : visibleRows.length === 0 ? (
           <Typography variant="body2" color="text.secondary">
-            {filter === 'active'
-              ? 'No active subscriptions in the last 30 days.'
-              : 'No subscription transactions found.'}
+            No subscriptions yet. The auto-detector will add ones with 3+ same-amount monthly charges. You can also add them manually via the agent.
           </Typography>
         ) : (
-          <TableContainer sx={{ maxHeight: 420 }}>
+          <TableContainer sx={{ maxHeight: 460 }}>
             <Table size="small" stickyHeader>
               <TableHead>
                 <TableRow>
-                  <TableCell>Merchant</TableCell>
-                  <TableCell align="right">Charges</TableCell>
-                  <TableCell align="right">Avg</TableCell>
-                  <TableCell align="right">Est /mo</TableCell>
+                  <TableCell>Subscription</TableCell>
+                  <TableCell align="right">Expected</TableCell>
+                  <TableCell align="right">/mo</TableCell>
                   <TableCell>Last charge</TableCell>
+                  <TableCell>Status</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {visibleGroups.map(g => (
-                  <TableRow key={g.merchant} sx={{ '&:hover': { bgcolor: 'rgba(255,255,255,0.03)' } }}>
+                {visibleRows.map(r => (
+                  <TableRow key={r.sub.id} sx={{ '&:hover': { bgcolor: 'rgba(255,255,255,0.03)' } }}>
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        {g.isAi && (
-                          <Tooltip title="AI subscription">
+                        {r.sub.source === 'detected' && (
+                          <Tooltip title="Auto-detected from repeat charges">
                             <AutoAwesome sx={{ fontSize: 14, color: '#764ba2' }} />
                           </Tooltip>
                         )}
-                        <Typography variant="body2" fontWeight={500}>{g.merchant}</Typography>
-                        {g.flags.length > 0 && (
-                          <Tooltip title={g.flags.join(' · ')}>
+                        <Typography variant="body2" fontWeight={500}>{r.sub.name}</Typography>
+                        {(r.driftFlag || r.staleFlag) && (
+                          <Tooltip title={[r.driftFlag, r.staleFlag].filter(Boolean).join(' · ')}>
                             <WarningAmberOutlined sx={{ fontSize: 14, color: '#FF9800' }} />
                           </Tooltip>
                         )}
+                        {r.sub.tier === 'cancel_candidate' && (
+                          <Tooltip title="Marked as cancel candidate"><CancelOutlined sx={{ fontSize: 14, color: '#F44336' }} /></Tooltip>
+                        )}
                       </Box>
+                      <Typography variant="caption" color="text.secondary">{r.sub.cadence}</Typography>
                     </TableCell>
-                    <TableCell align="right">{g.count}</TableCell>
-                    <TableCell align="right">{formatCurrency(g.avg)}</TableCell>
+                    <TableCell align="right">{formatCurrency(r.sub.expected_amount)}</TableCell>
                     <TableCell align="right">
-                      <Typography variant="body2" fontWeight={600}>{formatCurrency(g.estMonthly)}</Typography>
+                      <Typography variant="body2" fontWeight={600}>{formatCurrency(r.monthlyEquivalent)}</Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="caption" color="text.secondary">
-                        {g.lastDate ? formatDateShort(g.lastDate) : '--'} · {formatCurrency(g.lastAmount)}
-                      </Typography>
+                      {r.lastCharge ? (
+                        <Typography variant="caption" color="text.secondary">
+                          {formatDateShort(r.lastCharge.date)} · {formatCurrency(Math.abs(r.lastCharge.amount))}
+                        </Typography>
+                      ) : (
+                        <Typography variant="caption" color="text.secondary">—</Typography>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <StatusChip status={r.sub.status} />
                     </TableCell>
                   </TableRow>
                 ))}
@@ -211,11 +185,29 @@ const SubscriptionsCard: React.FC<Props> = ({ transactions }) => {
 
         {filter === 'active' && hiddenCount > 0 && (
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-            {hiddenCount} inactive subscription{hiddenCount > 1 ? 's' : ''} hidden (no charge in 30+ days)
+            {hiddenCount} canceled/paused hidden
           </Typography>
         )}
       </CardContent>
     </Card>
+  );
+};
+
+const StatusChip: React.FC<{ status: Subscription['status'] }> = ({ status }) => {
+  const map: Record<Subscription['status'], { label: string; color: string; icon?: React.ReactNode }> = {
+    active:   { label: 'Active',   color: '#4CAF50' },
+    trial:    { label: 'Trial',    color: '#FF9800' },
+    paused:   { label: 'Paused',   color: '#90CAF9', icon: <PauseCircleOutline sx={{ fontSize: 12 }} /> },
+    canceled: { label: 'Canceled', color: '#777' },
+  };
+  const v = map[status];
+  return (
+    <Chip
+      label={v.label}
+      icon={v.icon as any}
+      size="small"
+      sx={{ bgcolor: 'transparent', color: v.color, border: `1px solid ${v.color}40`, height: 20, fontSize: 11 }}
+    />
   );
 };
 
