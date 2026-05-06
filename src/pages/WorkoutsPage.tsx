@@ -3,7 +3,7 @@ import {
   Box, Typography, Grid, Card, CardContent, Stack, ToggleButton, ToggleButtonGroup, Chip,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
 } from '@mui/material';
-import { SportsBasketball, Terrain, FitnessCenter, DirectionsRun, EmojiEvents } from '@mui/icons-material';
+import { SportsBasketball, Terrain, FitnessCenter, DirectionsRun, EmojiEvents, GolfCourse } from '@mui/icons-material';
 import {
   LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   CartesianGrid, ReferenceLine, Cell,
@@ -18,11 +18,13 @@ import LoadingSkeleton from '../components/common/LoadingSkeleton';
 import AgentVoiceCard from '../components/common/AgentVoiceCard';
 import InsightsFeed from '../components/home/InsightsFeed';
 import ActivityHeatmap, { HeatmapEntry } from '../components/common/ActivityHeatmap';
+import GolfSection from '../components/workouts/GolfSection';
 
 // Activity type matchers — keep in sync with metricResolver.ts
 const isBasketball = (n: string | null) => !!n && /basketball/i.test(n);
 const isClimbing   = (n: string | null) => !!n && /climb|boulder/i.test(n);
 const isSoccer     = (n: string | null) => !!n && /soccer/i.test(n);
+const isGolf       = (n: string | null) => !!n && /golf/i.test(n);
 const isLifting    = (n: string | null) => !!n && /push|pull|legs?\b|gym\b|bench|full body|upper|lower|squat|deadlift/i.test(n);
 const isCardioOther = (n: string | null) => !!n && /walk|hike|hiking|run\b|running|cycling|bike/i.test(n);
 
@@ -167,7 +169,7 @@ const WorkoutsPage: React.FC = () => {
       <Box sx={{ mb: 3 }}>
         <Typography variant="h4" fontWeight={700}>Workouts</Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          Sport sessions, lifting trends, and personal records
+          Sport sessions, golf rounds, lifting trends, and personal records
         </Typography>
       </Box>
 
@@ -189,19 +191,25 @@ const WorkoutsPage: React.FC = () => {
 
       {/* Sport widgets */}
       <Grid container spacing={2.5} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <SportWidget icon={<SportsBasketball />} label="Basketball" color="#FF9800" workouts={workouts} matcher={isBasketball} />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <SportWidget icon={<DirectionsRun />} label="Soccer" color="#4CAF50" workouts={workouts} matcher={isSoccer} />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <SportWidget icon={<Terrain />} label="Climbing" color="#5B8DEF" workouts={workouts} matcher={isClimbing} />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <SportWidget icon={<GolfCourse />} label="Golf" color="#43A047" workouts={workouts} matcher={isGolf} />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <SportWidget icon={<DirectionsRun />} label="Other cardio" color="#90CAF9" workouts={workouts} matcher={isCardioOther} />
         </Grid>
       </Grid>
+
+      {/* Golf detail section */}
+      <GolfSection />
 
       {/* Lifting block */}
       <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.5, display: 'block', mb: 1 }}>
