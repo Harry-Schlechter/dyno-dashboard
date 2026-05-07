@@ -20,7 +20,9 @@ export interface Transaction {
   date: string;
   description: string;
   merchant_name: string;
-  amount: number;
+  amount: number;               // effective amount (post-split if edited)
+  original_amount: number | null; // unedited amount when row has been split-adjusted
+  split_note: string | null;
   account_id: string;
   empower_category: string;
   custom_category: string | null;
@@ -41,6 +43,19 @@ export interface InvestmentHolding {
   gain_loss_pct: number;
   asset_class: string;
   snapshot_date: string;
+}
+
+export interface InvestmentActivity {
+  id: string;
+  user_id: string;
+  account_id: string | null;
+  date: string;
+  description: string | null;
+  merchant_name: string | null;
+  amount: number;
+  kind: '401k' | 'buy' | 'sell' | 'dividend' | 'other' | null;
+  empower_transaction_id: string | null;
+  pending: boolean;
 }
 
 export interface NetWorthSnapshot {
@@ -75,6 +90,12 @@ export const useFinances = () => {
     order: { column: 'date', ascending: false },
   });
 
+  const investmentActivity = useSupabase<InvestmentActivity>({
+    table: 'financial_investment_activity',
+    order: { column: 'date', ascending: false },
+    limit: 200,
+  });
+
   const monthlySpending = useSupabase<{ month: string; category: string; total: number }>({
     table: 'monthly_spending_by_category',
     isView: true,
@@ -96,9 +117,10 @@ export const useFinances = () => {
     holdings: holdings.data,
     netWorth: netWorth.data,
     monthlySpending: monthlySpending.data,
+    investmentActivity: investmentActivity.data,
     loading: accounts.loading || transactions.loading || holdings.loading || netWorth.loading,
     error: accounts.error || transactions.error || holdings.error || netWorth.error,
     updateTransactionCategory,
-    refetch: () => { accounts.refetch(); transactions.refetch(); holdings.refetch(); netWorth.refetch(); monthlySpending.refetch(); },
+    refetch: () => { accounts.refetch(); transactions.refetch(); holdings.refetch(); netWorth.refetch(); monthlySpending.refetch(); investmentActivity.refetch(); },
   };
 };

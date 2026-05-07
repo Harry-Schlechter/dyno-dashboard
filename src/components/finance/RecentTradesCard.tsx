@@ -3,78 +3,70 @@ import {
   Card, CardContent, Typography, Box, Chip, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Stack,
 } from '@mui/material';
-import { Transaction } from '../../hooks/useFinances';
+import { InvestmentActivity } from '../../hooks/useFinances';
 import { formatCurrency, formatDateShort } from '../../lib/formatters';
 
 interface Props {
-  transactions: Transaction[];
+  activity: InvestmentActivity[];
   limit?: number;
 }
 
-interface ParsedTrade {
-  id: string;
-  date: string;
-  action: 'BUY' | 'SELL' | 'DIV';
-  ticker: string;
-  shares: number | null;
-  price: number | null;
-  amount: number;
-}
+type DisplayKind = 'BUY' | 'SELL' | 'DIV' | '401K' | 'OTHER';
 
-const TRADE_RE = /\b(buy|sell)\s+([\d.]+)\s+shares?\s+of\s+([A-Za-z0-9 ]+?)(?:\s+for|$)|^(?:Cash dividend|Dividend)\s+of\s+\$?([\d.]+)\s+from\s+([A-Z]+)/i;
-
-const parseTrade = (tx: Transaction): ParsedTrade | null => {
-  const desc = tx.description || '';
-  const m = desc.match(TRADE_RE);
-  if (!m) return null;
-
-  if (m[1]) {
-    // Buy/sell
-    const action = m[1].toUpperCase() as 'BUY' | 'SELL';
-    const shares = parseFloat(m[2]);
-    const ticker = m[3].trim().toUpperCase();
-    // Try to extract per-share price from "for $X.XX each"
-    const priceMatch = desc.match(/for\s+\$?([\d.]+)\s+each/i);
-    const price = priceMatch ? parseFloat(priceMatch[1]) : (shares > 0 ? Math.abs(tx.amount) / shares : null);
-    return { id: tx.id, date: tx.date, action, ticker, shares, price, amount: tx.amount };
-  }
-  if (m[4] && m[5]) {
-    // Dividend
-    return {
-      id: tx.id,
-      date: tx.date,
-      action: 'DIV',
-      ticker: m[5].toUpperCase(),
-      shares: null,
-      price: null,
-      amount: tx.amount,
-    };
-  }
-  return null;
+const kindLabel = (raw: InvestmentActivity['kind'], amount: number): DisplayKind => {
+  if (raw === 'buy') return 'BUY';
+  if (raw === 'sell') return 'SELL';
+  if (raw === 'dividend') return 'DIV';
+  if (raw === '401k') return '401K';
+  // Fall back to sign of amount when kind is null/other
+  if (raw === 'other' || raw === null) return amount < 0 ? 'BUY' : 'SELL';
+  return 'OTHER';
 };
 
-const actionColor = (action: ParsedTrade['action']) => {
-  if (action === 'BUY') return '#FF9800';
-  if (action === 'SELL') return '#4CAF50';
-  return '#5B8DEF';
+const kindColor = (k: DisplayKind): string => {
+  if (k === 'BUY') return '#FF9800';
+  if (k === 'SELL') return '#4CAF50';
+  if (k === 'DIV') return '#5B8DEF';
+  if (k === '401K') return '#764ba2';
+  return '#7d8590';
 };
 
-const RecentTradesCard: React.FC<Props> = ({ transactions, limit = 25 }) => {
-  const trades = useMemo(() => {
-    const parsed: ParsedTrade[] = [];
-    for (const tx of transactions) {
-      const t = parseTrade(tx);
-      if (t) parsed.push(t);
-    }
-    return parsed.sort((a, b) => b.date.localeCompare(a.date)).slice(0, limit);
-  }, [transactions, limit]);
+// Best-effort ticker extraction from description for display.
+const extractTicker = (description: string | null, merchant: string | null): string => {
+  const desc = description || '';
+  // Pattern: "buy/sell N shares of TICKER" or "X shares of TICKER"
+  const sharesMatch = desc.match(/shares?\s+of\s+([A-Z][A-Z0-9.\-]{0,7})\b/i);
+  if (sharesMatch) return sharesMatch[1].toUpperCase();
+  // Pattern: "Cash dividend of $X from TICKER"
+  const divMatch = desc.match(/from\s+([A-Z][A-Z0-9.\-]{0,7})\b/);
+  if (divMatch) return divMatch[1].toUpperCase();
+  // Standalone ticker-looking word
+  const standalone = desc.match(/\b([A-Z]{2,6})\b/);
+  if (standalone) return standalone[1];
+  return merchant || '—';
+};
 
-  const buyCount = trades.filter(t => t.action === 'BUY').length;
-  const sellCount = trades.filter(t => t.action === 'SELL').length;
-  const divCount = trades.filter(t => t.action === 'DIV').length;
-  const buyTotal = trades.filter(t => t.action === 'BUY').reduce((s, t) => s + Math.abs(t.amount), 0);
-  const sellTotal = trades.filter(t => t.action === 'SELL').reduce((s, t) => s + t.amount, 0);
-  const divTotal = trades.filter(t => t.action === 'DIV').reduce((s, t) => s + t.amount, 0);
+const RecentTradesCard: React.FC<Props> = ({ activity, limit = 25 }) => {
+  const rows = useMemo(() => {
+    return activity.slice(0, limit).map(a => ({
+      id: a.id,
+      date: a.date,
+      kind: kindLabel(a.kind, a.amount),
+      ticker: extractTicker(a.description, a.merchant_name),
+      description: a.description || '',
+      amount: a.amount,
+    }));
+  }, [activity, limit]);
+
+  const buys    = rows.filter(r => r.kind === 'BUY');
+  const sells   = rows.filter(r => r.kind === 'SELL');
+  const divs    = rows.filter(r => r.kind === 'DIV');
+  const fourOhOneK = rows.filter(r => r.kind === '401K');
+
+  const buyTotal      = buys.reduce((s, r) => s + Math.abs(r.amount), 0);
+  const sellTotal     = sells.reduce((s, r) => s + Math.abs(r.amount), 0);
+  const divTotal      = divs.reduce((s, r) => s + Math.abs(r.amount), 0);
+  const contribTotal  = fourOhOneK.reduce((s, r) => s + Math.abs(r.amount), 0);
 
   return (
     <Card sx={{ '&:hover': { transform: 'none' } }}>
@@ -82,91 +74,74 @@ const RecentTradesCard: React.FC<Props> = ({ transactions, limit = 25 }) => {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', mb: 1.5 }}>
           <Typography variant="h6">Recent Activity</Typography>
           <Typography variant="caption" color="text.secondary">
-            Last {trades.length} trades
+            Last {rows.length} from financial_investment_activity
           </Typography>
         </Box>
 
-        <Stack direction="row" spacing={3} sx={{ mb: 2 }}>
+        <Stack direction="row" spacing={3} sx={{ mb: 2, flexWrap: 'wrap' }}>
           <Box>
             <Typography variant="caption" color="text.secondary">Bought</Typography>
-            <Typography variant="body1" fontWeight={600} color="#FF9800">
-              {formatCurrency(buyTotal)}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">{buyCount} trades</Typography>
+            <Typography variant="body1" fontWeight={600} color="#FF9800">{formatCurrency(buyTotal)}</Typography>
+            <Typography variant="caption" color="text.secondary">{buys.length}</Typography>
           </Box>
           <Box>
             <Typography variant="caption" color="text.secondary">Sold</Typography>
-            <Typography variant="body1" fontWeight={600} color="#4CAF50">
-              {formatCurrency(sellTotal)}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">{sellCount} trades</Typography>
+            <Typography variant="body1" fontWeight={600} color="#4CAF50">{formatCurrency(sellTotal)}</Typography>
+            <Typography variant="caption" color="text.secondary">{sells.length}</Typography>
           </Box>
           <Box>
             <Typography variant="caption" color="text.secondary">Dividends</Typography>
-            <Typography variant="body1" fontWeight={600} color="#5B8DEF">
-              {formatCurrency(divTotal)}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">{divCount} payouts</Typography>
+            <Typography variant="body1" fontWeight={600} color="#5B8DEF">{formatCurrency(divTotal)}</Typography>
+            <Typography variant="caption" color="text.secondary">{divs.length}</Typography>
           </Box>
           <Box>
-            <Typography variant="caption" color="text.secondary">Net</Typography>
-            <Typography variant="body1" fontWeight={600} color={(sellTotal - buyTotal + divTotal) >= 0 ? 'success.main' : 'error.main'}>
-              {(sellTotal - buyTotal + divTotal) >= 0 ? '+' : ''}{formatCurrency(sellTotal - buyTotal + divTotal)}
-            </Typography>
+            <Typography variant="caption" color="text.secondary">401(k) contrib.</Typography>
+            <Typography variant="body1" fontWeight={600} color="#764ba2">{formatCurrency(contribTotal)}</Typography>
+            <Typography variant="caption" color="text.secondary">{fourOhOneK.length}</Typography>
           </Box>
         </Stack>
 
-        {trades.length === 0 ? (
-          <Typography variant="body2" color="text.secondary">No buys/sells/dividends in transaction history.</Typography>
+        {rows.length === 0 ? (
+          <Typography variant="body2" color="text.secondary">
+            No investment activity yet. The sync drops 401k / buys / sells / dividends into <code>financial_investment_activity</code>; they'll appear here as they arrive.
+          </Typography>
         ) : (
           <TableContainer sx={{ maxHeight: 380 }}>
             <Table size="small" stickyHeader>
               <TableHead>
                 <TableRow>
                   <TableCell>Date</TableCell>
-                  <TableCell>Action</TableCell>
+                  <TableCell>Kind</TableCell>
                   <TableCell>Ticker</TableCell>
-                  <TableCell align="right">Shares</TableCell>
-                  <TableCell align="right">Price</TableCell>
+                  <TableCell>Description</TableCell>
                   <TableCell align="right">Amount</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {trades.map(t => (
-                  <TableRow key={t.id}>
-                    <TableCell>
-                      <Typography variant="caption">{formatDateShort(t.date)}</Typography>
-                    </TableCell>
+                {rows.map(r => (
+                  <TableRow key={r.id}>
+                    <TableCell><Typography variant="caption">{formatDateShort(r.date)}</Typography></TableCell>
                     <TableCell>
                       <Chip
-                        label={t.action}
+                        label={r.kind}
                         size="small"
                         sx={{
                           height: 20,
                           fontSize: '0.65rem',
                           fontWeight: 700,
-                          color: actionColor(t.action),
-                          bgcolor: `${actionColor(t.action)}22`,
-                          border: `1px solid ${actionColor(t.action)}44`,
+                          color: kindColor(r.kind),
+                          bgcolor: `${kindColor(r.kind)}22`,
+                          border: `1px solid ${kindColor(r.kind)}44`,
                         }}
                       />
                     </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" fontWeight={600}>{t.ticker}</Typography>
+                    <TableCell><Typography variant="body2" fontWeight={600}>{r.ticker}</Typography></TableCell>
+                    <TableCell sx={{ maxWidth: 360, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <Typography variant="caption" color="text.secondary">{r.description}</Typography>
                     </TableCell>
                     <TableCell align="right">
-                      <Typography variant="caption">
-                        {t.shares !== null ? t.shares.toFixed(t.shares < 1 ? 4 : 2) : '--'}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="right">
-                      <Typography variant="caption">
-                        {t.price !== null ? formatCurrency(t.price) : '--'}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="right">
-                      <Typography variant="body2" fontWeight={600} sx={{ color: t.amount < 0 ? '#FF9800' : '#4CAF50' }}>
-                        {t.amount < 0 ? '-' : '+'}{formatCurrency(Math.abs(t.amount))}
+                      <Typography variant="body2" fontWeight={600} sx={{ color: r.amount < 0 ? '#FF9800' : '#4CAF50' }}>
+                        {r.amount < 0 ? '-' : '+'}{formatCurrency(Math.abs(r.amount))}
                       </Typography>
                     </TableCell>
                   </TableRow>

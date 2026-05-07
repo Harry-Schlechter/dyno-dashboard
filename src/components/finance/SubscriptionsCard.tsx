@@ -58,7 +58,10 @@ const SubscriptionsCard: React.FC<Props> = ({ transactions }) => {
 
       let driftFlag: string | null = null;
       if (lastCharge) {
-        const charged = Math.abs(lastCharge.amount);
+        // Compare against original_amount when the row has been split-edited,
+        // otherwise the split adjustment looks like drift.
+        const baseline = lastCharge.original_amount ?? lastCharge.amount;
+        const charged = Math.abs(baseline);
         const ratio = charged / sub.expected_amount;
         if (ratio < 0.8 || ratio > 1.2) {
           driftFlag = `Last charge ${formatCurrency(charged)} vs expected ${formatCurrency(sub.expected_amount)}`;

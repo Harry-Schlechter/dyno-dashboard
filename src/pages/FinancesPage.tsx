@@ -3,8 +3,9 @@ import {
   Box, Typography, Grid, Card, CardContent, Stack, Chip,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   TextField, Select, MenuItem, InputAdornment, Tabs, Tab, LinearProgress,
+  Tooltip as MuiTooltip,
 } from '@mui/material';
-import { Search, TrendingUp, TrendingDown, AccountBalance, CreditCard, Savings, ShowChart } from '@mui/icons-material';
+import { Search, TrendingUp, TrendingDown, AccountBalance, CreditCard, Savings, ShowChart, CallSplit } from '@mui/icons-material';
 import {
   ComposedChart, Line, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   PieChart, Pie, Cell, Legend, BarChart, Bar, ReferenceLine,
@@ -21,6 +22,7 @@ import CategoryPieCard from '../components/finance/CategoryPieCard';
 import SubscriptionsCard from '../components/finance/SubscriptionsCard';
 import CategoryTrendsCard from '../components/finance/CategoryTrendsCard';
 import InvestmentsPanel from '../components/finance/InvestmentsPanel';
+import { computeNetWorthBreakdown } from '../lib/finance';
 
 const CATEGORIES = ['Food & Dining', 'Groceries', 'Shopping', 'Transportation', 'Entertainment', 'Bills & Utilities', 'Health & Medical', 'Travel', 'Subscriptions', 'Personal', 'Gifts', 'Education', 'Income', 'Transfer', 'Credit Card Payment', 'Investment', 'Other'];
 const CHART_COLORS = ['#5B8DEF', '#764ba2', '#4CAF50', '#FF9800', '#F44336', '#90CAF9', '#FFB74D', '#81C784', '#E57373', '#64B5F6', '#CE93D8', '#A5D6A7'];
@@ -58,7 +60,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 const FinancesPage: React.FC = () => {
-  const { accounts, transactions, holdings, netWorth, monthlySpending, loading, error, updateTransactionCategory, refetch } = useFinances();
+  const { accounts, transactions, holdings, netWorth, monthlySpending, investmentActivity, loading, error, updateTransactionCategory, refetch } = useFinances();
   const [tab, setTab] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [accountFilter, setAccountFilter] = useState<string>('all');
@@ -149,6 +151,13 @@ const FinancesPage: React.FC = () => {
     return holdings.filter(h => h.snapshot_date === latestSnapshotDate);
   }, [holdings, latestSnapshotDate]);
 
+  // 4-bucket net worth breakdown for the hero card. The helper picks the
+  // latest snapshot per account internally.
+  const netWorthBreakdown = useMemo(
+    () => computeNetWorthBreakdown(accounts, holdings),
+    [accounts, holdings],
+  );
+
   const holdingsByAccount = useMemo(() => {
     const grouped: Record<string, typeof latestHoldings> = {};
     latestHoldings.forEach(h => {
@@ -186,36 +195,6 @@ const FinancesPage: React.FC = () => {
     return transactions.filter(t => creditAccountIds.has(t.account_id));
   }, [transactions, creditAccountIds]);
 
-  // Spending = credit card transactions only, grouped by category
-  const spendingByCategory = useMemo(() => {
-    const cats: Record<string, number> = {};
-    creditTransactions.filter(t => t.amount > 0).forEach(t => {
-      const cat = t.custom_category || t.empower_category || 'Uncategorized';
-      cats[cat] = (cats[cat] || 0) + t.amount;
-    });
-    return Object.entries(cats)
-      .map(([name, value]) => ({ name, value: Math.round(value) }))
-      .sort((a, b) => b.value - a.value);
-  }, [creditTransactions]);
-
-  const totalSpending = spendingByCategory.reduce((s, c) => s + c.value, 0);
-
-  // Monthly spending from credit card transactions
-  const monthlySpendingChart = useMemo(() => {
-    const months: Record<string, number> = {};
-    creditTransactions.filter(t => t.amount > 0).forEach(t => {
-      const month = t.date.slice(0, 7);
-      months[month] = (months[month] || 0) + t.amount;
-    });
-    return Object.entries(months)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([month, total]) => ({ month, total: Math.round(total) }));
-  }, [creditTransactions]);
-
-  const avgMonthlySpend = monthlySpendingChart.length > 0
-    ? Math.round(monthlySpendingChart.reduce((s, m) => s + m.total, 0) / monthlySpendingChart.length)
-    : 0;
-
   const filteredTransactions = useMemo(() => {
     let filtered = creditTransactions;
     if (accountFilter !== 'all') {
@@ -246,12 +225,92 @@ const FinancesPage: React.FC = () => {
         <Tab label="Overview" />
         <Tab label="Investments" />
         <Tab label="Transactions" />
-        <Tab label="Spending" />
       </Tabs>
 
       {/* ═══════════════ OVERVIEW ═══════════════ */}
       {tab === 0 && (
         <Grid container spacing={2.5}>
+          {/* Net Worth Hero (top of page) */}
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Card>
+              <CardContent sx={{ textAlign: 'center', py: 3 }}>
+                <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.5 }}>Net Worth</Typography>
+                <Typography variant="h3" fontWeight={700} sx={{ color: '#5B8DEF', mt: 1, mb: 0.5 }}>
+                  {currentNetWorth ? formatCurrency(currentNetWorth.net_worth) : '--'}
+                </Typography>
+                {netWorthChange !== null && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                    {netWorthChange >= 0 ? <TrendingUp sx={{ color: '#4CAF50', fontSize: 18 }} /> : <TrendingDown sx={{ color: '#F44336', fontSize: 18 }} />}
+                    <Typography variant="body2" fontWeight={600} color={netWorthChange >= 0 ? 'success.main' : 'error.main'}>
+                      {netWorthChange >= 0 ? '+' : ''}{formatCurrency(netWorthChange)}
+                      {netWorthChangePct !== null && ` (${netWorthChangePct >= 0 ? '+' : ''}${netWorthChangePct.toFixed(1)}%)`}
+                    </Typography>
+                  </Box>
+                )}
+                <Stack direction="row" justifyContent="center" spacing={3} sx={{ mt: 2 }}>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Assets</Typography>
+                    <Typography variant="body1" fontWeight={600} color="success.main">{currentNetWorth ? formatCurrency(currentNetWorth.total_assets) : '--'}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Liabilities</Typography>
+                    <Typography variant="body1" fontWeight={600} color="error.main">{currentNetWorth ? formatCurrency(Math.abs(currentNetWorth.total_liabilities)) : '--'}</Typography>
+                  </Box>
+                </Stack>
+
+                <Box sx={{ mt: 2.5, pt: 2, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                  <Stack spacing={0.5}>
+                    {[
+                      { label: '401(k)',     value: netWorthBreakdown.fourOhOneK, color: '#764ba2' },
+                      { label: 'Roth',       value: netWorthBreakdown.roth,       color: '#90CAF9' },
+                      { label: 'Brokerage',  value: netWorthBreakdown.brokerage,  color: '#FF9800' },
+                      { label: 'Cash + MMF', value: netWorthBreakdown.cash,       color: '#4CAF50' },
+                    ].map(row => (
+                      <Box key={row.label} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: row.color }} />
+                          <Typography variant="caption" color="text.secondary">{row.label}</Typography>
+                        </Box>
+                        <Typography variant="body2" fontWeight={600}>{formatCurrency(row.value)}</Typography>
+                      </Box>
+                    ))}
+                  </Stack>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Net Worth Over Time chart */}
+          <Grid size={{ xs: 12, md: 8 }}>
+            <Card sx={{ '&:hover': { transform: 'none' } }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Net Worth Over Time</Typography>
+                <ResponsiveContainer width="100%" height={300}>
+                  <ComposedChart data={netWorthChart}>
+                    <defs>
+                      <linearGradient id="assetGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#4CAF50" stopOpacity={0.2} />
+                        <stop offset="95%" stopColor="#4CAF50" stopOpacity={0} />
+                      </linearGradient>
+                      <linearGradient id="liabGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#F44336" stopOpacity={0.15} />
+                        <stop offset="95%" stopColor="#F44336" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                    <XAxis dataKey="month" stroke="#7d8590" fontSize={11} />
+                    <YAxis stroke="#7d8590" fontSize={11} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend wrapperStyle={{ fontSize: 12, color: '#7d8590' }} />
+                    <Area type="monotone" dataKey="assets" name="Assets" stroke="#4CAF50" fill="url(#assetGrad)" strokeWidth={1.5} />
+                    <Area type="monotone" dataKey="liabilities" name="Liabilities" stroke="#F44336" fill="url(#liabGrad)" strokeWidth={1.5} />
+                    <Line type="monotone" dataKey="netWorth" name="Net Worth" stroke="#5B8DEF" strokeWidth={2.5} dot={{ r: 3, fill: '#5B8DEF' }} />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </Grid>
+
           {/* Financial advisor voice + insights */}
           <Grid size={{ xs: 12, md: 6 }}>
             <AgentVoiceCard agentId="financial-advisor" />
@@ -300,68 +359,6 @@ const FinancesPage: React.FC = () => {
               endDate={dateRange.end}
               rangeLabel={rangeLabel}
             />
-          </Grid>
-
-          {/* Net Worth Hero */}
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Card>
-              <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.5 }}>Net Worth</Typography>
-                <Typography variant="h3" fontWeight={700} sx={{ color: '#5B8DEF', mt: 1, mb: 0.5 }}>
-                  {currentNetWorth ? formatCurrency(currentNetWorth.net_worth) : '--'}
-                </Typography>
-                {netWorthChange !== null && (
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
-                    {netWorthChange >= 0 ? <TrendingUp sx={{ color: '#4CAF50', fontSize: 18 }} /> : <TrendingDown sx={{ color: '#F44336', fontSize: 18 }} />}
-                    <Typography variant="body2" fontWeight={600} color={netWorthChange >= 0 ? 'success.main' : 'error.main'}>
-                      {netWorthChange >= 0 ? '+' : ''}{formatCurrency(netWorthChange)}
-                      {netWorthChangePct !== null && ` (${netWorthChangePct >= 0 ? '+' : ''}${netWorthChangePct.toFixed(1)}%)`}
-                    </Typography>
-                  </Box>
-                )}
-                <Stack direction="row" justifyContent="center" spacing={3} sx={{ mt: 2 }}>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">Assets</Typography>
-                    <Typography variant="body1" fontWeight={600} color="success.main">{currentNetWorth ? formatCurrency(currentNetWorth.total_assets) : '--'}</Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">Liabilities</Typography>
-                    <Typography variant="body1" fontWeight={600} color="error.main">{currentNetWorth ? formatCurrency(Math.abs(currentNetWorth.total_liabilities)) : '--'}</Typography>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Net Worth + Assets vs Liabilities by Month */}
-          <Grid size={{ xs: 12, md: 8 }}>
-            <Card sx={{ '&:hover': { transform: 'none' } }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Net Worth Over Time</Typography>
-                <ResponsiveContainer width="100%" height={300}>
-                  <ComposedChart data={netWorthChart}>
-                    <defs>
-                      <linearGradient id="assetGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#4CAF50" stopOpacity={0.2} />
-                        <stop offset="95%" stopColor="#4CAF50" stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="liabGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#F44336" stopOpacity={0.15} />
-                        <stop offset="95%" stopColor="#F44336" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                    <XAxis dataKey="month" stroke="#7d8590" fontSize={11} />
-                    <YAxis stroke="#7d8590" fontSize={11} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend wrapperStyle={{ fontSize: 12, color: '#7d8590' }} />
-                    <Area type="monotone" dataKey="assets" name="Assets" stroke="#4CAF50" fill="url(#assetGrad)" strokeWidth={1.5} />
-                    <Area type="monotone" dataKey="liabilities" name="Liabilities" stroke="#F44336" fill="url(#liabGrad)" strokeWidth={1.5} />
-                    <Line type="monotone" dataKey="netWorth" name="Net Worth" stroke="#5B8DEF" strokeWidth={2.5} dot={{ r: 3, fill: '#5B8DEF' }} />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
           </Grid>
 
           {/* Accounts grouped by type */}
@@ -422,7 +419,7 @@ const FinancesPage: React.FC = () => {
         <InvestmentsPanel
           accounts={accounts}
           holdings={holdings}
-          transactions={transactions}
+          investmentActivity={investmentActivity}
         />
       )}
 
@@ -496,9 +493,23 @@ const FinancesPage: React.FC = () => {
                             <Typography variant="caption" color="text.secondary">{getCardLabel(t.account_id)}</Typography>
                           </TableCell>
                           <TableCell align="right">
-                            <Typography variant="body2" fontWeight={600} sx={{ color: t.amount < 0 ? '#4CAF50' : '#e6edf3' }}>
-                              {t.amount < 0 ? '+' : '-'}{formatCurrency(Math.abs(t.amount))}
-                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5 }}>
+                              {t.original_amount !== null && (
+                                <MuiTooltip
+                                  title={
+                                    <>
+                                      <div>Adjusted: {formatCurrency(Math.abs(t.original_amount))} → {formatCurrency(Math.abs(t.amount))}</div>
+                                      {t.split_note && <div style={{ marginTop: 2, opacity: 0.85 }}>{t.split_note}</div>}
+                                    </>
+                                  }
+                                >
+                                  <CallSplit sx={{ fontSize: 14, color: '#90CAF9' }} />
+                                </MuiTooltip>
+                              )}
+                              <Typography variant="body2" fontWeight={600} sx={{ color: t.amount < 0 ? '#4CAF50' : '#e6edf3' }}>
+                                {t.amount < 0 ? '+' : '-'}{formatCurrency(Math.abs(t.amount))}
+                              </Typography>
+                            </Box>
                           </TableCell>
                           <TableCell>
                             {t.custom_category ? (
@@ -529,111 +540,6 @@ const FinancesPage: React.FC = () => {
         </Grid>
       )}
 
-      {/* ═══════════════ SPENDING ═══════════════ */}
-      {tab === 3 && (
-        <Grid container spacing={2.5}>
-          <Grid size={{ xs: 12 }}>
-            <Card>
-              <CardContent>
-                <Stack direction="row" spacing={4} flexWrap="wrap" useFlexGap>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">Total Spending</Typography>
-                    <Typography variant="h4" fontWeight={700}>{formatCurrency(totalSpending)}</Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">Avg Monthly</Typography>
-                    <Typography variant="h4" fontWeight={700}>{formatCurrency(avgMonthlySpend)}</Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">Categories</Typography>
-                    <Typography variant="h4" fontWeight={700}>{spendingByCategory.length}</Typography>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {monthlySpendingChart.length > 1 && (
-            <Grid size={{ xs: 12 }}>
-              <Card sx={{ '&:hover': { transform: 'none' } }}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>Monthly Spending</Typography>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <ComposedChart data={monthlySpendingChart}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                      <XAxis dataKey="month" stroke="#7d8590" fontSize={11} />
-                      <YAxis stroke="#7d8590" fontSize={11} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
-                      <Tooltip content={<CustomTooltip />} />
-                      <ReferenceLine y={avgMonthlySpend} stroke="#FF980080" strokeDasharray="6 4" label={{ value: `Avg: ${formatCurrency(avgMonthlySpend)}`, position: 'right', fill: '#FF9800', fontSize: 11 }} />
-                      <Bar dataKey="total" name="Spending" fill="#5B8DEF" radius={[4, 4, 0, 0]} fillOpacity={0.7} />
-                    </ComposedChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            </Grid>
-          )}
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Card sx={{ '&:hover': { transform: 'none' } }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Spending by Category</Typography>
-                <ResponsiveContainer width="100%" height={350}>
-                  <PieChart>
-                    <Pie
-                      data={spendingByCategory.slice(0, 10)}
-                      dataKey="value"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={120}
-                      innerRadius={55}
-                      paddingAngle={2}
-                    >
-                      {spendingByCategory.slice(0, 10).map((_, i) => (
-                        <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend wrapperStyle={{ fontSize: 11, color: '#7d8590' }} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Card sx={{ '&:hover': { transform: 'none' } }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Top Categories</Typography>
-                <Stack spacing={1}>
-                  {spendingByCategory.slice(0, 12).map((cat, i) => {
-                    const pct = totalSpending > 0 ? (cat.value / totalSpending) * 100 : 0;
-                    return (
-                      <Box key={cat.name}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.25 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: CHART_COLORS[i % CHART_COLORS.length], flexShrink: 0 }} />
-                            <Typography variant="body2">{cat.name}</Typography>
-                          </Box>
-                          <Typography variant="body2" fontWeight={600}>{formatCurrency(cat.value)}</Typography>
-                        </Box>
-                        <LinearProgress
-                          variant="determinate"
-                          value={pct}
-                          sx={{
-                            height: 4, borderRadius: 2, ml: 2.5,
-                            bgcolor: 'rgba(255,255,255,0.04)',
-                            '& .MuiLinearProgress-bar': { bgcolor: CHART_COLORS[i % CHART_COLORS.length], borderRadius: 2 },
-                          }}
-                        />
-                      </Box>
-                    );
-                  })}
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-      )}
     </Box>
   );
 };

@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import { AccountBalance, ShowChart, Savings, WarningAmberOutlined } from '@mui/icons-material';
 import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer, Legend } from 'recharts';
-import { FinancialAccount, InvestmentHolding, Transaction } from '../../hooks/useFinances';
+import { FinancialAccount, InvestmentHolding, InvestmentActivity } from '../../hooks/useFinances';
 import { bucketForAccount, FinanceBucket } from '../../lib/finance';
 import { formatCurrency, formatNumber, formatDateShort } from '../../lib/formatters';
 import RecentTradesCard from './RecentTradesCard';
@@ -15,37 +15,59 @@ const CHART_COLORS = ['#5B8DEF', '#764ba2', '#4CAF50', '#FF9800', '#F44336', '#9
 interface Props {
   accounts: FinancialAccount[];
   holdings: InvestmentHolding[];
-  transactions: Transaction[];
+  investmentActivity: InvestmentActivity[];
 }
 
-type ViewKey = 'retirement' | 'taxable' | 'cash';
+type ViewKey = 'retirement' | 'brokerage' | 'cash';
 
 const VIEW_LABEL: Record<ViewKey, string> = {
   retirement: 'Retirement',
-  taxable: 'Taxable',
+  brokerage: 'Brokerage',
   cash: 'Cash',
 };
 
 const VIEW_ICON: Record<ViewKey, React.ReactNode> = {
   retirement: <ShowChart sx={{ fontSize: 18 }} />,
-  taxable: <AccountBalance sx={{ fontSize: 18 }} />,
+  brokerage: <AccountBalance sx={{ fontSize: 18 }} />,
   cash: <Savings sx={{ fontSize: 18 }} />,
 };
 
-// Latest holdings per (account_id, ticker) — investment_holdings has multiple snapshots.
+// Pick only the latest snapshot per account, then SUM by ticker.
+// SimpleFIN returns one row per contribution source (employee pre-tax, employer
+// match, Roth) for the same fund — all distinct rows with the same ticker.
+// Older snapshots may also contain ghost positions that no longer exist
+// (e.g. funds reallocated out of), so we discard everything except the
+// latest snapshot_date for each account.
 const latestHoldingsPerTicker = (holdings: InvestmentHolding[]): InvestmentHolding[] => {
+  // 1. find latest snapshot_date per account_id
+  const latestDate = new Map<string, string>();
+  for (const h of holdings) {
+    const cur = latestDate.get(h.account_id);
+    if (!cur || h.snapshot_date > cur) latestDate.set(h.account_id, h.snapshot_date);
+  }
+
+  // 2. accumulate same-ticker rows within the latest snapshot
   const map = new Map<string, InvestmentHolding>();
   for (const h of holdings) {
+    if (h.snapshot_date !== latestDate.get(h.account_id)) continue;
     const key = `${h.account_id}|${h.ticker}`;
     const existing = map.get(key);
-    if (!existing || h.snapshot_date > existing.snapshot_date) {
-      map.set(key, h);
+    if (!existing) {
+      map.set(key, { ...h });
+    } else {
+      existing.quantity += h.quantity;
+      existing.current_value += h.current_value;
+      existing.cost_basis += h.cost_basis;
+      existing.gain_loss = existing.current_value - existing.cost_basis;
+      existing.gain_loss_pct = existing.cost_basis > 0
+        ? (existing.gain_loss / existing.cost_basis) * 100
+        : 0;
     }
   }
   return [...map.values()];
 };
 
-const InvestmentsPanel: React.FC<Props> = ({ accounts, holdings, transactions }) => {
+const InvestmentsPanel: React.FC<Props> = ({ accounts, holdings, investmentActivity }) => {
   const [view, setView] = useState<ViewKey>('retirement');
 
   // Map account_id -> bucket and account info
@@ -61,12 +83,12 @@ const InvestmentsPanel: React.FC<Props> = ({ accounts, holdings, transactions })
 
   // Group holdings by bucket (using override-aware bucket map)
   const holdingsByBucket = useMemo(() => {
-    const map: Record<ViewKey, InvestmentHolding[]> = { retirement: [], taxable: [], cash: [] };
+    const map: Record<ViewKey, InvestmentHolding[]> = { retirement: [], brokerage: [], cash: [] };
     for (const h of latestHoldings) {
       const acct = accountInfo.get(h.account_id);
       if (!acct) continue;
       const bucket = acct.bucket;
-      if (bucket === 'retirement' || bucket === 'taxable') {
+      if (bucket === 'retirement' || bucket === 'brokerage') {
         map[bucket].push(h);
       }
     }
@@ -87,21 +109,21 @@ const InvestmentsPanel: React.FC<Props> = ({ accounts, holdings, transactions })
       .reduce((s, h) => s + (h.current_value || 0), 0);
     return {
       retirement: holdingsByBucket.retirement.reduce((s, h) => s + (h.current_value || 0), 0),
-      taxable: holdingsByBucket.taxable
-        .filter(h => h.asset_class !== 'Cash') // exclude SPAXX from taxable equity total
+      brokerage: holdingsByBucket.brokerage
+        .filter(h => h.asset_class !== 'Cash') // exclude SPAXX from brokerage equity total
         .reduce((s, h) => s + (h.current_value || 0), 0),
       cash: cashFromAccounts + cashFromHoldings,
     };
   }, [holdingsByBucket, latestHoldings, cashAccounts]);
 
-  const grandTotal = bucketTotals.retirement + bucketTotals.taxable + bucketTotals.cash;
+  const grandTotal = bucketTotals.retirement + bucketTotals.brokerage + bucketTotals.cash;
 
   // Holdings grouped by account for the active view
   const accountsInView = useMemo(() => {
     if (view === 'cash') return [];
     const byAccount = new Map<string, InvestmentHolding[]>();
-    const list = view === 'taxable'
-      ? holdingsByBucket.taxable.filter(h => h.asset_class !== 'Cash')
+    const list = view === 'brokerage'
+      ? holdingsByBucket.brokerage.filter(h => h.asset_class !== 'Cash')
       : holdingsByBucket[view];
     for (const h of list) {
       if (!byAccount.has(h.account_id)) byAccount.set(h.account_id, []);
@@ -156,7 +178,7 @@ const InvestmentsPanel: React.FC<Props> = ({ accounts, holdings, transactions })
     <Stack spacing={2.5}>
       {/* Bucket summary tiles */}
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-        {(['retirement', 'taxable', 'cash'] as ViewKey[]).map(key => {
+        {(['retirement', 'brokerage', 'cash'] as ViewKey[]).map(key => {
           const total = bucketTotals[key];
           const pct = grandTotal > 0 ? (total / grandTotal) * 100 : 0;
           const active = view === key;
@@ -193,7 +215,7 @@ const InvestmentsPanel: React.FC<Props> = ({ accounts, holdings, transactions })
 
       <Tabs value={view} onChange={(_, v) => setView(v)} sx={{ borderBottom: 1, borderColor: 'rgba(255,255,255,0.08)' }}>
         <Tab label="Retirement" value="retirement" />
-        <Tab label="Taxable" value="taxable" />
+        <Tab label="Brokerage" value="brokerage" />
         <Tab label="Cash & Emergency" value="cash" />
       </Tabs>
 
@@ -233,7 +255,7 @@ const InvestmentsPanel: React.FC<Props> = ({ accounts, holdings, transactions })
         </Card>
       )}
 
-      {/* Concentration warnings (taxable view especially) */}
+      {/* Concentration warnings (brokerage view especially) */}
       {concentrationWarnings.length > 0 && (
         <Card sx={{ '&:hover': { transform: 'none' }, borderColor: 'rgba(255,152,0,0.35)', borderStyle: 'solid', borderWidth: 1 }}>
           <CardContent>
@@ -357,7 +379,7 @@ const InvestmentsPanel: React.FC<Props> = ({ accounts, holdings, transactions })
       )}
 
       {/* Recent buys / sells / dividends — same source for all views */}
-      <RecentTradesCard transactions={transactions} />
+      <RecentTradesCard activity={investmentActivity} />
     </Stack>
   );
 };

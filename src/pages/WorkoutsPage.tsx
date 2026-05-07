@@ -192,6 +192,9 @@ const WorkoutsPage: React.FC = () => {
       {/* Sport widgets */}
       <Grid container spacing={2.5} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <SportWidget icon={<FitnessCenter />} label="Lifting" color="#E57373" workouts={workouts} matcher={isLifting} />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <SportWidget icon={<SportsBasketball />} label="Basketball" color="#FF9800" workouts={workouts} matcher={isBasketball} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>

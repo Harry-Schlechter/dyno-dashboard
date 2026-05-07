@@ -36,7 +36,7 @@ const OnPaceCard: React.FC = () => {
 
   const {
     monthKey, daysElapsed, daysInMonth, spentSoFar, dailyBurnRate,
-    projectedMonthSpend, expectedIncome, projectedSavings, annualizedSavings,
+    projectedMonthSpend, oneOffsSoFar, oneOffs, expectedIncome, projectedSavings, annualizedSavings,
   } = projection;
 
   const monthProgressPct = (daysElapsed / daysInMonth) * 100;
@@ -80,7 +80,9 @@ const OnPaceCard: React.FC = () => {
           <Box sx={{ flex: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <Typography variant="caption" color="text.secondary">Projected month</Typography>
-              <Tooltip title={`Linear extrapolation: daily burn × ${daysInMonth} days`}>
+              <Tooltip title={oneOffsSoFar > 0
+                ? `Typical daily spend × ${daysInMonth} days, plus ${formatCurrency(oneOffsSoFar)} of one-off charges already booked. Big lumpy charges (≥ $200 in travel/medical/shopping/car/sydney/misc) are NOT extrapolated.`
+                : `Linear extrapolation: daily burn × ${daysInMonth} days`}>
                 <InfoOutlined sx={{ fontSize: 12, color: 'text.secondary' }} />
               </Tooltip>
             </Box>
@@ -101,6 +103,32 @@ const OnPaceCard: React.FC = () => {
             <Typography variant="caption" color="text.secondary">post-tax baseline</Typography>
           </Box>
         </Stack>
+
+        {oneOffs.length > 0 && (
+          <Box sx={{ mb: 2, p: 1.5, borderRadius: 2, bgcolor: 'rgba(255,152,0,0.06)', border: '1px solid rgba(255,152,0,0.2)' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', mb: 0.75 }}>
+              <Typography variant="caption" fontWeight={600} color="#FF9800" sx={{ letterSpacing: 1 }}>
+                {oneOffs.length} ONE-OFF CHARGE{oneOffs.length > 1 ? 'S' : ''} (NOT EXTRAPOLATED)
+              </Typography>
+              <Typography variant="caption" fontWeight={700} color="#FF9800">
+                {formatCurrency(oneOffsSoFar)}
+              </Typography>
+            </Box>
+            <Stack spacing={0.25}>
+              {oneOffs.slice(0, 4).map((o, i) => (
+                <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '70%' }}>
+                    {o.merchant || o.description} <span style={{ opacity: 0.6 }}>({o.category})</span>
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">{formatCurrency(o.amount)}</Typography>
+                </Box>
+              ))}
+              {oneOffs.length > 4 && (
+                <Typography variant="caption" color="text.secondary">+{oneOffs.length - 4} more</Typography>
+              )}
+            </Stack>
+          </Box>
+        )}
 
         <Box sx={{ p: 2, borderRadius: 2, bgcolor: onTrack ? 'rgba(76,175,80,0.08)' : 'rgba(244,67,54,0.08)', border: `1px solid ${onTrack ? 'rgba(76,175,80,0.25)' : 'rgba(244,67,54,0.25)'}` }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', mb: 1 }}>
