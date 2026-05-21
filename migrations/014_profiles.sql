@@ -14,16 +14,12 @@ CREATE TABLE IF NOT EXISTS profiles (
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
 -- Anyone signed in can read their own profile.
+-- (Do NOT add a "owner can read all" policy that queries profiles — it recurses.
+--  If we need cross-profile reads from the client later, do it via a SECURITY
+--  DEFINER function or just skip the table-level check.)
 DROP POLICY IF EXISTS "profiles self-read" ON profiles;
 CREATE POLICY "profiles self-read" ON profiles
   FOR SELECT USING (auth.uid() = id);
-
--- Owner role can read all profiles (used for sharing UIs etc.).
-DROP POLICY IF EXISTS "profiles owner-read-all" ON profiles;
-CREATE POLICY "profiles owner-read-all" ON profiles
-  FOR SELECT USING (
-    EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'owner')
-  );
 
 -- Helper: current user's role
 CREATE OR REPLACE FUNCTION public.current_role_safe() RETURNS text
