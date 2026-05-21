@@ -3,6 +3,7 @@ import { useParams, Link as RouterLink } from 'react-router-dom';
 import { Box, Typography, Card, CardContent, Stack, Chip } from '@mui/material';
 import { GENERATED_PAGES, GeneratedPageKind } from './generated/registry';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
+import { useAuth } from '../lib/auth';
 
 const KIND_COLOR: Record<GeneratedPageKind, string> = {
   trip:    '#26A69A',
@@ -14,7 +15,14 @@ const KIND_COLOR: Record<GeneratedPageKind, string> = {
 };
 
 const SpacesIndex: React.FC = () => {
-  const visible = GENERATED_PAGES.filter(p => !p.hidden);
+  const { user } = useAuth();
+  const isGuest = user?.role === 'guest';
+  const allowed = new Set(user?.allowed_spaces || []);
+  const visible = GENERATED_PAGES.filter(p => {
+    if (p.hidden) return false;
+    if (isGuest && !allowed.has(p.slug)) return false;
+    return true;
+  });
   return (
     <Box>
       <Box sx={{ mb: 3 }}>
@@ -79,7 +87,22 @@ const SpacesIndex: React.FC = () => {
 
 const SpacesViewer: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
+  const { user } = useAuth();
   const entry = GENERATED_PAGES.find(p => p.slug === slug);
+
+  if (user?.role === 'guest' && (!slug || !user.allowed_spaces.includes(slug))) {
+    return (
+      <Box>
+        <Typography variant="h5" fontWeight={700}>Not authorized</Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          You don't have access to this space.
+        </Typography>
+        <Typography variant="body2" sx={{ mt: 2 }}>
+          <RouterLink to="/spaces">← Back to your spaces</RouterLink>
+        </Typography>
+      </Box>
+    );
+  }
 
   if (!entry) {
     return (

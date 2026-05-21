@@ -19,6 +19,7 @@ type Window = '7d' | '30d' | '90d';
 const WINDOW_DAYS: Record<Window, number> = { '7d': 7, '30d': 30, '90d': 90 };
 
 const PROTEIN_TARGET = 170;
+const CALORIE_TARGET = 2400; // upper bound for cutting / maintenance
 
 interface Meal {
   id: string;
@@ -249,6 +250,47 @@ const NutritionPage: React.FC = () => {
               </ResponsiveContainer>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
                 Grey bars = no meals logged that day. Green = hit target.
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Daily calories chart */}
+        <Grid size={{ xs: 12 }}>
+          <Card sx={{ '&:hover': { transform: 'none' } }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>Daily calories vs target</Typography>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={dailyData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                  <XAxis dataKey="date" tickFormatter={v => format(new Date(v + 'T00:00:00'), 'MMM d')} stroke="#7d8590" fontSize={10} />
+                  <YAxis stroke="#7d8590" fontSize={10} />
+                  <Tooltip
+                    labelFormatter={v => format(new Date(v + 'T00:00:00'), 'EEE, MMM d')}
+                    formatter={(v: number, name: string) => name === 'calories' ? [`${Math.round(v).toLocaleString()} cal`, 'Calories'] : [v, name]}
+                    contentStyle={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8 }}
+                  />
+                  <ReferenceLine y={CALORIE_TARGET} stroke="#FF9800" strokeDasharray="6 4" label={{ value: `Target ≤${CALORIE_TARGET.toLocaleString()}`, position: 'right', fill: '#FF9800', fontSize: 11 }} />
+                  <Bar dataKey="calories" radius={[4, 4, 0, 0]}>
+                    {dailyData.map((d, i) => (
+                      <Cell
+                        key={i}
+                        fill={
+                          d.meals === 0
+                            ? '#2a2f37'                           // no log → grey
+                            : d.calories < 1500
+                              ? '#5B8DEF'                          // partial log → blue (low confidence)
+                              : d.calories <= CALORIE_TARGET
+                                ? '#4CAF50'                         // under target → green
+                                : '#FF9800'                         // over target → orange
+                        }
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                Grey = no meals logged. Blue = under 1,500 cal logged (probably partial). Green = under target. Orange = over target.
               </Typography>
             </CardContent>
           </Card>

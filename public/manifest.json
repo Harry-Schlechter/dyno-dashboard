@@ -1,6 +1,6 @@
 {
-  "short_name": "Dyno Dashboard",
-  "name": "Dyno Dashboard - Personal Life OS",
+  "short_name": "Dyno",
+  "name": "Dyno — Personal Life OS",
   "icons": [
     {
       "src": "favicon.ico",
@@ -10,6 +10,15 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "orientation": "portrait",
+  "theme_color": "#0d1117",
+  "background_color": "#0d1117",
+  "shortcuts": [
+    {
+      "name": "Voice",
+      "short_name": "Voice",
+      "description": "Talk to Dyno hands-free",
+      "url": "/voice"
+    }
+  ]
 }

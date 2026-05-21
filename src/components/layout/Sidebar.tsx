@@ -26,12 +26,14 @@ import {
   Book,
   Insights,
   AutoAwesome,
+  Logout,
   Menu as MenuIcon,
 } from '@mui/icons-material';
+import { useAuth, isDemo } from '../../lib/auth';
 
 const DRAWER_WIDTH = 200;
 
-const navItems = [
+const ALL_NAV_ITEMS = [
   { label: 'Home', path: '/', icon: Home },
   { label: 'Nutrition', path: '/nutrition', icon: Restaurant },
   { label: 'Workouts', path: '/workouts', icon: FitnessCenter },
@@ -44,6 +46,9 @@ const navItems = [
   { label: 'Spaces', path: '/spaces', icon: AutoAwesome },
 ];
 
+// Guests only see Spaces.
+const GUEST_NAV_ITEMS = ALL_NAV_ITEMS.filter(i => i.path === '/spaces');
+
 interface SidebarProps {
   open: boolean;
   onClose: () => void;
@@ -55,10 +60,18 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, onOpen }) => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const { user, logout } = useAuth();
+
+  const navItems = user?.role === 'guest' ? GUEST_NAV_ITEMS : ALL_NAV_ITEMS;
 
   const handleNav = (path: string) => {
     navigate(path);
     if (isMobile) onClose();
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
   };
 
   const drawerContent = (
@@ -129,6 +142,27 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, onOpen }) => {
           );
         })}
       </List>
+
+      {!isDemo() && user && (
+        <>
+          <Divider sx={{ my: 2, opacity: 0.1 }} />
+          <List sx={{ py: 0 }}>
+            <ListItem disablePadding>
+              <ListItemButton onClick={handleLogout} sx={{ borderRadius: '12px', py: 1, px: 1.5, minHeight: 0 }}>
+                <ListItemIcon sx={{ minWidth: 32, color: 'text.secondary', '& .MuiSvgIcon-root': { fontSize: '1.25rem' } }}>
+                  <Logout />
+                </ListItemIcon>
+                <ListItemText
+                  primary="Sign out"
+                  secondary={user.email}
+                  primaryTypographyProps={{ fontWeight: 500, fontSize: '0.9375rem' }}
+                  secondaryTypographyProps={{ fontSize: '0.7rem', sx: { opacity: 0.5 } }}
+                />
+              </ListItemButton>
+            </ListItem>
+          </List>
+        </>
+      )}
     </Box>
   );
 

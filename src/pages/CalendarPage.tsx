@@ -12,7 +12,6 @@ import {
   parseISO, isSameDay,
 } from 'date-fns';
 import { useSupabase } from '../hooks/useSupabase';
-import { useLifeScore } from '../hooks/useLifeScore';
 import { useFinances } from '../hooks/useFinances';
 import { isRealSpend } from '../lib/finance';
 import { formatCurrency } from '../lib/formatters';
@@ -32,15 +31,6 @@ interface CalendarEvent {
   source_calendar_name: string | null;
   status: string | null;
 }
-
-// Subtle accent color for score dot only (cell background stays neutral)
-const accentForScore = (score: number | null): string => {
-  if (score === null) return 'transparent';
-  if (score >= 80) return '#4CAF50';
-  if (score >= 60) return '#5B8DEF';
-  if (score >= 40) return '#FF9800';
-  return '#F44336';
-};
 
 const colorForCategory = (category: string | null): string => {
   switch (category) {
@@ -88,18 +78,6 @@ const CalendarPage: React.FC = () => {
   });
   const { transactions, loading: finLoading } = useFinances();
 
-  const { dailyScoreOn, loading: scoreLoading } = useLifeScore();
-
-  // Pre-compute scores for visible days
-  const scoresByDay = useMemo(() => {
-    const map = new Map<string, number | null>();
-    for (const d of days) {
-      const key = format(d, 'yyyy-MM-dd');
-      map.set(key, dailyScoreOn(key));
-    }
-    return map;
-  }, [days, dailyScoreOn]);
-
   // Group events by date (start_time local date)
   const eventsByDay = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
@@ -111,7 +89,7 @@ const CalendarPage: React.FC = () => {
     return map;
   }, [events]);
 
-  const loading = eventsLoading || sleepLoading || workoutsLoading || mealsLoading || finLoading || scoreLoading;
+  const loading = eventsLoading || sleepLoading || workoutsLoading || mealsLoading || finLoading;
   if (loading) return <LoadingSkeleton variant="card" count={2} />;
 
   // Pad start of grid with blanks so day-1 lands on the correct weekday
@@ -161,7 +139,6 @@ const CalendarPage: React.FC = () => {
             {padding.map((_, i) => <Box key={`pad-${i}`} />)}
             {days.map(d => {
               const key = format(d, 'yyyy-MM-dd');
-              const score = scoresByDay.get(key) ?? null;
               const dayEvents = eventsByDay.get(key) ?? [];
               const today = isToday(d);
               return (
@@ -187,38 +164,6 @@ const CalendarPage: React.FC = () => {
                     >
                       {format(d, 'd')}
                     </Typography>
-                    {score !== null && (
-                      <Tooltip title={`Life score: ${Math.round(score)}`} placement="top">
-                        <Box
-                          sx={{
-                            display: 'flex', alignItems: 'center', gap: 0.4,
-                            px: 0.5, py: 0.05, borderRadius: 1,
-                            bgcolor: `${accentForScore(score)}22`,
-                            border: `1px solid ${accentForScore(score)}55`,
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              width: 5,
-                              height: 5,
-                              borderRadius: '50%',
-                              bgcolor: accentForScore(score),
-                            }}
-                          />
-                          <Typography
-                            sx={{
-                              fontSize: '0.6rem',
-                              fontWeight: 600,
-                              color: accentForScore(score),
-                              lineHeight: 1,
-                              fontVariantNumeric: 'tabular-nums',
-                            }}
-                          >
-                            {Math.round(score)}
-                          </Typography>
-                        </Box>
-                      </Tooltip>
-                    )}
                   </Box>
                   {dayEvents.length > 0 && (
                     <Stack spacing={0.25}>
@@ -285,7 +230,6 @@ const CalendarPage: React.FC = () => {
         date={selectedDate}
         onClose={() => setSelectedDate(null)}
         events={selectedDate ? eventsByDay.get(format(selectedDate, 'yyyy-MM-dd')) ?? [] : []}
-        score={selectedDate ? scoresByDay.get(format(selectedDate, 'yyyy-MM-dd')) ?? null : null}
         sleep={sleep}
         workouts={workouts}
         meals={meals}
@@ -385,7 +329,6 @@ interface DayDrawerProps {
   date: Date | null;
   onClose: () => void;
   events: CalendarEvent[];
-  score: number | null;
   sleep: Array<{ date: string; hours: number | null; went_to_bed_at: string | null; woke_up_at: string | null }>;
   workouts: Array<{ date: string; name: string | null; duration_min: number | null }>;
   meals: Array<{ date: string; meal_type: string | null; description: string | null; calories: number | null; protein_g: number | null }>;
@@ -393,7 +336,7 @@ interface DayDrawerProps {
   onEventClick: (event: CalendarEvent) => void;
 }
 
-const DayDrawer: React.FC<DayDrawerProps> = ({ date, onClose, events, score, sleep, workouts, meals, transactions, onEventClick }) => {
+const DayDrawer: React.FC<DayDrawerProps> = ({ date, onClose, events, sleep, workouts, meals, transactions, onEventClick }) => {
   if (!date) return null;
   const key = format(date, 'yyyy-MM-dd');
 
@@ -404,8 +347,6 @@ const DayDrawer: React.FC<DayDrawerProps> = ({ date, onClose, events, score, sle
   const dayProtein = dayMeals.reduce((s, m) => s + (m.protein_g ?? 0), 0);
   const dayTxs = transactions.filter((t: any) => t.date === key && isRealSpend(t));
   const daySpend = dayTxs.reduce((s: number, t: any) => s + Math.abs(t.amount), 0);
-
-  const scoreAccent = accentForScore(score);
 
   return (
     <Drawer
@@ -422,16 +363,6 @@ const DayDrawer: React.FC<DayDrawerProps> = ({ date, onClose, events, score, sle
           </Box>
           <IconButton onClick={onClose}><Close /></IconButton>
         </Box>
-
-        {/* Life Score — slim one-liner */}
-        {score !== null && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-            <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: scoreAccent, opacity: 0.7 }} />
-            <Typography variant="caption" color="text.secondary">
-              Life score: <Box component="span" sx={{ color: 'text.primary', fontWeight: 600 }}>{Math.round(score)}</Box>
-            </Typography>
-          </Box>
-        )}
 
         {/* Calendar events */}
         <Section icon={<EventIcon sx={{ color: '#5B8DEF' }} />} label="Events">

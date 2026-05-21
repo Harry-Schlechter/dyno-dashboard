@@ -3,6 +3,10 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { theme } from './theme/theme';
 import Layout from './components/layout/Layout';
+import AuthGate from './components/AuthGate';
+import { AuthProvider } from './lib/auth';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from './lib/auth';
 import HomePage from './pages/HomePage';
 import NutritionPage from './pages/NutritionPage';
 import WorkoutsPage from './pages/WorkoutsPage';
@@ -13,29 +17,72 @@ import CalendarPage from './pages/CalendarPage';
 import JournalPage from './pages/JournalPage';
 import CorrelationsPage from './pages/CorrelationsPage';
 import SpacesPage from './pages/SpacesPage';
+import VoicePage from './pages/VoicePage';
+import LoginPage from './pages/LoginPage';
+
+const IS_DEMO = process.env.REACT_APP_DEMO === '1';
 
 const App: React.FC = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <BrowserRouter>
-        <Layout>
+      <AuthProvider>
+        <BrowserRouter>
           <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/nutrition" element={<NutritionPage />} />
-            <Route path="/workouts" element={<WorkoutsPage />} />
-            <Route path="/sleep" element={<SleepPage />} />
-            <Route path="/finances" element={<FinancesPage />} />
-            <Route path="/tasks" element={<TasksPage />} />
-            <Route path="/calendar" element={<CalendarPage />} />
-            <Route path="/journal" element={<JournalPage />} />
-            <Route path="/correlations" element={<CorrelationsPage />} />
-            <Route path="/spaces" element={<SpacesPage index />} />
-            <Route path="/spaces/:slug" element={<SpacesPage />} />
+            {/* Login page (hidden in demo) */}
+            {!IS_DEMO && <Route path="/login" element={<LoginPage />} />}
+
+            {/* Voice page — owner only, fullscreen, hidden in demo */}
+            {!IS_DEMO && (
+              <Route path="/voice" element={
+                <AuthGate roles={['owner']}>
+                  <VoicePage />
+                </AuthGate>
+              } />
+            )}
+
+            {/* Everything else — gated unless demo */}
+            <Route path="/*" element={
+              IS_DEMO ? (
+                <Layout>
+                  <DashboardRoutes />
+                </Layout>
+              ) : (
+                <AuthGate>
+                  <Layout>
+                    <DashboardRoutes />
+                  </Layout>
+                </AuthGate>
+              )
+            } />
           </Routes>
-        </Layout>
-      </BrowserRouter>
+        </BrowserRouter>
+      </AuthProvider>
     </ThemeProvider>
+  );
+};
+
+const DashboardRoutes: React.FC = () => {
+  const { user } = useAuth();
+  const isGuest = user?.role === 'guest';
+
+  // Guests only see Spaces.
+  const ownerOnly = (el: React.ReactNode) => isGuest ? <Navigate to="/spaces" replace /> : <>{el}</>;
+
+  return (
+    <Routes>
+      <Route path="/" element={isGuest ? <Navigate to="/spaces" replace /> : <HomePage />} />
+      <Route path="/nutrition"     element={ownerOnly(<NutritionPage />)} />
+      <Route path="/workouts"      element={ownerOnly(<WorkoutsPage />)} />
+      <Route path="/sleep"         element={ownerOnly(<SleepPage />)} />
+      <Route path="/finances"      element={ownerOnly(<FinancesPage />)} />
+      <Route path="/tasks"         element={ownerOnly(<TasksPage />)} />
+      <Route path="/calendar"      element={ownerOnly(<CalendarPage />)} />
+      <Route path="/journal"       element={ownerOnly(<JournalPage />)} />
+      <Route path="/correlations"  element={ownerOnly(<CorrelationsPage />)} />
+      <Route path="/spaces"        element={<SpacesPage index />} />
+      <Route path="/spaces/:slug"  element={<SpacesPage />} />
+    </Routes>
   );
 };
 
