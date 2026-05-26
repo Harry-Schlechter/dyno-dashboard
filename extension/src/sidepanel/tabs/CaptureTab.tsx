@@ -1,16 +1,19 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
   Box, Card, CardContent, Typography, IconButton, Stack, TextField,
-  Button, Chip, Skeleton, Tooltip, InputAdornment, Collapse, Avatar,
+  Button, Chip, Skeleton, Tooltip, Collapse, Avatar,
+  Dialog, DialogTitle, DialogContent, DialogActions,
 } from '@mui/material';
 import {
-  PlayArrow, Stop, Edit, Refresh, Send, Search, OpenInNew,
+  PlayArrow, Stop, Edit, Refresh, Send, OpenInNew,
   CheckCircleOutline, Close, AutoAwesome, AttachFile,
+  Add, Delete, Link as LinkIcon,
 } from '@mui/icons-material';
 import {
   fetchActiveFocus, startFocus, endFocus,
   createCapture, fetchQueue, markQueueItem,
-  FocusSession, QueueItem,
+  fetchLinks, createLink, updateLink, deleteLink,
+  FocusSession, QueueItem, CockpitLink,
 } from '../../lib/queries';
 import { AGENTS, AGENT_BY_ID } from '../../lib/agents';
 import { getActiveTabContext, hostnameOf, TabContext } from '../../lib/tabContext';
@@ -18,19 +21,21 @@ import { getActiveTabContext, hostnameOf, TabContext } from '../../lib/tabContex
 export function CaptureTab() {
   const [focus, setFocus] = useState<FocusSession | null>(null);
   const [queue, setQueue] = useState<QueueItem[]>([]);
-  const [bookmarks, setBookmarks] = useState<chrome.bookmarks.BookmarkTreeNode[]>([]);
+  const [links, setLinks] = useState<CockpitLink[]>([]);
   const [tabCtx, setTabCtx] = useState<TabContext | null>(null);
   const [loading, setLoading] = useState(true);
 
   const reload = useCallback(async () => {
     setLoading(true);
-    const [f, q, ctx] = await Promise.all([
+    const [f, q, l, ctx] = await Promise.all([
       fetchActiveFocus(),
       fetchQueue(),
+      fetchLinks(),
       getActiveTabContext(),
     ]);
     setFocus(f);
     setQueue(q);
+    setLinks(l);
     setTabCtx(ctx);
     setLoading(false);
   }, []);
@@ -53,7 +58,7 @@ export function CaptureTab() {
       <FocusHeader focus={focus} loading={loading} onChange={setFocus} />
       <CaptureBox tabCtx={tabCtx} focus={focus} onSubmit={reload} />
       <QueueCard queue={queue} loading={loading} onChange={setQueue} />
-      <BookmarksCard bookmarks={bookmarks} onLoad={setBookmarks} />
+      <LinksCard links={links} loading={loading} onChange={setLinks} />
 
       <Stack direction="row" justifyContent="flex-end" sx={{ pt: 0.5 }}>
         <IconButton size="small" onClick={reload} sx={{ color: 'text.secondary' }}>
@@ -366,74 +371,148 @@ function QueueCard({ queue, loading, onChange }: { queue: QueueItem[]; loading: 
   );
 }
 
-// ─── Bookmarks ────────────────────────────────────────────────────────────────
+// ─── Quick links (same curated set as the new-tab page) ──────────────────────
 
-function BookmarksCard({ bookmarks, onLoad }: { bookmarks: chrome.bookmarks.BookmarkTreeNode[]; onLoad: (b: chrome.bookmarks.BookmarkTreeNode[]) => void }) {
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<chrome.bookmarks.BookmarkTreeNode[]>([]);
+function LinksCard({ links, loading, onChange }: { links: CockpitLink[]; loading: boolean; onChange: (l: CockpitLink[]) => void }) {
+  const [editor, setEditor] = useState<{ mode: 'add' } | { mode: 'edit'; link: CockpitLink } | null>(null);
 
-  // Lazy-load recent bookmarks on mount.
-  useEffect(() => {
-    chrome.bookmarks.getRecent(20, (recent) => onLoad(recent));
-  }, [onLoad]);
+  if (loading) return <Skeleton variant="rounded" height={120} />;
 
-  useEffect(() => {
-    if (!query.trim()) { setResults([]); return; }
-    const t = setTimeout(() => {
-      chrome.bookmarks.search(query.trim(), (found) => setResults(found.filter((b) => b.url).slice(0, 30)));
-    }, 200);
-    return () => clearTimeout(t);
-  }, [query]);
+  const handleSaved = async () => {
+    setEditor(null);
+    onChange(await fetchLinks());
+  };
 
-  const display = query.trim() ? results : bookmarks.filter((b) => b.url);
+  const handleDelete = async (id: string) => {
+    onChange(links.filter((l) => l.id !== id));
+    await deleteLink(id);
+  };
 
   return (
     <Card>
       <CardContent sx={{ '&:last-child': { pb: 1.5 }, py: 1.5 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 0.75 }}>
-          <Typography variant="overline" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>Bookmarks</Typography>
-          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            {query.trim() ? `${display.length} match` : 'Recent'}
-          </Typography>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+          <Stack direction="row" alignItems="center" spacing={0.75}>
+            <LinkIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+            <Typography variant="overline" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>Quick links</Typography>
+          </Stack>
+          <Button size="small" startIcon={<Add sx={{ fontSize: 14 }} />} onClick={() => setEditor({ mode: 'add' })} sx={{ minHeight: 0, py: 0.25, fontSize: '0.7rem' }}>
+            Add
+          </Button>
         </Stack>
-        <TextField
-          size="small"
-          fullWidth
-          placeholder="Search bookmarks…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start"><Search sx={{ fontSize: 16, color: 'text.secondary' }} /></InputAdornment>
-            ),
-          }}
-        />
-        <Box sx={{ maxHeight: 240, overflowY: 'auto', mt: 0.5, mx: -0.5, px: 0.5 }}>
-          {display.length === 0 ? (
-            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 1 }}>
-              {query.trim() ? 'No matches.' : 'No recent bookmarks.'}
-            </Typography>
-          ) : (
-            display.map((b) => (
-              <Box
-                key={b.id}
-                onClick={() => b.url && chrome.tabs.create({ url: b.url })}
-                sx={{
-                  mt: 0.5, p: 0.75, borderRadius: 1.5, cursor: 'pointer',
-                  '&:hover': { bgcolor: 'rgba(255,255,255,0.04)' },
-                }}
-              >
-                <Typography variant="body2" noWrap>{b.title || b.url}</Typography>
-                {b.url && (
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }} noWrap>
-                    {hostnameOf(b.url)}
-                  </Typography>
-                )}
-              </Box>
-            ))
-          )}
-        </Box>
+
+        {links.length === 0 ? (
+          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.5 }}>
+            No links yet. Add them on the new-tab page.
+          </Typography>
+        ) : (
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 0.75 }}>
+            {links.map((l) => <LinkTile key={l.id} link={l} onEdit={() => setEditor({ mode: 'edit', link: l })} onDelete={() => handleDelete(l.id)} />)}
+          </Box>
+        )}
       </CardContent>
+
+      <LinkEditorDialog
+        open={editor !== null}
+        initial={editor?.mode === 'edit' ? editor.link : undefined}
+        onClose={() => setEditor(null)}
+        onSaved={handleSaved}
+      />
     </Card>
+  );
+}
+
+function LinkTile({ link, onEdit, onDelete }: { link: CockpitLink; onEdit: () => void; onDelete: () => void }) {
+  const host = hostnameOf(link.url);
+  const favicon = `https://www.google.com/s2/favicons?sz=64&domain=${host}`;
+  return (
+    <Box
+      onClick={() => chrome.tabs.create({ url: link.url })}
+      sx={{
+        position: 'relative',
+        p: 1, borderRadius: 1.5,
+        bgcolor: 'rgba(255,255,255,0.03)',
+        border: '1px solid rgba(255,255,255,0.06)',
+        cursor: 'pointer',
+        textAlign: 'center',
+        transition: 'all 0.15s',
+        '&:hover': {
+          bgcolor: 'rgba(91,141,239,0.12)',
+          borderColor: 'rgba(91,141,239,0.4)',
+          '& .link-actions': { opacity: 1 },
+        },
+      }}
+    >
+      <Box sx={{ fontSize: '1.25rem', lineHeight: 1, mb: 0.5 }}>
+        {link.emoji ? (
+          <span>{link.emoji}</span>
+        ) : (
+          <img src={favicon} alt="" width={20} height={20} style={{ borderRadius: 4, verticalAlign: 'middle' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+        )}
+      </Box>
+      <Typography variant="caption" sx={{ fontWeight: 600, lineHeight: 1.2, display: 'block' }} noWrap>
+        {link.title}
+      </Typography>
+      <Box className="link-actions" sx={{ position: 'absolute', top: 2, right: 2, display: 'flex', gap: 0.25, opacity: 0, transition: 'opacity 0.15s' }}>
+        <Tooltip title="Edit">
+          <IconButton size="small" sx={{ p: 0.2 }} onClick={(e) => { e.stopPropagation(); onEdit(); }}>
+            <Edit sx={{ fontSize: 12 }} />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete">
+          <IconButton size="small" sx={{ p: 0.2 }} onClick={(e) => { e.stopPropagation(); onDelete(); }}>
+            <Delete sx={{ fontSize: 12 }} />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    </Box>
+  );
+}
+
+function LinkEditorDialog({ open, initial, onClose, onSaved }: { open: boolean; initial?: CockpitLink; onClose: () => void; onSaved: () => void }) {
+  const [title, setTitle] = useState('');
+  const [url, setUrl] = useState('');
+  const [emoji, setEmoji] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setTitle(initial?.title ?? '');
+      setUrl(initial?.url ?? '');
+      setEmoji(initial?.emoji ?? '');
+    }
+  }, [open, initial]);
+
+  const handleSave = async () => {
+    if (!title.trim() || !url.trim()) return;
+    setSaving(true);
+    let fullUrl = url.trim();
+    if (!/^https?:\/\//i.test(fullUrl)) fullUrl = 'https://' + fullUrl;
+    if (initial) {
+      await updateLink(initial.id, { title: title.trim(), url: fullUrl, emoji: emoji.trim() || null });
+    } else {
+      await createLink({ title: title.trim(), url: fullUrl, emoji: emoji.trim() || undefined });
+    }
+    setSaving(false);
+    onSaved();
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+      <DialogTitle>{initial ? 'Edit link' : 'Add quick link'}</DialogTitle>
+      <DialogContent>
+        <Stack spacing={1.5} sx={{ mt: 0.5 }}>
+          <TextField autoFocus size="small" label="Title" value={title} onChange={(e) => setTitle(e.target.value)} fullWidth />
+          <TextField size="small" label="URL" placeholder="https://…" value={url} onChange={(e) => setUrl(e.target.value)} fullWidth />
+          <TextField size="small" label="Emoji (optional)" placeholder="🐙" value={emoji} onChange={(e) => setEmoji(e.target.value)} inputProps={{ maxLength: 4 }} sx={{ width: 140 }} />
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button variant="contained" onClick={handleSave} disabled={saving || !title.trim() || !url.trim()}>
+          {initial ? 'Save' : 'Add'}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }

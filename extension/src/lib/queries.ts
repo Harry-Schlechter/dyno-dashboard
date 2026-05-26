@@ -116,6 +116,58 @@ export async function markQueueItem(id: string, status: 'opened' | 'completed' |
   if (error) console.warn('[dyno cockpit] markQueueItem', error.message);
 }
 
+// ─── Cockpit quick links ──────────────────────────────────────────────────────
+
+export interface CockpitLink {
+  id: string;
+  title: string;
+  url: string;
+  emoji: string | null;
+  sort_order: number;
+}
+
+export async function fetchLinks(): Promise<CockpitLink[]> {
+  const { data, error } = await getSupabase()
+    .from('cockpit_links')
+    .select('id, title, url, emoji, sort_order')
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true });
+  if (error) { console.warn('[dyno cockpit] fetchLinks', error.message); return []; }
+  return (data as CockpitLink[]) ?? [];
+}
+
+export async function createLink(args: { title: string; url: string; emoji?: string }): Promise<CockpitLink | null> {
+  const supa = getSupabase();
+  const { data: userData } = await supa.auth.getUser();
+  if (!userData.user) return null;
+  // Place at end by default.
+  const { data: existing } = await supa
+    .from('cockpit_links')
+    .select('sort_order')
+    .order('sort_order', { ascending: false })
+    .limit(1);
+  const nextOrder = ((existing?.[0]?.sort_order as number | undefined) ?? 0) + 1;
+  const { data, error } = await supa.from('cockpit_links').insert({
+    user_id: userData.user.id,
+    title: args.title,
+    url: args.url,
+    emoji: args.emoji ?? null,
+    sort_order: nextOrder,
+  }).select().single();
+  if (error) { console.warn('[dyno cockpit] createLink', error.message); return null; }
+  return data as CockpitLink;
+}
+
+export async function updateLink(id: string, patch: Partial<{ title: string; url: string; emoji: string | null; sort_order: number }>): Promise<void> {
+  const { error } = await getSupabase().from('cockpit_links').update(patch).eq('id', id);
+  if (error) console.warn('[dyno cockpit] updateLink', error.message);
+}
+
+export async function deleteLink(id: string): Promise<void> {
+  const { error } = await getSupabase().from('cockpit_links').delete().eq('id', id);
+  if (error) console.warn('[dyno cockpit] deleteLink', error.message);
+}
+
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
 export async function fetchLatestBriefing(): Promise<Briefing | null> {
