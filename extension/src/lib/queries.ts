@@ -168,6 +168,67 @@ export async function deleteLink(id: string): Promise<void> {
   if (error) console.warn('[dyno cockpit] deleteLink', error.message);
 }
 
+// ─── Notes ────────────────────────────────────────────────────────────────────
+
+export interface Note {
+  id: string;
+  title: string | null;
+  body: string;
+  tags: string[];
+  pinned: boolean;
+  author_kind: 'user' | 'agent';
+  author_agent: string | null;
+  archived_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export function noteTitle(n: Note): string {
+  if (n.title && n.title.trim()) return n.title.trim();
+  const firstLine = n.body.split('\n').find((l) => l.trim());
+  if (firstLine) return firstLine.replace(/^#+\s*/, '').slice(0, 80);
+  return 'Untitled';
+}
+
+export async function fetchNotes(limit = 200): Promise<Note[]> {
+  const { data, error } = await getSupabase()
+    .from('notes')
+    .select('*')
+    .is('archived_at', null)
+    .order('pinned', { ascending: false })
+    .order('updated_at', { ascending: false })
+    .limit(limit);
+  if (error) { console.warn('[dyno cockpit] fetchNotes', error.message); return []; }
+  return (data as Note[]) ?? [];
+}
+
+export async function createNote(patch: Partial<Pick<Note, 'title' | 'body' | 'tags' | 'pinned'>> = {}): Promise<Note | null> {
+  const supa = getSupabase();
+  const { data: userData } = await supa.auth.getUser();
+  if (!userData.user) return null;
+  const { data, error } = await supa.from('notes').insert({
+    user_id: userData.user.id,
+    title: patch.title ?? null,
+    body: patch.body ?? '',
+    tags: patch.tags ?? [],
+    pinned: patch.pinned ?? false,
+  }).select().single();
+  if (error) { console.warn('[dyno cockpit] createNote', error.message); return null; }
+  return data as Note;
+}
+
+export async function updateNote(id: string, patch: Partial<Pick<Note, 'title' | 'body' | 'tags' | 'pinned'>>): Promise<void> {
+  const { error } = await getSupabase().from('notes').update(patch).eq('id', id);
+  if (error) console.warn('[dyno cockpit] updateNote', error.message);
+}
+
+export async function archiveNote(id: string): Promise<void> {
+  const { error } = await getSupabase().from('notes')
+    .update({ archived_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) console.warn('[dyno cockpit] archiveNote', error.message);
+}
+
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
 export async function fetchLatestBriefing(): Promise<Briefing | null> {

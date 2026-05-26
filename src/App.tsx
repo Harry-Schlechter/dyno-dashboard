@@ -15,6 +15,8 @@ import FinancesPage from './pages/FinancesPage';
 import TasksPage from './pages/TasksPage';
 import CalendarPage from './pages/CalendarPage';
 import JournalPage from './pages/JournalPage';
+import NotesPage from './pages/NotesPage';
+import SettingsPage from './pages/SettingsPage';
 import CorrelationsPage from './pages/CorrelationsPage';
 import SpacesPage from './pages/SpacesPage';
 import VoicePage from './pages/VoicePage';
@@ -79,6 +81,8 @@ const DashboardRoutes: React.FC = () => {
       <Route path="/tasks"         element={ownerOnly(<TasksPage />)} />
       <Route path="/calendar"      element={ownerOnly(<CalendarPage />)} />
       <Route path="/journal"       element={ownerOnly(<JournalPage />)} />
+      <Route path="/notes"         element={ownerOnly(<NotesPage />)} />
+      <Route path="/settings"      element={<SettingsPage />} />
       <Route path="/correlations"  element={ownerOnly(<CorrelationsPage />)} />
       <Route path="/spaces"        element={<SpacesPage index />} />
       <Route path="/spaces/:slug"  element={<SpacesPage />} />

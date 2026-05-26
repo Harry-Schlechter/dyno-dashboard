@@ -3,9 +3,10 @@ import { Box, Tabs, Tab, Typography, Button, Stack } from '@mui/material';
 import { OpenInNew } from '@mui/icons-material';
 import { NowTab } from './tabs/NowTab';
 import { CaptureTab } from './tabs/CaptureTab';
+import { NotesTab } from './tabs/NotesTab';
 import { getCurrentSession } from '../lib/supabase';
 
-type TabKey = 'now' | 'capture';
+type TabKey = 'now' | 'capture' | 'notes';
 
 export function App() {
   const [active, setActive] = useState<TabKey>('now');
@@ -56,12 +57,14 @@ export function App() {
             sx={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
           >
             <Tab value="now" label="Now" />
-            <Tab value="capture" label="Capture & Focus" />
+            <Tab value="capture" label="Capture" />
+            <Tab value="notes" label="Notes" />
           </Tabs>
 
           <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
             {active === 'now' && <NowTab />}
             {active === 'capture' && <CaptureTab />}
+            {active === 'notes' && <NotesTab />}
           </Box>
         </>
       )}

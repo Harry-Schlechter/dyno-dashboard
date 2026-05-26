@@ -24,14 +24,13 @@ import {
   CalendarMonth,
   ViewTimeline,
   Book,
+  StickyNote2,
   Insights,
   AutoAwesome,
-  Logout,
-  Extension as ExtensionIcon,
+  Settings as SettingsIcon,
   Menu as MenuIcon,
 } from '@mui/icons-material';
 import { useAuth, isDemo } from '../../lib/auth';
-import { PairCockpitDialog } from '../PairCockpitDialog';
 
 const DRAWER_WIDTH = 200;
 
@@ -41,6 +40,7 @@ const ALL_NAV_ITEMS = [
   { label: 'Workouts', path: '/workouts', icon: FitnessCenter },
   { label: 'Sleep', path: '/sleep', icon: Bedtime },
   { label: 'Journal', path: '/journal', icon: Book },
+  { label: 'Notes', path: '/notes', icon: StickyNote2 },
   { label: 'Finances', path: '/finances', icon: AccountBalance },
   { label: 'Tasks', path: '/tasks', icon: CheckCircle },
   { label: 'Calendar', path: '/calendar', icon: CalendarMonth },
@@ -62,19 +62,13 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, onOpen }) => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const { user, logout } = useAuth();
-  const [pairOpen, setPairOpen] = React.useState(false);
+  const { user } = useAuth();
 
   const navItems = user?.role === 'guest' ? GUEST_NAV_ITEMS : ALL_NAV_ITEMS;
 
   const handleNav = (path: string) => {
     navigate(path);
     if (isMobile) onClose();
-  };
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
   };
 
   const drawerContent = (
@@ -150,24 +144,17 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, onOpen }) => {
         <>
           <Divider sx={{ my: 2, opacity: 0.1 }} />
           <List sx={{ py: 0 }}>
-            <ListItem disablePadding sx={{ mb: 0.5 }}>
-              <ListItemButton onClick={() => setPairOpen(true)} sx={{ borderRadius: '12px', py: 1, px: 1.5, minHeight: 0 }}>
-                <ListItemIcon sx={{ minWidth: 32, color: 'text.secondary', '& .MuiSvgIcon-root': { fontSize: '1.25rem' } }}>
-                  <ExtensionIcon />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Pair Cockpit"
-                  primaryTypographyProps={{ fontWeight: 500, fontSize: '0.9375rem' }}
-                />
-              </ListItemButton>
-            </ListItem>
             <ListItem disablePadding>
-              <ListItemButton onClick={handleLogout} sx={{ borderRadius: '12px', py: 1, px: 1.5, minHeight: 0 }}>
+              <ListItemButton
+                selected={location.pathname === '/settings'}
+                onClick={() => handleNav('/settings')}
+                sx={{ borderRadius: '12px', py: 1, px: 1.5, minHeight: 0 }}
+              >
                 <ListItemIcon sx={{ minWidth: 32, color: 'text.secondary', '& .MuiSvgIcon-root': { fontSize: '1.25rem' } }}>
-                  <Logout />
+                  <SettingsIcon />
                 </ListItemIcon>
                 <ListItemText
-                  primary="Sign out"
+                  primary="Settings"
                   secondary={user.email}
                   primaryTypographyProps={{ fontWeight: 500, fontSize: '0.9375rem' }}
                   secondaryTypographyProps={{ fontSize: '0.7rem', sx: { opacity: 0.5 } }}
@@ -177,7 +164,6 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, onOpen }) => {
           </List>
         </>
       )}
-      <PairCockpitDialog open={pairOpen} onClose={() => setPairOpen(false)} />
     </Box>
   );
 
@@ -188,14 +174,20 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, onOpen }) => {
           onClick={onOpen}
           aria-label="Open navigation menu"
           sx={{
-            display: { xs: 'block', md: 'none' },
+            display: { xs: 'flex', md: 'none' },
             position: 'fixed',
-            top: 16,
-            left: 16,
+            bottom: 24,
+            right: 24,
             zIndex: theme.zIndex.drawer - 1,
-            backgroundColor: 'background.paper',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
-            '&:hover': { backgroundColor: 'background.paper' },
+            width: 56,
+            height: 56,
+            background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+            color: '#fff',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08)',
+            '&:hover': {
+              background: `linear-gradient(135deg, ${theme.palette.primary.light}, ${theme.palette.secondary.main})`,
+              boxShadow: '0 10px 28px rgba(0,0,0,0.55)',
+            },
           }}
         >
           <MenuIcon />

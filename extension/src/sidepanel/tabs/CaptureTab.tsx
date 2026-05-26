@@ -7,12 +7,13 @@ import {
 import {
   PlayArrow, Stop, Edit, Refresh, Send, OpenInNew,
   CheckCircleOutline, Close, AutoAwesome, AttachFile,
-  Add, Delete, Link as LinkIcon,
+  Add, Delete, Link as LinkIcon, StickyNote2,
 } from '@mui/icons-material';
 import {
   fetchActiveFocus, startFocus, endFocus,
   createCapture, fetchQueue, markQueueItem,
   fetchLinks, createLink, updateLink, deleteLink,
+  createNote,
   FocusSession, QueueItem, CockpitLink,
 } from '../../lib/queries';
 import { AGENTS, AGENT_BY_ID } from '../../lib/agents';
@@ -174,6 +175,30 @@ function CaptureBox({ tabCtx, focus, onSubmit }: { tabCtx: TabContext | null; fo
   const [forcedAgent, setForcedAgent] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [justSent, setJustSent] = useState(false);
+  const [justNoted, setJustNoted] = useState(false);
+
+  const handleSaveNote = async () => {
+    if (!content.trim()) return;
+    setSending(true);
+    // Compose body: capture content first, then any attached page link or selection.
+    const lines = [content.trim()];
+    if (attachPage && tabCtx?.url) {
+      lines.push('');
+      lines.push(`[${tabCtx.title || tabCtx.url}](${tabCtx.url})`);
+    }
+    if (attachPage && tabCtx?.selection) {
+      lines.push('');
+      lines.push('> ' + tabCtx.selection.replace(/\n/g, '\n> '));
+    }
+    const note = await createNote({ body: lines.join('\n') });
+    setSending(false);
+    if (note) {
+      setContent(''); setAsk(''); setShowAsk(false); setForcedAgent(null);
+      setJustNoted(true);
+      setTimeout(() => setJustNoted(false), 1500);
+      onSubmit();
+    }
+  };
 
   const handleSend = async () => {
     if (!content.trim()) return;
@@ -285,6 +310,17 @@ function CaptureBox({ tabCtx, focus, onSubmit }: { tabCtx: TabContext | null; fo
             </Button>
           )}
           <Box sx={{ flex: 1 }} />
+          <Tooltip title="Save as note instead of sending">
+            <Button
+              variant="outlined"
+              size="small"
+              endIcon={justNoted ? <CheckCircleOutline /> : <StickyNote2 />}
+              onClick={handleSaveNote}
+              disabled={!content.trim() || sending}
+            >
+              {justNoted ? 'Saved' : 'Note'}
+            </Button>
+          </Tooltip>
           <Button
             variant="contained"
             size="small"
@@ -296,7 +332,7 @@ function CaptureBox({ tabCtx, focus, onSubmit }: { tabCtx: TabContext | null; fo
           </Button>
         </Stack>
         <Typography variant="caption" sx={{ display: 'block', color: 'text.disabled', mt: 0.5, fontSize: '0.65rem' }}>
-          ⌘+Enter to send
+          ⌘+Enter to send · Note button saves it instead of routing
         </Typography>
       </CardContent>
     </Card>

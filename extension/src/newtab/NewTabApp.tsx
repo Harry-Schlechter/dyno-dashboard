@@ -15,6 +15,7 @@ import {
   createCapture,
   fetchLinks, createLink, updateLink, deleteLink, CockpitLink,
 } from '../lib/queries';
+import { QuickNoteCard } from './QuickNoteCard';
 import { getCurrentSession } from '../lib/supabase';
 import { DASHBOARD_URL } from '../lib/config';
 import type { Task } from '../lib/types';
@@ -79,6 +80,7 @@ export function NewTabApp() {
       <HeaderRow />
       <FocusPill focus={focus} onChange={setFocus} loading={loading} />
       <CaptureSearchBox focus={focus} onCapture={reload} />
+      <QuickNoteCard />
       <Stack spacing={2.5} sx={{ mt: 4 }}>
         <LinksRow links={links} loading={loading} onChange={setLinks} />
         <TasksRow tasks={tasks} loading={loading} onComplete={async (id) => {
