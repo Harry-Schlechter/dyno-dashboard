@@ -27,9 +27,11 @@ import {
   Insights,
   AutoAwesome,
   Logout,
+  Extension as ExtensionIcon,
   Menu as MenuIcon,
 } from '@mui/icons-material';
 import { useAuth, isDemo } from '../../lib/auth';
+import { PairCockpitDialog } from '../PairCockpitDialog';
 
 const DRAWER_WIDTH = 200;
 
@@ -61,6 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, onOpen }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { user, logout } = useAuth();
+  const [pairOpen, setPairOpen] = React.useState(false);
 
   const navItems = user?.role === 'guest' ? GUEST_NAV_ITEMS : ALL_NAV_ITEMS;
 
@@ -147,6 +150,17 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, onOpen }) => {
         <>
           <Divider sx={{ my: 2, opacity: 0.1 }} />
           <List sx={{ py: 0 }}>
+            <ListItem disablePadding sx={{ mb: 0.5 }}>
+              <ListItemButton onClick={() => setPairOpen(true)} sx={{ borderRadius: '12px', py: 1, px: 1.5, minHeight: 0 }}>
+                <ListItemIcon sx={{ minWidth: 32, color: 'text.secondary', '& .MuiSvgIcon-root': { fontSize: '1.25rem' } }}>
+                  <ExtensionIcon />
+                </ListItemIcon>
+                <ListItemText
+                  primary="Pair Cockpit"
+                  primaryTypographyProps={{ fontWeight: 500, fontSize: '0.9375rem' }}
+                />
+              </ListItemButton>
+            </ListItem>
             <ListItem disablePadding>
               <ListItemButton onClick={handleLogout} sx={{ borderRadius: '12px', py: 1, px: 1.5, minHeight: 0 }}>
                 <ListItemIcon sx={{ minWidth: 32, color: 'text.secondary', '& .MuiSvgIcon-root': { fontSize: '1.25rem' } }}>
@@ -163,6 +177,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, onOpen }) => {
           </List>
         </>
       )}
+      <PairCockpitDialog open={pairOpen} onClose={() => setPairOpen(false)} />
     </Box>
   );
 

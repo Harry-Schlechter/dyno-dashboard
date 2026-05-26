@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "Dyno Cockpit",
+  "version": "0.1.0",
+  "description": "Side panel for the Dyno dashboard — capture, focus, agents.",
+  "permissions": [
+    "sidePanel",
+    "storage",
+    "tabs",
+    "bookmarks",
+    "contextMenus",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://*.supabase.co/*",
+    "https://dyno.harryschlechter.com/*",
+    "http://localhost/*",
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Open Dyno Cockpit"
+  },
+  "side_panel": {
+    "default_path": "src/sidepanel/index.html"
+  },
+  "options_page": "src/options/index.html",
+  "omnibox": {
+    "keyword": "dyno"
+  }
+}
