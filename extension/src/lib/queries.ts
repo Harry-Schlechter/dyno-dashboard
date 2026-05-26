@@ -1,0 +1,183 @@
+import { getSupabase } from './supabase';
+import type { Briefing, Task, Observation, MealRow } from './types';
+
+// ─── Focus sessions ───────────────────────────────────────────────────────────
+
+export interface FocusSession {
+  id: string;
+  title: string;
+  description: string | null;
+  started_at: string;
+  ended_at: string | null;
+  notes: any[];
+}
+
+export async function fetchActiveFocus(): Promise<FocusSession | null> {
+  const { data, error } = await getSupabase()
+    .from('focus_sessions')
+    .select('*')
+    .is('ended_at', null)
+    .order('started_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) { console.warn('[dyno cockpit] fetchActiveFocus', error.message); return null; }
+  return data as FocusSession | null;
+}
+
+export async function startFocus(title: string, description?: string): Promise<FocusSession | null> {
+  // End any existing active session first.
+  const supa = getSupabase();
+  const { data: userData } = await supa.auth.getUser();
+  if (!userData.user) return null;
+  await supa.from('focus_sessions')
+    .update({ ended_at: new Date().toISOString() })
+    .is('ended_at', null)
+    .eq('user_id', userData.user.id);
+  const { data, error } = await supa.from('focus_sessions')
+    .insert({ user_id: userData.user.id, title, description: description ?? null })
+    .select()
+    .single();
+  if (error) { console.warn('[dyno cockpit] startFocus', error.message); return null; }
+  return data as FocusSession;
+}
+
+export async function endFocus(id: string): Promise<void> {
+  const { error } = await getSupabase()
+    .from('focus_sessions')
+    .update({ ended_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) console.warn('[dyno cockpit] endFocus', error.message);
+}
+
+// ─── Captures ─────────────────────────────────────────────────────────────────
+
+export interface CreateCaptureArgs {
+  content: string;
+  ask?: string;
+  page_url?: string;
+  page_title?: string;
+  page_selection?: string;
+  page_metadata?: Record<string, any>;
+  source?: 'capture-box' | 'selection-bar' | 'omnibox' | 'context-menu' | 'site-suggestion';
+  focus_session_id?: string | null;
+  forced_agent?: string | null;
+}
+
+export async function createCapture(args: CreateCaptureArgs): Promise<{ ok: boolean; error?: string }> {
+  const supa = getSupabase();
+  const { data: userData } = await supa.auth.getUser();
+  if (!userData.user) return { ok: false, error: 'Not authenticated' };
+  const { error } = await supa.from('captures').insert({
+    user_id: userData.user.id,
+    content: args.content,
+    ask: args.ask ?? null,
+    page_url: args.page_url ?? null,
+    page_title: args.page_title ?? null,
+    page_selection: args.page_selection ?? null,
+    page_metadata: args.page_metadata ?? {},
+    source: args.source ?? 'capture-box',
+    focus_session_id: args.focus_session_id ?? null,
+    forced_agent: args.forced_agent ?? null,
+  });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+// ─── Agent queue ──────────────────────────────────────────────────────────────
+
+export interface QueueItem {
+  id: string;
+  agent_id: string;
+  title: string;
+  body: string | null;
+  url: string | null;
+  metadata: Record<string, any>;
+  status: 'pending' | 'opened' | 'completed' | 'dismissed';
+  created_at: string;
+}
+
+export async function fetchQueue(): Promise<QueueItem[]> {
+  const { data, error } = await getSupabase()
+    .from('agent_queue')
+    .select('id, agent_id, title, body, url, metadata, status, created_at')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false })
+    .limit(20);
+  if (error) { console.warn('[dyno cockpit] fetchQueue', error.message); return []; }
+  return (data as QueueItem[]) ?? [];
+}
+
+export async function markQueueItem(id: string, status: 'opened' | 'completed' | 'dismissed'): Promise<void> {
+  const updates: Record<string, any> = { status };
+  if (status === 'opened') updates.opened_at = new Date().toISOString();
+  if (status === 'completed') updates.completed_at = new Date().toISOString();
+  if (status === 'dismissed') updates.dismissed_at = new Date().toISOString();
+  const { error } = await getSupabase().from('agent_queue').update(updates).eq('id', id);
+  if (error) console.warn('[dyno cockpit] markQueueItem', error.message);
+}
+
+const todayISO = () => new Date().toISOString().slice(0, 10);
+
+export async function fetchLatestBriefing(): Promise<Briefing | null> {
+  const { data, error } = await getSupabase()
+    .from('agent_briefings')
+    .select('*')
+    .order('generated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) {
+    console.warn('[dyno cockpit] fetchLatestBriefing', error.message);
+    return null;
+  }
+  return data as Briefing | null;
+}
+
+export async function fetchPendingTasks(): Promise<Task[]> {
+  const { data, error } = await getSupabase()
+    .from('tasks')
+    .select('*')
+    .eq('status', 'pending')
+    .order('priority', { ascending: true })
+    .order('due_date', { ascending: true, nullsFirst: false });
+  if (error) {
+    console.warn('[dyno cockpit] fetchPendingTasks', error.message);
+    return [];
+  }
+  return (data as Task[]) ?? [];
+}
+
+export async function completeTask(id: string): Promise<{ ok: boolean; error?: string }> {
+  const { error } = await getSupabase()
+    .from('tasks')
+    .update({ status: 'completed', completed_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+export async function fetchLatestObservation(): Promise<Observation | null> {
+  const { data, error } = await getSupabase()
+    .from('agent_observations')
+    .select('id, agent_id, kind, severity, title, body, created_at')
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) {
+    console.warn('[dyno cockpit] fetchLatestObservation', error.message);
+    return null;
+  }
+  return data as Observation | null;
+}
+
+export async function fetchTodaysMeals(): Promise<MealRow[]> {
+  const { data, error } = await getSupabase()
+    .from('meals')
+    .select('id, date, calories, protein_g, carbs_g, fat_g')
+    .eq('date', todayISO());
+  if (error) {
+    console.warn('[dyno cockpit] fetchTodaysMeals', error.message);
+    return [];
+  }
+  return (data as MealRow[]) ?? [];
+}

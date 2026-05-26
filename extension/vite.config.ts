@@ -1,23 +1,14 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
-import { copyFileSync, mkdirSync, readdirSync, statSync } from 'fs';
-import { join } from 'path';
 
-// Multi-entry build: sidepanel (React), options (HTML), background (service worker).
-// Each entry lands as its own file under dist/ with predictable names referenced by manifest.json.
-// `public/` is copied to dist/ by Vite automatically (manifest.json lives there).
+// Multi-entry build:
+//   sidepanel + options: React HTML entries (hashed bundles, fine).
+//   background, content-selection, content-site-suggester: plain script files
+//     that must be referenced from manifest.json by stable filenames, so we
+//     pin their entryFileNames below.
 export default defineConfig({
-  plugins: [
-    react(),
-    {
-      name: 'dyno-copy-icons',
-      closeBundle() {
-        // If we add icons later, they go in public/icons and get copied automatically.
-        // Placeholder: nothing to do for now.
-      },
-    },
-  ],
+  plugins: [react()],
   publicDir: 'public',
   build: {
     outDir: 'dist',
@@ -27,10 +18,14 @@ export default defineConfig({
         sidepanel: resolve(__dirname, 'src/sidepanel/index.html'),
         options: resolve(__dirname, 'src/options/index.html'),
         background: resolve(__dirname, 'src/background/service-worker.ts'),
+        'content-selection': resolve(__dirname, 'src/content/selection-bar.ts'),
+        'content-site-suggester': resolve(__dirname, 'src/content/site-suggester.ts'),
       },
       output: {
         entryFileNames: (chunk) => {
           if (chunk.name === 'background') return 'background.js';
+          if (chunk.name === 'content-selection') return 'content-selection.js';
+          if (chunk.name === 'content-site-suggester') return 'content-site-suggester.js';
           return 'assets/[name]-[hash].js';
         },
         chunkFileNames: 'assets/[name]-[hash].js',

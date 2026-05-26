@@ -41,45 +41,29 @@ export function OptionsApp() {
     setLoading(true);
     try {
       const supa = getSupabase();
-      const { data, error: lookupErr } = await supa
-        .from('extension_pairing')
-        .select('id, user_id, payload, expires_at, consumed_at')
-        .eq('code', trimmed)
-        .maybeSingle();
+      // SECURITY DEFINER function bypasses RLS for code-only lookups, validates
+      // expiry/consumed state, and marks consumed atomically. See migration 022.
+      const { data: payload, error: rpcErr } = await supa.rpc('redeem_pairing_code', {
+        p_code: trimmed,
+      });
 
-      if (lookupErr) {
-        setError(`Lookup failed: ${lookupErr.message}`);
+      if (rpcErr) {
+        setError(`Lookup failed: ${rpcErr.message}`);
         setLoading(false);
         return;
       }
-      if (!data) {
-        setError('Code not found. Generate a new one from the dashboard.');
-        setLoading(false);
-        return;
-      }
-      if (data.consumed_at) {
-        setError('This code has already been used. Generate a fresh one.');
-        setLoading(false);
-        return;
-      }
-      if (new Date(data.expires_at) < new Date()) {
-        setError('This code has expired. Generate a fresh one.');
+      if (!payload) {
+        setError('Code not found, already used, or expired. Generate a fresh one.');
         setLoading(false);
         return;
       }
 
-      const payload = data.payload as { access_token: string; refresh_token: string };
-      const result = await setSessionFromPairing(payload);
+      const result = await setSessionFromPairing(payload as { access_token: string; refresh_token: string });
       if (!result.ok) {
         setError(`Could not apply session: ${result.error}`);
         setLoading(false);
         return;
       }
-
-      // Mark consumed (best-effort — RLS only lets the owner update, which we now are post-setSession)
-      await supa.from('extension_pairing')
-        .update({ consumed_at: new Date().toISOString() })
-        .eq('id', data.id);
 
       const session = await getCurrentSession();
       if (session?.user) {
