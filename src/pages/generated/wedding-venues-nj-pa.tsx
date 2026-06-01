@@ -40,7 +40,7 @@ const WeddingVenuesNjPa: React.FC = () => (
         <StatTile label="Target Guests" value="225" accent="#5B8DEF" />
       </Grid>
       <Grid size={{ xs: 6, sm: 3 }}>
-        <StatTile label="Price Range" value="$33k-$102k" accent="#26A69A" hint="Across all venues" />
+        <StatTile label="Price Range" value="$33k-$97k" accent="#26A69A" hint="Across all venues" />
       </Grid>
       <Grid size={{ xs: 6, sm: 3 }}>
         <StatTile label="Capacity Warnings" value="3" accent="#FF9800" hint="Under 225 target" />
@@ -50,31 +50,6 @@ const WeddingVenuesNjPa: React.FC = () => (
     {/* PREMIUM ESTATES */}
     <SectionHeader title="Premium Estates (Full Capacity)" hint="225-300 guests · All-inclusive, overnight options" />
     <Grid container spacing={2.5} sx={{ mb: 3 }}>
-      {/* ELKINS ESTATE */}
-      <Grid size={{ xs: 12, md: 6 }}>
-        <InfoCard title="Elkins Estate (Elstowe Manor)">
-          <KeyValueGrid columns={2} items={[
-            { label: 'Location', value: 'Elkins Park, PA · ~35 min from Yardley' },
-            { label: 'Capacity', value: 'Fits 225 (300 max)' },
-            { label: 'Price Est.', value: '$79k-$102k+' },
-            { label: 'Catering', value: 'All-inclusive in-house' },
-            { label: 'Ceremony', value: 'Indoor ballroom or outdoor staircase' },
-            { label: 'Overnight', value: '69 rooms (15 complimentary)' },
-            { label: 'Extras', value: 'Valet + maitre d\' included' },
-            { label: 'Rating', value: '4.9/5' },
-          ]} />
-          <Box sx={{ mt: 1.5, fontSize: '0.85rem', color: 'text.secondary' }}>
-            Pros: Most stunning venue, turnkey all-inclusive, overnight + valet
-          </Box>
-          <Box sx={{ fontSize: '0.85rem', color: 'text.secondary' }}>
-            Cons: Most expensive, 24% service surcharge
-          </Box>
-          <Box sx={{ mt: 1.5 }}>
-            <LinkOut emoji="🌐" href="https://www.bylandmark.com/venues/elkins-estate/" label="Book Tour: bylandmark.com" hint="Daily by appointment" />
-          </Box>
-        </InfoCard>
-      </Grid>
-
       {/* LAKE HOUSE INN */}
       <Grid size={{ xs: 12, md: 6 }}>
         <InfoCard title="Lake House Inn — CLOSEST">
@@ -96,6 +71,31 @@ const WeddingVenuesNjPa: React.FC = () => (
           </Box>
           <Box sx={{ mt: 1.5 }}>
             <LinkOut emoji="📞" href="tel:2152582556" label="Call: 215-258-2556" hint="thelhi.com/booking" />
+          </Box>
+        </InfoCard>
+      </Grid>
+
+      {/* PEARL S. BUCK ESTATE */}
+      <Grid size={{ xs: 12, md: 6 }}>
+        <InfoCard title="Pearl S. Buck Estate">
+          <KeyValueGrid columns={2} items={[
+            { label: 'Location', value: 'Dublin, PA (Bucks County) · ~35 min from Yardley' },
+            { label: 'Capacity', value: 'Fits 225 (300 max)' },
+            { label: 'Price Est.', value: 'By quote (exclusive catering)' },
+            { label: 'Catering', value: 'Jamie Hollander Gourmet Catering (exclusive)' },
+            { label: 'Style', value: '60-acre historic stone farmhouse estate, sweeping lawns' },
+            { label: 'Ceremony', value: 'Multiple outdoor options + cocktail hour on patio' },
+            { label: 'Overnight', value: 'No' },
+            { label: 'Rating', value: '4.8/5 WeddingWire (43 reviews)' },
+          ]} />
+          <Box sx={{ mt: 1.5, fontSize: '0.85rem', color: 'text.secondary' }}>
+            Pros: Unique historic estate, excellent food (Jamie Hollander raved about), beautiful Bucks County setting, close to Lake House Inn for back-to-back tours
+          </Box>
+          <Box sx={{ fontSize: '0.85rem', color: 'text.secondary' }}>
+            Cons: Pricing not public (quote required), exclusive caterer (no flexibility), primarily outdoor (covered/indoor backups available)
+          </Box>
+          <Box sx={{ mt: 1.5 }}>
+            <LinkOut emoji="📧" href="mailto:events@jhollandergourmet.com" label="Email: events@jhollandergourmet.com" hint="pearlsbuck.org/events-weddings" />
           </Box>
         </InfoCard>
       </Grid>
@@ -234,17 +234,6 @@ const WeddingVenuesNjPa: React.FC = () => (
     <SectionHeader title="Quick Comparison" hint="All 7 venues at a glance" />
     <Grid container spacing={2} sx={{ mb: 3 }}>
       <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-        <InfoCard title="Elkins Estate" dense>
-          <KeyValueGrid columns={1} items={[
-            { label: 'Distance', value: '~35 min' },
-            { label: 'Capacity', value: '300 max' },
-            { label: 'Est. Cost', value: '$79k-$102k+' },
-            { label: 'BYO Alcohol', value: 'No' },
-            { label: 'Overnight', value: '69 rooms' },
-          ]} />
-        </InfoCard>
-      </Grid>
-      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
         <InfoCard title="Manor House Commonwealth" dense>
           <KeyValueGrid columns={1} items={[
             { label: 'Distance', value: '~30 min' },
@@ -289,6 +278,17 @@ const WeddingVenuesNjPa: React.FC = () => (
         </InfoCard>
       </Grid>
       <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+        <InfoCard title="Pearl S. Buck Estate" dense>
+          <KeyValueGrid columns={1} items={[
+            { label: 'Distance', value: '~35 min' },
+            { label: 'Capacity', value: '300 max' },
+            { label: 'Est. Cost', value: 'TBD (quote req.)' },
+            { label: 'BYO Alcohol', value: 'No' },
+            { label: 'Overnight', value: 'No' },
+          ]} />
+        </InfoCard>
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
         <InfoCard title="Cairnwood Estate" accent="#FF9800" dense>
           <KeyValueGrid columns={1} items={[
             { label: 'Distance', value: '~25-30 min' },
@@ -317,20 +317,20 @@ const WeddingVenuesNjPa: React.FC = () => (
     <Box sx={{ mb: 1 }}>
       <InfoCard accent="#2196F3">
         <Box sx={{ fontSize: '0.9rem', fontWeight: 600 }}>
-          Peak season Saturday. Call all 5 venues immediately to confirm tour availability.
+          Peak season Saturday. Call all 5 venues immediately to confirm tour availability. Pearl S. Buck: email events@jhollandergourmet.com or call 215-936-5791.
         </Box>
       </InfoCard>
     </Box>
     <Box sx={{ mb: 3 }}>
-      <InfoCard title="Yardley to Villanova (10am-3:30pm)">
+      <InfoCard title="Yardley to Horsham (10am-3:15pm)">
         <TimelineList entries={[
           { when: '10:00 AM', title: 'Depart Yardley', description: 'Start point', status: 'upcoming' },
           { when: '10:30 AM', title: 'Lake House Inn', description: 'Perkasie · 30 min north · Closest venue — book early', status: 'upcoming', tag: 'CLOSEST' },
-          { when: '11:30 AM', title: 'Cairnwood Estate', description: 'Bryn Athyn · 30 min south · Sat open house 11am-3pm · Over capacity', status: 'upcoming', tag: 'OPEN HOUSE' },
-          { when: '12:30 PM', title: 'Elkins Estate', description: 'Elkins Park · 10 min SW · Most expensive, turnkey all-inclusive', status: 'upcoming' },
-          { when: '1:30 PM', title: 'Manor House at Commonwealth', description: 'Horsham · 15 min west · Best value estate, legendary food', status: 'upcoming' },
-          { when: '2:30 PM', title: 'Appleford Estate', description: 'Villanova · 25 min further west · Most stunning gardens · Over capacity', status: 'upcoming' },
-          { when: '~3:30 PM', title: 'Route complete', description: '5 venues in 5.5 hours', status: 'upcoming' },
+          { when: '11:15 AM', title: 'Pearl S. Buck Estate', description: 'Dublin · 10 min from Lake House · Historic 60-acre estate, Jamie Hollander catering', status: 'upcoming' },
+          { when: '12:15 PM', title: 'Cairnwood Estate', description: 'Bryn Athyn · 30 min south · Sat open house 11am-3pm · Over capacity', status: 'upcoming', tag: 'OPEN HOUSE' },
+          { when: '1:15 PM', title: 'Manor House at Commonwealth', description: 'Horsham · 15 min west · Best value estate, legendary food', status: 'upcoming' },
+          { when: '2:15 PM', title: 'Appleford Estate', description: 'Villanova · 25 min further · Most stunning gardens · Over capacity', status: 'upcoming' },
+          { when: '~3:15 PM', title: 'Route complete', description: '5 venues in 5.25 hours', status: 'upcoming' },
         ]} />
       </InfoCard>
     </Box>
@@ -350,8 +350,8 @@ const WeddingVenuesNjPa: React.FC = () => (
       <Grid size={{ xs: 12, md: 6 }}>
         <ChecklistCard title="Call to Confirm Tours (June 20)" items={[
           { label: 'Lake House Inn: 215-258-2556', hint: 'CLOSEST — prioritize early booking', done: false },
+          { label: 'Pearl S. Buck: events@jhollandergourmet.com', hint: '215-936-5791 · pearlsbuck.org/events-weddings', done: false },
           { label: 'Cairnwood Estate: 215-947-2004', hint: 'Sat/Sun 11am-3pm open house + Wed 6-8pm', done: false },
-          { label: 'Elkins Estate: bylandmark.com', hint: 'Book appointment online', done: false },
           { label: 'Manor House: 215-672-4554', hint: 'commonwealthmanor.com', done: false },
           { label: 'Appleford: info@applefordestate.com', hint: 'applefordestate.com/contact', done: false },
         ]} />
@@ -361,13 +361,13 @@ const WeddingVenuesNjPa: React.FC = () => (
           { label: 'Capacity decision: 3 venues under 225', hint: 'Cut list to 200 OR expand search OR negotiate', done: false },
           { label: 'Schedule Pomme + Mansion tours separately', hint: 'Different weekend — both ~50 min away', done: false },
           { label: 'Compare BYO savings vs. all-inclusive', hint: 'Appleford + Cairnwood = BYO alcohol', done: false },
-          { label: 'Discuss overnight preference with Sydney', hint: 'Elkins (69 rooms) vs Lake House (30-40 guests)', done: false },
+          { label: 'Discuss overnight preference with Sydney', hint: 'Lake House Inn only has on-site overnight (30-40 guests)', done: false },
         ]} />
       </Grid>
     </Grid>
 
     <QuoteBlock
-      text="Book Lake House and Cairnwood tours first — closest, best food-to-cost ratio. Garden venues (Appleford, Elkins) are stunning but tight on capacity or budget."
+      text="Book Lake House and Cairnwood tours first — closest, best food-to-cost ratio. Pearl S. Buck pairs perfectly with Lake House on June 20 (10 min apart). Elkins cut — too far over budget."
       attribution="builder · venue scout"
     />
   </Box>
