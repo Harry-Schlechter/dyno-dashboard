@@ -44,7 +44,7 @@ const ALL_NAV_ITEMS = [
   { label: 'Finances', path: '/finances', icon: AccountBalance },
   { label: 'Tasks', path: '/tasks', icon: CheckCircle },
   { label: 'Calendar', path: '/calendar', icon: CalendarMonth },
-  { label: 'Correlations', path: '/correlations', icon: Insights },
+  { label: 'Patterns', path: '/patterns', icon: Insights },
   { label: 'Spaces', path: '/spaces', icon: AutoAwesome },
 ];
 

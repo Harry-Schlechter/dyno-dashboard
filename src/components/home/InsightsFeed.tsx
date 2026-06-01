@@ -98,16 +98,6 @@ const InsightCard: React.FC<CardProps> = ({ obs, onReact, onDismiss }) => {
                   bgcolor: `${agentMeta.color}1a`, color: agentMeta.color,
                 }}
               />
-              {obs.source === 'stats' && (
-                <Chip
-                  size="small"
-                  label="auto"
-                  sx={{
-                    height: 20, fontSize: '0.6rem',
-                    bgcolor: 'rgba(125,133,144,0.15)', color: 'text.secondary',
-                  }}
-                />
-              )}
             </Stack>
             <Typography variant="body2" fontWeight={600} sx={{ lineHeight: 1.3 }}>
               {obs.title}
