@@ -6,10 +6,10 @@
 // 7 venues with capacity, pricing, and June 20 tour route for Harry & Sydney's 2028 wedding
 
 import React from 'react';
-import { Box, Grid, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
-import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
+import { Box, Grid, Stack } from '@mui/material';
 import {
-  PageHero, SectionHeader, InfoCard, KeyValueGrid, LinkOut, QuoteBlock,
+  PageHero, SectionHeader, InfoCard, KeyValueGrid, LinkOut,
+  QuoteBlock, TimelineList, ChecklistCard, StatTile,
 } from '../../components/generated';
 
 const WeddingVenuesNjPa: React.FC = () => (
@@ -23,478 +23,351 @@ const WeddingVenuesNjPa: React.FC = () => (
     />
 
     {/* CAPACITY WARNING */}
-    <InfoCard accent="#FF9800">
-      <Box sx={{ fontSize: '0.9rem', fontWeight: 600 }}>
-        ⚠️ Capacity Alert: 3 venues max out at 200–220 guests (Appleford, Pomme, Cairnwood). Need to cut 5–25 guests or expand search.
-      </Box>
-    </InfoCard>
+    <Box sx={{ mb: 2 }}>
+      <InfoCard accent="#FF9800">
+        <Box sx={{ fontSize: '0.9rem', fontWeight: 600 }}>
+          Capacity Alert: 3 venues max out at 200-220 guests (Appleford, Pomme, Cairnwood). Need to cut 5-25 guests or expand search.
+        </Box>
+      </InfoCard>
+    </Box>
 
-    {/* VENUE CARDS — Top Tier */}
-    <SectionHeader title="Premium Estates (Full Capacity · 225–300)" hint="All-inclusive, overnight options, iconic settings" />
+    {/* QUICK STATS */}
+    <Grid container spacing={2.5} sx={{ mb: 3 }}>
+      <Grid size={{ xs: 6, sm: 3 }}>
+        <StatTile label="Venues Scouted" value="7" accent="#D946EF" />
+      </Grid>
+      <Grid size={{ xs: 6, sm: 3 }}>
+        <StatTile label="Target Guests" value="225" accent="#5B8DEF" />
+      </Grid>
+      <Grid size={{ xs: 6, sm: 3 }}>
+        <StatTile label="Price Range" value="$33k-$102k" accent="#26A69A" hint="Across all venues" />
+      </Grid>
+      <Grid size={{ xs: 6, sm: 3 }}>
+        <StatTile label="Capacity Warnings" value="3" accent="#FF9800" hint="Under 225 target" />
+      </Grid>
+    </Grid>
+
+    {/* PREMIUM ESTATES */}
+    <SectionHeader title="Premium Estates (Full Capacity)" hint="225-300 guests · All-inclusive, overnight options" />
     <Grid container spacing={2.5} sx={{ mb: 3 }}>
       {/* ELKINS ESTATE */}
       <Grid size={{ xs: 12, md: 6 }}>
-        <Paper elevation={0} sx={{ p: 2.5, border: '1px solid rgba(255,255,255,0.07)', borderRadius: '8px', bgcolor: 'background.paper' }}>
-          <Box sx={{ mb: 1.5 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
-              🏛️ Elkins Estate
-            </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-              Elkins Park, PA · ~35 min from Yardley
-            </Typography>
-          </Box>
+        <InfoCard title="Elkins Estate (Elstowe Manor)">
           <KeyValueGrid columns={2} items={[
+            { label: 'Location', value: 'Elkins Park, PA · ~35 min from Yardley' },
             { label: 'Capacity', value: 'Fits 225 (300 max)' },
-            { label: 'Price Est.', value: '$79k–$102k+' },
+            { label: 'Price Est.', value: '$79k-$102k+' },
             { label: 'Catering', value: 'All-inclusive in-house' },
-            { label: 'Ceremony', value: 'Indoor or outdoor staircase' },
-            { label: 'Overnight', value: 'Yes (69 rooms, 15 free)' },
+            { label: 'Ceremony', value: 'Indoor ballroom or outdoor staircase' },
+            { label: 'Overnight', value: '69 rooms (15 complimentary)' },
+            { label: 'Extras', value: 'Valet + maitre d\' included' },
             { label: 'Rating', value: '4.9/5' },
           ]} />
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="body2" sx={{ mb: 1, fontSize: '0.85rem', fontWeight: 600 }}>Highlights:</Typography>
-            <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'text.secondary', mb: 1 }}>
-              ✅ Most stunning venue · Turnkey all-inclusive · Overnight + valet included
-            </Typography>
-            <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'text.secondary' }}>
-              ❌ Most expensive · 24% service surcharge
-            </Typography>
+          <Box sx={{ mt: 1.5, fontSize: '0.85rem', color: 'text.secondary' }}>
+            Pros: Most stunning venue, turnkey all-inclusive, overnight + valet
           </Box>
-          <Box sx={{ mt: 2 }}>
-            <LinkOut emoji="🌐" href="https://www.bylandmark.com/venues/elkins-estate/" label="Tour: bylandmark.com" hint="Book appointment" />
+          <Box sx={{ fontSize: '0.85rem', color: 'text.secondary' }}>
+            Cons: Most expensive, 24% service surcharge
           </Box>
-        </Paper>
+          <Box sx={{ mt: 1.5 }}>
+            <LinkOut emoji="🌐" href="https://www.bylandmark.com/venues/elkins-estate/" label="Book Tour: bylandmark.com" hint="Daily by appointment" />
+          </Box>
+        </InfoCard>
       </Grid>
 
       {/* LAKE HOUSE INN */}
       <Grid size={{ xs: 12, md: 6 }}>
-        <Paper elevation={0} sx={{ p: 2.5, border: '1px solid rgba(255,255,255,0.07)', borderRadius: '8px', bgcolor: 'background.paper' }}>
-          <Box sx={{ mb: 1.5 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
-              🏖️ Lake House Inn
-            </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-              Perkasie, PA (Bucks County) · ~25–30 min — CLOSEST
-            </Typography>
-          </Box>
+        <InfoCard title="Lake House Inn — CLOSEST">
           <KeyValueGrid columns={2} items={[
+            { label: 'Location', value: 'Perkasie, PA (Bucks County) · ~25-30 min' },
             { label: 'Capacity', value: 'Fits 225 (300+ max)' },
-            { label: 'Price Est.', value: '$90k–$97.5k+ (in-season Sat)' },
-            { label: 'Catering', value: 'All-inclusive + sommelier' },
-            { label: 'Ceremony', value: 'Lakefront with sunset views' },
-            { label: 'Overnight', value: 'Yes (30–40 guests)' },
-            { label: 'Rating', value: '4.8/5 (260 reviews)' },
+            { label: 'Price Est.', value: '$90k-$97.5k+ (in-season Sat)' },
+            { label: 'Off-Season', value: 'Sat from $42,800 · Sun from $30k' },
+            { label: 'Catering', value: 'All-inclusive + sommelier wine cellar tasting' },
+            { label: 'Ceremony', value: 'Lakefront with sunset views + rain plan' },
+            { label: 'Overnight', value: '30-40 guests + 2-hr after party + breakfast' },
+            { label: 'Rating', value: '4.8/5 WeddingWire (260 reviews)' },
           ]} />
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="body2" sx={{ mb: 1, fontSize: '0.85rem', fontWeight: 600 }}>Highlights:</Typography>
-            <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'text.secondary', mb: 1 }}>
-              ✅ Closest venue · Breathtaking lakefront · Most all-inclusive (5-hr open bar, wine cellar tasting)
-            </Typography>
-            <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'text.secondary' }}>
-              ❌ 2nd most expensive in-season
-            </Typography>
+          <Box sx={{ mt: 1.5, fontSize: '0.85rem', color: 'text.secondary' }}>
+            Pros: Closest, breathtaking lakefront, most all-inclusive (5-hr open bar, wine cellar)
           </Box>
-          <Box sx={{ mt: 2 }}>
+          <Box sx={{ fontSize: '0.85rem', color: 'text.secondary' }}>
+            Cons: 2nd most expensive in-season
+          </Box>
+          <Box sx={{ mt: 1.5 }}>
             <LinkOut emoji="📞" href="tel:2152582556" label="Call: 215-258-2556" hint="thelhi.com/booking" />
           </Box>
-        </Paper>
+        </InfoCard>
       </Grid>
     </Grid>
 
-    {/* VENUE CARDS — Mid Tier */}
-    <SectionHeader title="Value Estates (Full Capacity · 225–240)" hint="Exceptional food, excellent value" />
+    {/* VALUE ESTATES */}
+    <SectionHeader title="Value Estates (Full Capacity)" hint="225-360 guests · Exceptional food, best value" />
     <Grid container spacing={2.5} sx={{ mb: 3 }}>
       {/* MANOR HOUSE AT COMMONWEALTH */}
       <Grid size={{ xs: 12, md: 6 }}>
-        <Paper elevation={0} sx={{ p: 2.5, border: '1px solid rgba(255,255,255,0.07)', borderRadius: '8px', bgcolor: 'background.paper' }}>
-          <Box sx={{ mb: 1.5 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
-              🏡 Manor House at Commonwealth
-            </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-              Horsham, PA · ~30 min
-            </Typography>
-          </Box>
+        <InfoCard title="Manor House at Commonwealth">
           <KeyValueGrid columns={2} items={[
+            { label: 'Location', value: 'Horsham, PA · ~30 min' },
             { label: 'Capacity', value: 'Fits 225 (240 max)' },
-            { label: 'Price Est.', value: '$40k–$50k ($175–200/pp)' },
-            { label: 'Catering', value: 'In-house legendary' },
-            { label: 'Ceremony', value: 'Gardens, Veranda, or Ballroom' },
+            { label: 'Price Est.', value: '$40k-$50k (~$175-200/pp)' },
+            { label: 'Catering', value: 'In-house legendary cocktail hr + late-night snacks' },
+            { label: 'Ceremony', value: 'Gardens, covered Veranda (golf views), or Ballroom' },
             { label: 'Overnight', value: 'No' },
-            { label: 'Rating', value: '4.9/5 (185 reviews WeddingWire)' },
+            { label: 'Rating', value: '4.9/5 WeddingWire (185 reviews)' },
           ]} />
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="body2" sx={{ mb: 1, fontSize: '0.85rem', fontWeight: 600 }}>Highlights:</Typography>
-            <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'text.secondary', mb: 1 }}>
-              ✅ Best value estate · Exclusive full property · Legendary cocktail hour + late-night snacks · Custom menus
-            </Typography>
-            <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'text.secondary' }}>
-              ℹ️ Golf views, no overnight
-            </Typography>
+          <Box sx={{ mt: 1.5, fontSize: '0.85rem', color: 'text.secondary' }}>
+            Pros: Best value estate, full property exclusively yours, exceptional food, custom menus
           </Box>
-          <Box sx={{ mt: 2 }}>
+          <Box sx={{ mt: 1.5 }}>
             <LinkOut emoji="📞" href="tel:2156724554" label="Call: 215-672-4554" hint="commonwealthmanor.com" />
           </Box>
-        </Paper>
+        </InfoCard>
       </Grid>
 
       {/* MANSION ON MAIN STREET */}
       <Grid size={{ xs: 12, md: 6 }}>
-        <Paper elevation={0} sx={{ p: 2.5, border: '1px solid rgba(255,255,255,0.07)', borderRadius: '8px', bgcolor: 'background.paper' }}>
-          <Box sx={{ mb: 1.5 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
-              🎭 Mansion on Main Street
-            </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-              Voorhees, NJ · ~50 min (crosses state line)
-            </Typography>
-          </Box>
+        <InfoCard title="Mansion on Main Street">
           <KeyValueGrid columns={2} items={[
-            { label: 'Capacity', value: 'Fits 225+ (360 max)' },
-            { label: 'Price Est.', value: '$32.6k–$49.5k ($145–220/pp)' },
-            { label: 'Catering', value: 'In-house award-winning' },
-            { label: 'Ceremony', value: 'Waterfall garden or indoor' },
+            { label: 'Location', value: 'Voorhees, NJ · ~50 min (crosses state line)' },
+            { label: 'Capacity', value: 'Fits 225 easily (360 max)' },
+            { label: 'Price Est.', value: '$32.6k-$49.5k ($145-220/pp)' },
+            { label: 'Catering', value: 'Award-winning in-house, legendary cocktail hour' },
+            { label: 'Ceremony', value: 'Outdoor waterfall garden or indoor Pavilion' },
             { label: 'Overnight', value: 'No' },
-            { label: 'Rating', value: '1000+ five-star reviews' },
+            { label: 'Reviews', value: '1,000+ five-star reviews' },
           ]} />
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="body2" sx={{ mb: 1, fontSize: '0.85rem', fontWeight: 600 }}>Highlights:</Typography>
-            <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'text.secondary', mb: 1 }}>
-              ✅ Most price-competitive · Legendary food + white-glove service · Waterfall garden + chandeliers
-            </Typography>
-            <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'text.secondary' }}>
-              ℹ️ NJ location (furthest), banquet hall feel
-            </Typography>
+          <Box sx={{ mt: 1.5, fontSize: '0.85rem', color: 'text.secondary' }}>
+            Pros: Most price-competitive, legendary food, white-gloved service
           </Box>
-          <Box sx={{ mt: 2 }}>
-            <LinkOut emoji="🌐" href="https://www.mansiononmainstreet.com" label="mansiononmainstreet.com" hint="1000+ reviews" />
+          <Box sx={{ fontSize: '0.85rem', color: 'text.secondary' }}>
+            Cons: NJ location (furthest), banquet hall feel
           </Box>
-        </Paper>
+          <Box sx={{ mt: 1.5 }}>
+            <LinkOut emoji="🌐" href="https://www.mansiononmainstreet.com" label="mansiononmainstreet.com" hint="1000+ five-star reviews" />
+          </Box>
+        </InfoCard>
       </Grid>
     </Grid>
 
-    {/* CAPACITY WARNING VENUES */}
-    <SectionHeader title="⚠️ Capacity-Constrained (Max 200–220)" hint="Require 5–25 guest cuts or need to expand search" />
+    {/* CAPACITY-CONSTRAINED VENUES */}
+    <SectionHeader title="Capacity-Constrained (Max 200-220)" hint="Require 5-25 guest cuts — BYO alcohol options" />
     <Grid container spacing={2.5} sx={{ mb: 3 }}>
       {/* APPLEFORD ESTATE */}
       <Grid size={{ xs: 12, md: 6 }}>
-        <Paper elevation={0} sx={{ p: 2.5, border: '2px solid #FF9800', borderRadius: '8px', bgcolor: 'background.paper' }}>
-          <Box sx={{ mb: 1.5 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5, color: '#FF9800' }}>
-              🌳 Appleford Estate ⚠️ MAX 200
-            </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-              Villanova, PA · ~50 min (25 guests over limit)
-            </Typography>
-          </Box>
+        <InfoCard title="Appleford Estate — MAX 200" accent="#FF9800">
           <KeyValueGrid columns={2} items={[
-            { label: 'Capacity', value: '⚠️ 200 MAX (cut 25)' },
-            { label: 'Price Est.', value: '$40k–$50k+ ($160–180/pp)' },
-            { label: 'Alcohol', value: 'BYO — huge savings' },
-            { label: 'Ceremony', value: 'Garden (ponds, waterfall, tree allée)' },
+            { label: 'Location', value: 'Villanova, PA · ~50 min' },
+            { label: 'Capacity', value: 'MAX 200 (25 over target)' },
+            { label: 'Price Est.', value: '$40k-$50k+ ($160-180/pp x200)' },
+            { label: 'Alcohol', value: 'BYO — huge savings, caterers provide bartenders' },
             { label: 'Caterers', value: '6 preferred options to choose from' },
+            { label: 'Ceremony', value: 'Garden (ponds, waterfall, tree allee)' },
+            { label: 'Extras', value: 'Permanent tent Apr-Nov, indoor estate house' },
             { label: 'Overnight', value: 'No' },
           ]} />
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="body2" sx={{ mb: 1, fontSize: '0.85rem', fontWeight: 600 }}>Highlights:</Typography>
-            <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'text.secondary', mb: 1 }}>
-              ✅ Most stunning garden (ponds + waterfall) · BYO alcohol = cost savings · 6 caterer flexibility
-            </Typography>
-            <Typography variant="body2" sx={{ fontSize: '0.85rem', color: '#FF9800', fontWeight: 600 }}>
-              ❌ 25 guests over target — requires cutting list
-            </Typography>
+          <Box sx={{ mt: 1.5, fontSize: '0.85rem', color: 'text.secondary' }}>
+            Pros: Most stunning garden setting, BYO alcohol = cost savings, 6 caterer options
           </Box>
-          <Box sx={{ mt: 2 }}>
-            <LinkOut emoji="📧" href="mailto:info@applefordestate.com" label="Email: info@applefordestate.com" hint="applefordestate.com" />
+          <Box sx={{ fontSize: '0.85rem', color: '#FF9800', fontWeight: 600 }}>
+            Requires cutting 25 guests from list
           </Box>
-        </Paper>
+          <Box sx={{ mt: 1.5 }}>
+            <LinkOut emoji="📧" href="mailto:info@applefordestate.com" label="Email: info@applefordestate.com" hint="applefordestate.com/contact" />
+          </Box>
+        </InfoCard>
       </Grid>
 
       {/* CAIRNWOOD ESTATE */}
       <Grid size={{ xs: 12, md: 6 }}>
-        <Paper elevation={0} sx={{ p: 2.5, border: '2px solid #FF9800', borderRadius: '8px', bgcolor: 'background.paper' }}>
-          <Box sx={{ mb: 1.5 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5, color: '#FF9800' }}>
-              🏰 Cairnwood Estate ⚠️ MAX ~220
-            </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-              Bryn Athyn, PA · ~25–30 min (5–25 guests over limit)
-            </Typography>
-          </Box>
+        <InfoCard title="Cairnwood Estate — MAX ~220" accent="#FF9800">
           <KeyValueGrid columns={2} items={[
-            { label: 'Capacity', value: '⚠️ ~220 MAX (cut 0–25)' },
-            { label: 'Price Est.', value: '$33k–$44k ($130–150/pp)' },
-            { label: 'Alcohol', value: 'BYO — no minimums' },
-            { label: 'Ceremony', value: 'Great Hall or gardens' },
-            { label: 'Reception', value: 'Extends to midnight' },
-            { label: 'Overnight', value: 'No' },
+            { label: 'Location', value: 'Bryn Athyn, PA · ~25-30 min' },
+            { label: 'Capacity', value: 'MAX ~220 (5-25 over target)' },
+            { label: 'Price Est.', value: '$33k-$44k ($130-150/pp x220)' },
+            { label: 'Alcohol', value: 'BYO — no guest minimum, flexible cancellation' },
+            { label: 'Style', value: 'French Chateau / Beaux Arts 1890s, 26,000 sqft' },
+            { label: 'Ceremony', value: 'Great Hall (stone fireplace, gilded staircase) or gardens' },
+            { label: 'Extras', value: 'Reception to midnight, fire pit, market lighting' },
+            { label: 'Rating', value: '4.9/5 WeddingWire (104 reviews)' },
           ]} />
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="body2" sx={{ mb: 1, fontSize: '0.85rem', fontWeight: 600 }}>Highlights:</Typography>
-            <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'text.secondary', mb: 1 }}>
-              ✅ Most affordable estate · 1890s Beaux Arts mansion · BYO + no minimums · Open house Sat/Sun 11am–3pm · Iconic staircase
-            </Typography>
-            <Typography variant="body2" sx={{ fontSize: '0.85rem', color: '#FF9800', fontWeight: 600 }}>
-              ⚠️ Slightly over max (5–25 guests)
-            </Typography>
+          <Box sx={{ mt: 1.5, fontSize: '0.85rem', color: 'text.secondary' }}>
+            Pros: Most affordable estate, BYO, no minimums, flexible cancellation, iconic staircase
           </Box>
-          <Box sx={{ mt: 2 }}>
+          <Box sx={{ fontSize: '0.85rem', color: '#FF9800', fontWeight: 600 }}>
+            Slightly over max (5-25 guests)
+          </Box>
+          <Stack spacing={1} sx={{ mt: 1.5 }}>
             <LinkOut emoji="📞" href="tel:2159472004" label="Call: 215-947-2004" hint="cairnwood.org" />
-          </Box>
-        </Paper>
+            <LinkOut emoji="📧" href="mailto:info@cairnwood.org" label="Email: info@cairnwood.org" hint="Open house Sat/Sun 11am-3pm + Wed 6-8pm" />
+          </Stack>
+        </InfoCard>
       </Grid>
 
       {/* POMME */}
       <Grid size={{ xs: 12, md: 6 }}>
-        <Paper elevation={0} sx={{ p: 2.5, border: '2px solid #FF9800', borderRadius: '8px', bgcolor: 'background.paper' }}>
-          <Box sx={{ mb: 1.5 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5, color: '#FF9800' }}>
-              🍎 Pomme ⚠️ MAX 200
-            </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-              Radnor, PA · ~50 min (25 guests over limit)
-            </Typography>
-          </Box>
+        <InfoCard title="Pomme — MAX 200" accent="#FF9800">
           <KeyValueGrid columns={2} items={[
-            { label: 'Capacity', value: '⚠️ 200 MAX (cut 25)' },
-            { label: 'Price Est.', value: '$45k–$65k all-in peak' },
+            { label: 'Location', value: 'Radnor, PA · ~50 min' },
+            { label: 'Capacity', value: 'MAX 200 (25 over target)' },
+            { label: 'Price Est.', value: '$45k-$65k all-in peak (from $20,575)' },
             { label: 'Catering', value: 'Peachtree Catering exclusively' },
             { label: 'Alcohol', value: 'No BYO — in-house only' },
-            { label: 'Ceremony', value: 'Ballroom or creek-side veranda' },
-            { label: 'Photos', value: 'Bridge + swans on pond' },
+            { label: 'Ceremony', value: 'Indoor ballroom or creek-side veranda' },
+            { label: 'Photos', value: 'Bridge + swans on pond, pet-friendly' },
+            { label: 'Rating', value: '4.9/5 Zola (all 5-star)' },
           ]} />
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="body2" sx={{ mb: 1, fontSize: '0.85rem', fontWeight: 600 }}>Highlights:</Typography>
-            <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'text.secondary', mb: 1 }}>
-              ✅ Unique woodsy-chic aesthetic · All-inclusive simplicity · Pet-friendly · 4.9/5 Zola (all 5-star)
-            </Typography>
-            <Typography variant="body2" sx={{ fontSize: '0.85rem', color: '#FF9800', fontWeight: 600 }}>
-              ❌ 25 guests over, exclusive caterer, no outside alcohol
-            </Typography>
+          <Box sx={{ mt: 1.5, fontSize: '0.85rem', color: 'text.secondary' }}>
+            Pros: Unique woodsy-chic aesthetic, all-inclusive simplicity, pet-friendly, on-site coordinator
           </Box>
-          <Box sx={{ mt: 2 }}>
-            <LinkOut emoji="🌐" href="https://www.pommeradnor.com" label="pommeradnor.com" hint="Pet-friendly, all-in pricing" />
+          <Box sx={{ fontSize: '0.85rem', color: '#FF9800', fontWeight: 600 }}>
+            Requires cutting 25 guests, exclusive caterer, no outside alcohol
           </Box>
-        </Paper>
+          <Box sx={{ mt: 1.5 }}>
+            <LinkOut emoji="🌐" href="https://www.pommeradnor.com" label="pommeradnor.com" hint="Pet-friendly, creek/bridge/swans" />
+          </Box>
+        </InfoCard>
       </Grid>
     </Grid>
 
-    {/* COMPARISON TABLE */}
+    {/* COMPARISON TABLE using KeyValueGrid per venue */}
     <SectionHeader title="Quick Comparison" hint="All 7 venues at a glance" />
-    <TableContainer component={Paper} sx={{ mb: 3, bgcolor: 'background.paper', border: '1px solid rgba(255,255,255,0.07)' }}>
-      <Table>
-        <TableHead sx={{ bgcolor: 'rgba(255,255,255,0.05)' }}>
-          <TableRow>
-            <TableCell sx={{ fontWeight: 700, fontSize: '0.85rem' }}>Venue</TableCell>
-            <TableCell align="center" sx={{ fontWeight: 700, fontSize: '0.85rem' }}>Distance</TableCell>
-            <TableCell align="center" sx={{ fontWeight: 700, fontSize: '0.85rem' }}>Capacity</TableCell>
-            <TableCell align="right" sx={{ fontWeight: 700, fontSize: '0.85rem' }}>Est. Cost</TableCell>
-            <TableCell align="center" sx={{ fontWeight: 700, fontSize: '0.85rem' }}>BYO?</TableCell>
-            <TableCell align="center" sx={{ fontWeight: 700, fontSize: '0.85rem' }}>Overnight</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          <TableRow>
-            <TableCell sx={{ fontSize: '0.85rem' }}>Elkins Estate</TableCell>
-            <TableCell align="center" sx={{ fontSize: '0.85rem' }}>~35 min</TableCell>
-            <TableCell align="center" sx={{ fontSize: '0.85rem', color: '#26A69A', fontWeight: 600 }}>✓ 300 max</TableCell>
-            <TableCell align="right" sx={{ fontSize: '0.85rem' }}>$79k–$102k+</TableCell>
-            <TableCell align="center" sx={{ fontSize: '0.85rem' }}>No</TableCell>
-            <TableCell align="center" sx={{ fontSize: '0.85rem' }}>✓ 69 rooms</TableCell>
-          </TableRow>
-          <TableRow sx={{ bgcolor: 'rgba(255,255,255,0.02)' }}>
-            <TableCell sx={{ fontSize: '0.85rem' }}>Manor House Commonwealth</TableCell>
-            <TableCell align="center" sx={{ fontSize: '0.85rem' }}>~30 min</TableCell>
-            <TableCell align="center" sx={{ fontSize: '0.85rem', color: '#26A69A', fontWeight: 600 }}>✓ 240 max</TableCell>
-            <TableCell align="right" sx={{ fontSize: '0.85rem' }}>$40k–$50k</TableCell>
-            <TableCell align="center" sx={{ fontSize: '0.85rem' }}>No</TableCell>
-            <TableCell align="center" sx={{ fontSize: '0.85rem' }}>No</TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell sx={{ fontSize: '0.85rem' }}>Mansion on Main St</TableCell>
-            <TableCell align="center" sx={{ fontSize: '0.85rem' }}>~50 min (NJ)</TableCell>
-            <TableCell align="center" sx={{ fontSize: '0.85rem', color: '#26A69A', fontWeight: 600 }}>✓ 360 max</TableCell>
-            <TableCell align="right" sx={{ fontSize: '0.85rem' }}>$33k–$50k</TableCell>
-            <TableCell align="center" sx={{ fontSize: '0.85rem' }}>No</TableCell>
-            <TableCell align="center" sx={{ fontSize: '0.85rem' }}>No</TableCell>
-          </TableRow>
-          <TableRow sx={{ bgcolor: 'rgba(255,255,255,0.02)' }}>
-            <TableCell sx={{ fontSize: '0.85rem', color: '#FF9800', fontWeight: 600 }}>⚠️ Appleford</TableCell>
-            <TableCell align="center" sx={{ fontSize: '0.85rem' }}>~50 min</TableCell>
-            <TableCell align="center" sx={{ fontSize: '0.85rem', color: '#FF9800', fontWeight: 600 }}>⚠️ 200 max</TableCell>
-            <TableCell align="right" sx={{ fontSize: '0.85rem' }}>$40k–$50k+</TableCell>
-            <TableCell align="center" sx={{ fontSize: '0.85rem', color: '#26A69A', fontWeight: 600 }}>✓ BYO</TableCell>
-            <TableCell align="center" sx={{ fontSize: '0.85rem' }}>No</TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell sx={{ fontSize: '0.85rem' }}>Lake House Inn</TableCell>
-            <TableCell align="center" sx={{ fontSize: '0.85rem', color: '#26A69A', fontWeight: 600 }}>~25–30 min ✓</TableCell>
-            <TableCell align="center" sx={{ fontSize: '0.85rem', color: '#26A69A', fontWeight: 600 }}>✓ 300+ max</TableCell>
-            <TableCell align="right" sx={{ fontSize: '0.85rem' }}>$90k–$97.5k+</TableCell>
-            <TableCell align="center" sx={{ fontSize: '0.85rem' }}>No</TableCell>
-            <TableCell align="center" sx={{ fontSize: '0.85rem' }}>✓ 30–40</TableCell>
-          </TableRow>
-          <TableRow sx={{ bgcolor: 'rgba(255,255,255,0.02)' }}>
-            <TableCell sx={{ fontSize: '0.85rem', color: '#FF9800', fontWeight: 600 }}>⚠️ Cairnwood</TableCell>
-            <TableCell align="center" sx={{ fontSize: '0.85rem' }}>~25–30 min</TableCell>
-            <TableCell align="center" sx={{ fontSize: '0.85rem', color: '#FF9800', fontWeight: 600 }}>⚠️ ~220 max</TableCell>
-            <TableCell align="right" sx={{ fontSize: '0.85rem' }}>$33k–$44k</TableCell>
-            <TableCell align="center" sx={{ fontSize: '0.85rem', color: '#26A69A', fontWeight: 600 }}>✓ BYO</TableCell>
-            <TableCell align="center" sx={{ fontSize: '0.85rem' }}>No</TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell sx={{ fontSize: '0.85rem', color: '#FF9800', fontWeight: 600 }}>⚠️ Pomme</TableCell>
-            <TableCell align="center" sx={{ fontSize: '0.85rem' }}>~50 min</TableCell>
-            <TableCell align="center" sx={{ fontSize: '0.85rem', color: '#FF9800', fontWeight: 600 }}>⚠️ 200 max</TableCell>
-            <TableCell align="right" sx={{ fontSize: '0.85rem' }}>$45k–$65k</TableCell>
-            <TableCell align="center" sx={{ fontSize: '0.85rem' }}>No</TableCell>
-            <TableCell align="center" sx={{ fontSize: '0.85rem' }}>No</TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
-    </TableContainer>
+    <Grid container spacing={2} sx={{ mb: 3 }}>
+      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+        <InfoCard title="Elkins Estate" dense>
+          <KeyValueGrid columns={1} items={[
+            { label: 'Distance', value: '~35 min' },
+            { label: 'Capacity', value: '300 max' },
+            { label: 'Est. Cost', value: '$79k-$102k+' },
+            { label: 'BYO Alcohol', value: 'No' },
+            { label: 'Overnight', value: '69 rooms' },
+          ]} />
+        </InfoCard>
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+        <InfoCard title="Manor House Commonwealth" dense>
+          <KeyValueGrid columns={1} items={[
+            { label: 'Distance', value: '~30 min' },
+            { label: 'Capacity', value: '240 max' },
+            { label: 'Est. Cost', value: '$40k-$50k' },
+            { label: 'BYO Alcohol', value: 'No' },
+            { label: 'Overnight', value: 'No' },
+          ]} />
+        </InfoCard>
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+        <InfoCard title="Mansion on Main St" dense>
+          <KeyValueGrid columns={1} items={[
+            { label: 'Distance', value: '~50 min (NJ)' },
+            { label: 'Capacity', value: '360 max' },
+            { label: 'Est. Cost', value: '$33k-$50k' },
+            { label: 'BYO Alcohol', value: 'No' },
+            { label: 'Overnight', value: 'No' },
+          ]} />
+        </InfoCard>
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+        <InfoCard title="Appleford Estate" accent="#FF9800" dense>
+          <KeyValueGrid columns={1} items={[
+            { label: 'Distance', value: '~50 min' },
+            { label: 'Capacity', value: 'MAX 200' },
+            { label: 'Est. Cost', value: '$40k-$50k+' },
+            { label: 'BYO Alcohol', value: 'Yes' },
+            { label: 'Overnight', value: 'No' },
+          ]} />
+        </InfoCard>
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+        <InfoCard title="Lake House Inn" dense>
+          <KeyValueGrid columns={1} items={[
+            { label: 'Distance', value: '~25-30 min (closest)' },
+            { label: 'Capacity', value: '300+ max' },
+            { label: 'Est. Cost', value: '$90k-$97.5k+' },
+            { label: 'BYO Alcohol', value: 'No' },
+            { label: 'Overnight', value: '30-40 guests' },
+          ]} />
+        </InfoCard>
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+        <InfoCard title="Cairnwood Estate" accent="#FF9800" dense>
+          <KeyValueGrid columns={1} items={[
+            { label: 'Distance', value: '~25-30 min' },
+            { label: 'Capacity', value: 'MAX ~220' },
+            { label: 'Est. Cost', value: '$33k-$44k' },
+            { label: 'BYO Alcohol', value: 'Yes' },
+            { label: 'Overnight', value: 'No' },
+          ]} />
+        </InfoCard>
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+        <InfoCard title="Pomme" accent="#FF9800" dense>
+          <KeyValueGrid columns={1} items={[
+            { label: 'Distance', value: '~50 min' },
+            { label: 'Capacity', value: 'MAX 200' },
+            { label: 'Est. Cost', value: '$45k-$65k' },
+            { label: 'BYO Alcohol', value: 'No' },
+            { label: 'Overnight', value: 'No' },
+          ]} />
+        </InfoCard>
+      </Grid>
+    </Grid>
 
     {/* JUNE 20 TOUR ROUTE */}
     <SectionHeader title="June 20 Tour Route" hint="Peak season Saturday — confirm all tours ASAP" />
-    <InfoCard accent="#2196F3">
-      <Box sx={{ fontSize: '0.9rem' }}>
-        <strong>📍 Important:</strong> Peak season Saturday. Call all 5 venues immediately to confirm tour availability.
-      </Box>
-    </InfoCard>
-    <Box sx={{ mt: 2.5, mb: 3 }}>
-      <Paper elevation={0} sx={{ p: 2.5, border: '1px solid rgba(255,255,255,0.07)', borderRadius: '8px', bgcolor: 'background.paper' }}>
-        <Stack spacing={2}>
-          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
-            <Typography sx={{ fontWeight: 700, color: '#26A69A', minW: 60 }}>10:00am</Typography>
-            <Box>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>Depart Yardley</Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>Start point</Typography>
-            </Box>
-          </Box>
-
-          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
-            <Typography sx={{ fontWeight: 700, color: '#26A69A', minW: 60 }}>10:30am</Typography>
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>Lake House Inn</Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>Perkasie · 30 min north · ⚠️ CLOSEST · Book early</Typography>
-            </Box>
-          </Box>
-
-          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
-            <Typography sx={{ fontWeight: 700, color: '#26A69A', minW: 60 }}>11:30am</Typography>
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>Cairnwood Estate</Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>Bryn Athyn · 30 min south · ⚠️ OVER CAPACITY · Saturday open house 11am–3pm</Typography>
-            </Box>
-          </Box>
-
-          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
-            <Typography sx={{ fontWeight: 700, color: '#26A69A', minW: 60 }}>12:30pm</Typography>
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>Elkins Estate</Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>Elkins Park · 10 min SW · Most expensive, turnkey</Typography>
-            </Box>
-          </Box>
-
-          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
-            <Typography sx={{ fontWeight: 700, color: '#26A69A', minW: 60 }}>1:30pm</Typography>
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>Manor House at Commonwealth</Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>Horsham · 15 min west · Best value, legendary food</Typography>
-            </Box>
-          </Box>
-
-          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
-            <Typography sx={{ fontWeight: 700, color: '#26A69A', minW: 60 }}>2:30pm</Typography>
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>Appleford Estate</Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>Villanova · 25 min further west · Most stunning gardens · ⚠️ OVER CAPACITY</Typography>
-            </Box>
-          </Box>
-
-          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
-            <Typography sx={{ fontWeight: 700, color: '#26A69A', minW: 60 }}>~3:30pm</Typography>
-            <Box>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>Route complete</Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>5 venues in 5.5 hours</Typography>
-            </Box>
-          </Box>
-        </Stack>
-      </Paper>
+    <Box sx={{ mb: 1 }}>
+      <InfoCard accent="#2196F3">
+        <Box sx={{ fontSize: '0.9rem', fontWeight: 600 }}>
+          Peak season Saturday. Call all 5 venues immediately to confirm tour availability.
+        </Box>
+      </InfoCard>
+    </Box>
+    <Box sx={{ mb: 3 }}>
+      <InfoCard title="Yardley to Villanova (10am-3:30pm)">
+        <TimelineList entries={[
+          { when: '10:00 AM', title: 'Depart Yardley', description: 'Start point', status: 'upcoming' },
+          { when: '10:30 AM', title: 'Lake House Inn', description: 'Perkasie · 30 min north · Closest venue — book early', status: 'upcoming', tag: 'CLOSEST' },
+          { when: '11:30 AM', title: 'Cairnwood Estate', description: 'Bryn Athyn · 30 min south · Sat open house 11am-3pm · Over capacity', status: 'upcoming', tag: 'OPEN HOUSE' },
+          { when: '12:30 PM', title: 'Elkins Estate', description: 'Elkins Park · 10 min SW · Most expensive, turnkey all-inclusive', status: 'upcoming' },
+          { when: '1:30 PM', title: 'Manor House at Commonwealth', description: 'Horsham · 15 min west · Best value estate, legendary food', status: 'upcoming' },
+          { when: '2:30 PM', title: 'Appleford Estate', description: 'Villanova · 25 min further west · Most stunning gardens · Over capacity', status: 'upcoming' },
+          { when: '~3:30 PM', title: 'Route complete', description: '5 venues in 5.5 hours', status: 'upcoming' },
+        ]} />
+      </InfoCard>
     </Box>
 
-    <InfoCard accent="#FF9800">
-      <Box sx={{ fontSize: '0.9rem', lineHeight: 1.6 }}>
-        <strong>Separate day required:</strong> Pomme (Radnor) + Mansion on Main St (NJ) — too far to fit June 20 route. Schedule for different weekend.
-      </Box>
-    </InfoCard>
+    <Box sx={{ mb: 3 }}>
+      <InfoCard accent="#FF9800">
+        <Box sx={{ fontSize: '0.9rem' }}>
+          <Box sx={{ fontWeight: 600, mb: 0.5 }}>Separate day required</Box>
+          Pomme (Radnor) + Mansion on Main St (NJ) — too far for June 20 route. Schedule for a different weekend.
+        </Box>
+      </InfoCard>
+    </Box>
 
-    {/* ACTION ITEMS */}
+    {/* NEXT STEPS */}
     <SectionHeader title="Next Steps" />
-    <Stack spacing={1.5} sx={{ mb: 3 }}>
-      <Accordion disableGutters elevation={0} sx={{ bgcolor: 'background.paper', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '8px !important', '&:before': { display: 'none' } }}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ minHeight: 48 }}>
-          <Typography variant="body2" fontWeight={600}>📞 Call all 5 venues (June 20 route) to confirm tours</Typography>
-        </AccordionSummary>
-        <AccordionDetails sx={{ pt: 0 }}>
-          <Stack spacing={1} sx={{ fontSize: '0.9rem' }}>
-            <Box>
-              <strong>Lake House Inn:</strong> 215-258-2556 (CLOSEST — prioritize early booking)
-            </Box>
-            <Box>
-              <strong>Cairnwood Estate:</strong> 215-947-2004 (Saturday 11am–3pm open house + Wed 6–8pm)
-            </Box>
-            <Box>
-              <strong>Elkins Estate:</strong> bylandmark.com/venues/elkins-estate/ (Book appointment online)
-            </Box>
-            <Box>
-              <strong>Manor House Commonwealth:</strong> 215-672-4554 (commonwealthmanor.com)
-            </Box>
-            <Box>
-              <strong>Appleford Estate:</strong> info@applefordestate.com (applefordestate.com/contact)
-            </Box>
-          </Stack>
-        </AccordionDetails>
-      </Accordion>
-
-      <Accordion disableGutters elevation={0} sx={{ bgcolor: 'background.paper', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '8px !important', '&:before': { display: 'none' } }}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ minHeight: 48 }}>
-          <Typography variant="body2" fontWeight={600}>⚠️ Capacity decision: 3 venues are 5–25 guests over limit</Typography>
-        </AccordionSummary>
-        <AccordionDetails sx={{ pt: 0 }}>
-          <Stack spacing={1} sx={{ fontSize: '0.9rem' }}>
-            <Box>
-              <strong>Option A: Cut the list</strong> — Trim to 200 guests (removes 3 capacity-constrained venues: Appleford, Cairnwood, Pomme)
-            </Box>
-            <Box>
-              <strong>Option B: Expand search</strong> — Look for larger-capacity venues to avoid cuts, or negotiate flexibility with venues
-            </Box>
-            <Box>
-              <strong>Recommended:</strong> Keep all 7 as backups. Appleford + Cairnwood have the best BYO alcohol rates if you want to negotiate capacity.
-            </Box>
-          </Stack>
-        </AccordionDetails>
-      </Accordion>
-
-      <Accordion disableGutters elevation={0} sx={{ bgcolor: 'background.paper', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '8px !important', '&:before': { display: 'none' } }}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ minHeight: 48 }}>
-          <Typography variant="body2" fontWeight={600}>🗓️ Schedule follow-ups: Pomme + Mansion on Main St separately</Typography>
-        </AccordionSummary>
-        <AccordionDetails sx={{ pt: 0 }}>
-          <Stack spacing={1} sx={{ fontSize: '0.9rem' }}>
-            <Box>
-              <strong>Pomme (Radnor, PA):</strong> pommeradnor.com — All-in pricing, pet-friendly, all 5-star Zola reviews
-            </Box>
-            <Box>
-              <strong>Mansion on Main St (Voorhees, NJ):</strong> mansiononmainstreet.com — Best value ($145–220/pp), 1000+ five-star reviews, award-winning food
-            </Box>
-          </Stack>
-        </AccordionDetails>
-      </Accordion>
-    </Stack>
+    <Grid container spacing={2.5} sx={{ mb: 3 }}>
+      <Grid size={{ xs: 12, md: 6 }}>
+        <ChecklistCard title="Call to Confirm Tours (June 20)" items={[
+          { label: 'Lake House Inn: 215-258-2556', hint: 'CLOSEST — prioritize early booking', done: false },
+          { label: 'Cairnwood Estate: 215-947-2004', hint: 'Sat/Sun 11am-3pm open house + Wed 6-8pm', done: false },
+          { label: 'Elkins Estate: bylandmark.com', hint: 'Book appointment online', done: false },
+          { label: 'Manor House: 215-672-4554', hint: 'commonwealthmanor.com', done: false },
+          { label: 'Appleford: info@applefordestate.com', hint: 'applefordestate.com/contact', done: false },
+        ]} />
+      </Grid>
+      <Grid size={{ xs: 12, md: 6 }}>
+        <ChecklistCard title="Other Action Items" items={[
+          { label: 'Capacity decision: 3 venues under 225', hint: 'Cut list to 200 OR expand search OR negotiate', done: false },
+          { label: 'Schedule Pomme + Mansion tours separately', hint: 'Different weekend — both ~50 min away', done: false },
+          { label: 'Compare BYO savings vs. all-inclusive', hint: 'Appleford + Cairnwood = BYO alcohol', done: false },
+          { label: 'Discuss overnight preference with Sydney', hint: 'Elkins (69 rooms) vs Lake House (30-40 guests)', done: false },
+        ]} />
+      </Grid>
+    </Grid>
 
     <QuoteBlock
-      text="Book Lake House and Cairnwood tours first — those are your strongest options given location, food, and cost. The garden venues (Appleford, Elkins) are stunning but tight on capacity and budget."
+      text="Book Lake House and Cairnwood tours first — closest, best food-to-cost ratio. Garden venues (Appleford, Elkins) are stunning but tight on capacity or budget."
       attribution="builder · venue scout"
     />
   </Box>
