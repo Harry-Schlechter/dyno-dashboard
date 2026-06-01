@@ -45,4 +45,14 @@ export const GENERATED_PAGES: GeneratedPageEntry[] = [
     summary: 'Harry + Sydney · Jun 12–18 · Rainier + Olympic National Parks.',
     component: React.lazy(() => import('./seattle-june-2026')),
   },
+  {
+    slug: 'wedding-venues-nj-pa',
+    title: 'Wedding Venues — NJ & PA',
+    emoji: '💍',
+    kind: 'plan',
+    author: 'builder',
+    createdAt: '2026-05-31',
+    summary: 'Harry & Sydney · 2028 wedding · 7 venues, capacity analysis, June 20 tour route.',
+    component: React.lazy(() => import('./wedding-venues-nj-pa')),
+  },
 ];
