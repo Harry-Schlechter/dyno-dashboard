@@ -22,6 +22,92 @@ const SeattleJune2026: React.FC = () => (
       accent="#26A69A"
     />
 
+    {/* ALL LOCATIONS QUICK NAV */}
+    <SectionHeader title="All Locations" hint="Tap any to open in Google Maps" />
+    <Grid container spacing={1.5} sx={{ mb: 1 }}>
+      <Grid size={{ xs: 12 }}>
+        <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>🏨 Hotels</Typography>
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <LinkOut emoji="🏨" href="https://maps.google.com/?q=19445+International+Blvd+Seattle+WA+98188" label="Hampton Inn Sea-Tac" hint="19445 International Blvd, Seattle, WA 98188" />
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <LinkOut emoji="🏔️" href="https://maps.google.com/?q=Paradise+Inn+Mt+Rainier+National+Park+WA" label="Paradise Inn · Mt. Rainier" hint="Inside the park · Night 2" />
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <LinkOut emoji="🏠" href="https://maps.google.com/?q=Port+Angeles+WA" label="Airbnb · Port Angeles" hint="Strait of Juan de Fuca views · Nights 3–5" />
+      </Grid>
+      <Grid size={{ xs: 12 }} sx={{ mt: 0.5 }}>
+        <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>🍽️ Restaurants</Typography>
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <LinkOut emoji="🦀" href="https://maps.google.com/?q=Anthony%27s+HomePort+Des+Moines+Marina+WA" label="Anthony's HomePort" hint="Des Moines Marina · Day 2 lunch w/ grandma" />
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <LinkOut emoji="🏔️" href="https://maps.google.com/?q=Paradise+Inn+Dining+Room+Mt+Rainier+National+Park+WA" label="Paradise Inn Dining Room" hint="Inside Mt. Rainier NP · (360) 569-2275" />
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <LinkOut emoji="🍷" href="https://maps.google.com/?q=128+E+Front+St+Port+Angeles+WA" label="Spruce" hint="128 E Front St, Port Angeles · Day 3 dinner" />
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <LinkOut emoji="🍺" href="https://maps.google.com/?q=Next+Door+Gastropub+Port+Angeles+WA" label="Next Door Gastropub" hint="Port Angeles · Day 4 dinner · (360) 504-2613" />
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <LinkOut emoji="🔥" href="https://maps.google.com/?q=929+Woodfire+Grill+Port+Angeles+WA" label="929 Woodfire Grill" hint="Port Angeles · Day 5 dinner · (360) 452-0400" />
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <LinkOut emoji="🌊" href="https://maps.google.com/?q=Water%27s+Table+Hyatt+Regency+Lake+Washington+Renton+WA" label="Water's Table" hint="Hyatt Regency Lake Washington · Day 6 lunch" />
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <LinkOut emoji="🍣" href="https://maps.google.com/?q=Umi+Sake+House+Seattle+WA" label="Umi Sake House" hint="Seattle · Day 6 dinner · BOOKED" />
+      </Grid>
+      <Grid size={{ xs: 12 }} sx={{ mt: 0.5 }}>
+        <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>🥾 Trails & Trailheads</Typography>
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <LinkOut emoji="💧" href="https://maps.google.com/?q=Comet+Falls+Trailhead+Mt+Rainier+WA" label="Comet Falls Trailhead" hint="3.6mi · +1,286ft · 301-ft waterfall · Day 2" />
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <LinkOut emoji="🏔️" href="https://maps.google.com/?q=Skyline+Trail+Paradise+Mt+Rainier+WA" label="Skyline Trail Loop" hint="5.7mi · +1,700ft · Glaciers + wildflowers · Day 3" />
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <LinkOut emoji="🌊" href="https://maps.google.com/?q=Rialto+Beach+Olympic+National+Park+WA" label="Rialto Beach / Hole-in-the-Wall" hint="~3mi · sea stacks + rock arch · check tides · Day 4" />
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <LinkOut emoji="🌿" href="https://maps.google.com/?q=Hall+of+Mosses+Hoh+Rainforest+Olympic+National+Park+WA" label="Hall of Mosses" hint="0.8mi loop · Hoh Rainforest · Day 4" />
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <LinkOut emoji="🌲" href="https://maps.google.com/?q=Hoh+Rain+Forest+Visitor+Center+Olympic+National+Park+WA" label="Hoh River Trail" hint="2.5mi out-and-back · old-growth + elk · Day 4" />
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <LinkOut emoji="💧" href="https://maps.google.com/?q=Marymere+Falls+Trailhead+Olympic+National+Park+WA" label="Marymere Falls" hint="1.7mi RT · 90-ft waterfall · Day 4" />
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <LinkOut emoji="🏔️" href="https://maps.google.com/?q=Hurricane+Ridge+Visitor+Center+Olympic+National+Park+WA" label="Hurricane Ridge / Klahhane Ridge" hint="7mi RT · +2,200ft · Best panoramic views · Day 5" />
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <LinkOut emoji="💙" href="https://maps.google.com/?q=Lake+Crescent+Olympic+National+Park+WA" label="Lake Crescent" hint="Vivid blue glacial water · Day 5" />
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <LinkOut emoji="💧" href="https://maps.google.com/?q=Sol+Duc+Falls+Trailhead+Olympic+National+Park+WA" label="Sol Duc Falls" hint="1.8mi RT · multi-tiered waterfall · Day 5" />
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <LinkOut emoji="♨️" href="https://maps.google.com/?q=Sol+Duc+Hot+Springs+Resort+Olympic+National+Park+WA" label="Sol Duc Hot Springs" hint="~$25/person · 3 mineral pools · Day 5" />
+      </Grid>
+      <Grid size={{ xs: 12 }} sx={{ mt: 0.5 }}>
+        <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>🏙️ Seattle</Typography>
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <LinkOut emoji="🐟" href="https://maps.google.com/?q=Pike+Place+Market+Seattle+WA" label="Pike Place Market" hint="Fish toss · Rachel the pig · Pike Place Chowder" />
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <LinkOut emoji="⚙️" href="https://maps.google.com/?q=Gas+Works+Park+Seattle+WA" label="Gas Works Park" hint="Best skyline views in the city · Lake Union" />
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <LinkOut emoji="🛶" href="https://maps.google.com/?q=Agua+Verde+Paddle+Club+Seattle+WA" label="Agua Verde Kayaks" hint="Lake Union · city + mountain views" />
+      </Grid>
+    </Grid>
+
     {/* DAY 1 */}
     <SectionHeader title="Day 1 · Fri Jun 12" hint="Arrival · Sea-Tac" />
     <ItineraryDay
@@ -90,7 +176,10 @@ const SeattleJune2026: React.FC = () => (
             { label: 'Notes', value: 'Free hot breakfast · Close to Sea-Tac' },
           ]} />
           <Box sx={{ mt: 1.5 }}>
-            <LinkOut emoji="🏨" href="https://www.hilton.com/en/hilton-honors/guest/my-account/reservations/" label="View on Hilton.com" hint="Conf: 85583116" />
+            <Stack spacing={1}>
+              <LinkOut emoji="📍" href="https://maps.google.com/?q=19445+International+Blvd+Seattle+WA+98188" label="Open in Google Maps" hint="19445 International Blvd, Seattle, WA 98188" />
+              <LinkOut emoji="🏨" href="https://www.hilton.com/en/hilton-honors/guest/my-account/reservations/" label="View on Hilton.com" hint="Conf: 85583116" />
+            </Stack>
           </Box>
         </AccordionDetails>
       </Accordion>
@@ -125,7 +214,10 @@ const SeattleJune2026: React.FC = () => (
             { label: 'Dining', value: 'Paradise Inn Dining Room · (360) 569-2275' },
           ]} />
           <Box sx={{ mt: 1.5 }}>
-            <LinkOut emoji="🏔️" href="https://www.mtrainierguestservices.com/lodging/paradise-inn/" label="Paradise Inn website" hint="Inside Mt. Rainier NP" />
+            <Stack spacing={1}>
+              <LinkOut emoji="📍" href="https://maps.google.com/?q=Paradise+Inn+Mt+Rainier+National+Park+WA" label="Open in Google Maps" hint="Mt. Rainier National Park, Ashford, WA 98304" />
+              <LinkOut emoji="🏔️" href="https://www.mtrainierguestservices.com/lodging/paradise-inn/" label="Paradise Inn website" hint="Inside Mt. Rainier NP" />
+            </Stack>
           </Box>
         </AccordionDetails>
       </Accordion>
@@ -169,7 +261,10 @@ const SeattleJune2026: React.FC = () => (
             { label: 'Listing', value: 'airbnb.com/rooms/52613763' },
           ]} />
           <Box sx={{ mt: 1.5 }}>
-            <LinkOut emoji="🏠" href="https://www.airbnb.com/rooms/52613763" label="View Airbnb listing" hint="4.87★ · 388 reviews · Strait of Juan de Fuca views" />
+            <Stack spacing={1}>
+              <LinkOut emoji="📍" href="https://maps.google.com/?q=Port+Angeles+WA" label="Port Angeles, WA" hint="Tap to open area in Google Maps" />
+              <LinkOut emoji="🏠" href="https://www.airbnb.com/rooms/52613763" label="View Airbnb listing" hint="4.87★ · 388 reviews · Strait of Juan de Fuca views" />
+            </Stack>
           </Box>
         </AccordionDetails>
       </Accordion>
@@ -286,7 +381,10 @@ const SeattleJune2026: React.FC = () => (
             { label: 'Notes', value: 'Free hot breakfast · airport shuttle available' },
           ]} />
           <Box sx={{ mt: 1.5 }}>
-            <LinkOut emoji="🏨" href="https://www.hilton.com/en/hilton-honors/guest/my-account/reservations/" label="View on Hilton.com" hint="Conf: 81665388" />
+            <Stack spacing={1}>
+              <LinkOut emoji="📍" href="https://maps.google.com/?q=19445+International+Blvd+Seattle+WA+98188" label="Open in Google Maps" hint="19445 International Blvd, Seattle, WA 98188" />
+              <LinkOut emoji="🏨" href="https://www.hilton.com/en/hilton-honors/guest/my-account/reservations/" label="View on Hilton.com" hint="Conf: 81665388" />
+            </Stack>
           </Box>
         </AccordionDetails>
       </Accordion>
