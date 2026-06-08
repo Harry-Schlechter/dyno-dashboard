@@ -44,6 +44,23 @@ const colorForCategory = (category: string | null): string => {
   }
 };
 
+// Heatmap fill for a day based on its Life Score. Subtle so events still read.
+const scoreFill = (score: number | null): string => {
+  if (score === null) return 'rgba(255,255,255,0.018)';
+  if (score >= 80) return 'rgba(76,175,80,0.16)';
+  if (score >= 60) return 'rgba(91,141,239,0.14)';
+  if (score >= 40) return 'rgba(255,152,0,0.14)';
+  return 'rgba(244,67,54,0.14)';
+};
+
+const scoreAccent = (score: number | null): string => {
+  if (score === null) return '#7d8590';
+  if (score >= 80) return '#4CAF50';
+  if (score >= 60) return '#5B8DEF';
+  if (score >= 40) return '#FF9800';
+  return '#F44336';
+};
+
 const CalendarPage: React.FC = () => {
   const [cursor, setCursor] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -89,6 +106,70 @@ const CalendarPage: React.FC = () => {
     return map;
   }, [events]);
 
+  // Lightweight per-day Life Score — inline computation against a few core signals
+  // (sleep hours, workout occurred, protein hit, spend within band). Null when
+  // nothing tracked. Returns 0-100. Keeps the calendar heatmap meaningful without
+  // requiring the full goals-based scoring engine.
+  const scoresByDay = useMemo(() => {
+    const map = new Map<string, number | null>();
+    const sleepByDay = new Map(sleep.map(s => [s.date, s.hours]));
+    const workoutDays = new Set(workouts.map(w => w.date));
+    const proteinByDay = new Map<string, number>();
+    for (const m of meals) {
+      if (m.protein_g == null) continue;
+      proteinByDay.set(m.date, (proteinByDay.get(m.date) ?? 0) + (m.protein_g ?? 0));
+    }
+    const spendByDay = new Map<string, number>();
+    for (const t of transactions) {
+      if (!isRealSpend(t)) continue;
+      spendByDay.set(t.date, (spendByDay.get(t.date) ?? 0) + Math.abs(t.amount));
+    }
+
+    for (const d of days) {
+      const key = format(d, 'yyyy-MM-dd');
+      const parts: number[] = [];
+
+      // Sleep: steps function (matches the goal seed)
+      const hrs = sleepByDay.get(key);
+      if (hrs != null) {
+        let s = 0;
+        if (hrs >= 8)        s = 100;
+        else if (hrs >= 7.5) s = 90;
+        else if (hrs >= 7)   s = 80;
+        else if (hrs >= 6.5) s = 65;
+        else if (hrs >= 6)   s = 55;
+        else if (hrs >= 5)   s = 40;
+        else if (hrs >= 4)   s = 20;
+        parts.push(s);
+      }
+
+      // Protein: 170g target, linear
+      const prot = proteinByDay.get(key);
+      if (prot != null) parts.push(Math.min(100, (prot / 170) * 100));
+
+      // Workout: binary
+      if (workoutDays.size > 0) parts.push(workoutDays.has(key) ? 100 : 50);
+
+      // Spend within typical range ($0-150 = 100, scales down to 0 at $400)
+      const sp = spendByDay.get(key);
+      if (sp != null) {
+        if (sp <= 150) parts.push(100);
+        else if (sp >= 400) parts.push(40);
+        else parts.push(100 - ((sp - 150) / 250) * 60);
+      }
+
+      // Don't score future days
+      const isFuture = d.getTime() > Date.now() + 24 * 60 * 60 * 1000;
+      if (isFuture || parts.length === 0) {
+        map.set(key, null);
+      } else {
+        const avg = parts.reduce((a, b) => a + b, 0) / parts.length;
+        map.set(key, Math.round(avg));
+      }
+    }
+    return map;
+  }, [days, sleep, workouts, meals, transactions]);
+
   const loading = eventsLoading || sleepLoading || workoutsLoading || mealsLoading || finLoading;
   if (loading) return <LoadingSkeleton variant="card" count={2} />;
 
@@ -97,19 +178,42 @@ const CalendarPage: React.FC = () => {
 
   return (
     <Box>
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+      <Box sx={{ mb: 2.5, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 2 }}>
         <Box>
-          <Typography variant="h4" fontWeight={700}>{format(cursor, 'MMMM yyyy')}</Typography>
+          <Typography variant="h4" fontWeight={700} sx={{ letterSpacing: '-0.02em' }}>
+            {format(cursor, 'MMMM')}{' '}
+            <Typography component="span" variant="h4" sx={{ fontWeight: 400, color: 'text.secondary', letterSpacing: '-0.02em' }}>
+              {format(cursor, 'yyyy')}
+            </Typography>
+          </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            Click a day to see workouts, meals, sleep, and spend. Click an event for details.
+            Click any day for a full breakdown · click an event for details
           </Typography>
         </Box>
-        <Stack direction="row" spacing={0.5}>
-          <IconButton onClick={() => setCursor(subMonths(cursor, 1))}><ChevronLeft /></IconButton>
-          <IconButton onClick={() => setCursor(new Date())} sx={{ fontSize: 13, px: 1.5 }}>
-            <Typography variant="caption">Today</Typography>
+        <Stack direction="row" spacing={0.75} alignItems="center" sx={{
+          bgcolor: 'rgba(255,255,255,0.03)',
+          border: '1px solid rgba(255,255,255,0.06)',
+          borderRadius: 2,
+          p: 0.375,
+        }}>
+          <IconButton size="small" onClick={() => setCursor(subMonths(cursor, 1))} sx={{ borderRadius: 1.25 }}>
+            <ChevronLeft fontSize="small" />
           </IconButton>
-          <IconButton onClick={() => setCursor(addMonths(cursor, 1))}><ChevronRight /></IconButton>
+          <Box
+            onClick={() => setCursor(new Date())}
+            sx={{
+              px: 1.5, py: 0.4, borderRadius: 1.25, cursor: 'pointer',
+              bgcolor: 'rgba(91,141,239,0.12)',
+              border: '1px solid rgba(91,141,239,0.25)',
+              transition: 'background-color 0.1s',
+              '&:hover': { bgcolor: 'rgba(91,141,239,0.2)' },
+            }}
+          >
+            <Typography variant="caption" fontWeight={600} sx={{ color: '#5B8DEF', letterSpacing: 0.4 }}>Today</Typography>
+          </Box>
+          <IconButton size="small" onClick={() => setCursor(addMonths(cursor, 1))} sx={{ borderRadius: 1.25 }}>
+            <ChevronRight fontSize="small" />
+          </IconButton>
         </Stack>
       </Box>
 
@@ -123,50 +227,112 @@ const CalendarPage: React.FC = () => {
         </Card>
       )}
 
-      <Card sx={{ '&:hover': { transform: 'none' } }}>
-        <CardContent>
+      <Card sx={{ '&:hover': { transform: 'none' }, bgcolor: 'rgba(255,255,255,0.012)', border: '1px solid rgba(255,255,255,0.05)' }}>
+        <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
           {/* Weekday header */}
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 0.5, mb: 0.75 }}>
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
-              <Typography key={d} variant="caption" color="text.secondary" sx={{ textAlign: 'center', fontWeight: 600, letterSpacing: 1 }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 0.625, mb: 1, px: 0.5 }}>
+            {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(d => (
+              <Typography
+                key={d}
+                variant="caption"
+                sx={{
+                  textAlign: 'center',
+                  fontWeight: 600,
+                  letterSpacing: 1.2,
+                  fontSize: '0.65rem',
+                  color: 'text.secondary',
+                  opacity: 0.6,
+                }}
+              >
                 {d}
               </Typography>
             ))}
           </Box>
 
           {/* Day grid */}
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 0.5 }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 0.625 }}>
             {padding.map((_, i) => <Box key={`pad-${i}`} />)}
             {days.map(d => {
               const key = format(d, 'yyyy-MM-dd');
               const dayEvents = eventsByDay.get(key) ?? [];
               const today = isToday(d);
+              const score = scoresByDay.get(key) ?? null;
+              const accent = scoreAccent(score);
+              const fill = scoreFill(score);
+
               return (
                 <Box
                   key={key}
                   onClick={() => setSelectedDate(d)}
                   sx={{
-                    minHeight: 78,
-                    p: 0.75,
-                    borderRadius: 1.5,
+                    position: 'relative',
+                    minHeight: 96,
+                    p: 0.875,
+                    pt: 0.625,
+                    borderRadius: 2,
                     cursor: 'pointer',
-                    bgcolor: 'rgba(255,255,255,0.02)',
-                    border: today ? '1.5px solid #5B8DEF' : '1px solid rgba(255,255,255,0.05)',
-                    transition: 'background-color 0.1s, border-color 0.1s',
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.18)' },
+                    bgcolor: fill,
+                    border: today
+                      ? '1.5px solid rgba(91,141,239,0.85)'
+                      : '1px solid rgba(255,255,255,0.04)',
+                    transition: 'background-color 0.15s, border-color 0.15s, transform 0.1s',
+                    overflow: 'hidden',
+                    '&:hover': {
+                      bgcolor: score === null ? 'rgba(255,255,255,0.05)' : fill.replace(/[\d.]+\)$/, '0.24)'),
+                      borderColor: 'rgba(255,255,255,0.18)',
+                    },
+                    '&::before': score !== null ? {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0, left: 0, right: 0,
+                      height: 2,
+                      bgcolor: accent,
+                      opacity: 0.85,
+                    } : undefined,
                   }}
                 >
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.4 }}>
-                    <Typography
-                      variant="caption"
-                      fontWeight={today ? 700 : 500}
-                      sx={{ color: today ? '#5B8DEF' : 'text.primary' }}
-                    >
-                      {format(d, 'd')}
-                    </Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+                    {today ? (
+                      <Box sx={{
+                        width: 22, height: 22, borderRadius: '50%',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        bgcolor: '#5B8DEF',
+                      }}>
+                        <Typography variant="caption" fontWeight={700} sx={{ color: '#fff', fontSize: '0.72rem' }}>
+                          {format(d, 'd')}
+                        </Typography>
+                      </Box>
+                    ) : (
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          fontWeight: 500,
+                          color: 'text.primary',
+                          opacity: 0.8,
+                          fontSize: '0.78rem',
+                        }}
+                      >
+                        {format(d, 'd')}
+                      </Typography>
+                    )}
+                    {score !== null && (
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          fontSize: '0.62rem',
+                          fontWeight: 700,
+                          color: accent,
+                          opacity: 0.9,
+                          letterSpacing: 0.3,
+                        }}
+                      >
+                        {Math.round(score)}
+                      </Typography>
+                    )}
                   </Box>
+
                   {dayEvents.length > 0 && (
-                    <Stack spacing={0.25}>
+                    <Stack spacing={0.3}>
                       {dayEvents.slice(0, 3).map(e => (
                         <Box
                           key={e.id}
@@ -175,24 +341,27 @@ const CalendarPage: React.FC = () => {
                             setSelectedEvent(e);
                           }}
                           sx={{
-                            display: 'flex', alignItems: 'center', gap: 0.5,
-                            bgcolor: `${colorForCategory(e.category)}1f`,
+                            bgcolor: `${colorForCategory(e.category)}26`,
                             borderLeft: `2px solid ${colorForCategory(e.category)}`,
-                            px: 0.5, py: 0.15, borderRadius: 0.5,
+                            px: 0.625, py: 0.2,
+                            borderRadius: 0.75,
                             cursor: 'pointer',
                             transition: 'background-color 0.1s',
-                            '&:hover': { bgcolor: `${colorForCategory(e.category)}3a` },
+                            '&:hover': { bgcolor: `${colorForCategory(e.category)}40` },
                           }}
                         >
                           <Typography
                             variant="caption"
                             sx={{
-                              fontSize: '0.62rem',
+                              fontSize: '0.64rem',
+                              fontWeight: 500,
+                              display: 'block',
                               whiteSpace: 'nowrap',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
                               textDecoration: e.status === 'cancelled' ? 'line-through' : 'none',
-                              opacity: e.status === 'cancelled' ? 0.5 : 1,
+                              opacity: e.status === 'cancelled' ? 0.5 : 0.95,
+                              lineHeight: 1.35,
                             }}
                           >
                             {e.title}
@@ -200,7 +369,7 @@ const CalendarPage: React.FC = () => {
                         </Box>
                       ))}
                       {dayEvents.length > 3 && (
-                        <Typography variant="caption" sx={{ fontSize: '0.6rem', opacity: 0.6, pl: 0.5 }}>
+                        <Typography variant="caption" sx={{ fontSize: '0.6rem', opacity: 0.5, pl: 0.5 }}>
                           +{dayEvents.length - 3} more
                         </Typography>
                       )}
@@ -212,15 +381,16 @@ const CalendarPage: React.FC = () => {
           </Box>
 
           {/* Legend */}
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mt: 2, pt: 1.5, borderTop: '1px solid rgba(255,255,255,0.06)', flexWrap: 'wrap', gap: 1 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2, pt: 1.5, borderTop: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap', gap: 1 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.68rem', letterSpacing: 0.8, opacity: 0.7 }}>
+              LIFE SCORE
+            </Typography>
             <Stack direction="row" spacing={1.5} alignItems="center">
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                Score dot
-              </Typography>
               <ScoreDot label="80+" color="#4CAF50" />
               <ScoreDot label="60+" color="#5B8DEF" />
               <ScoreDot label="40+" color="#FF9800" />
               <ScoreDot label="<40" color="#F44336" />
+              <ScoreDot label="—" color="#7d8590" />
             </Stack>
           </Box>
         </CardContent>
@@ -243,9 +413,9 @@ const CalendarPage: React.FC = () => {
 };
 
 const ScoreDot: React.FC<{ label: string; color: string }> = ({ label, color }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-    <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: color, opacity: 0.7 }} />
-    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>{label}</Typography>
+  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.625 }}>
+    <Box sx={{ width: 14, height: 3, borderRadius: 1.5, bgcolor: color, opacity: 0.85 }} />
+    <Typography variant="caption" sx={{ fontSize: '0.65rem', color: 'text.secondary', fontWeight: 500 }}>{label}</Typography>
   </Box>
 );
 
