@@ -13,6 +13,61 @@ chrome.runtime.onInstalled.addListener(() => {
   chrome.sidePanel
     .setPanelBehavior({ openPanelOnActionClick: true })
     .catch((err) => console.warn('[dyno cockpit] sidePanel.setPanelBehavior failed', err));
+  ensureSessionRefreshAlarm();
+  refreshSessionSilently();
+});
+
+// ─── Session keepalive ────────────────────────────────────────────────────────
+// Manifest V3 service workers are killed after ~30s idle. Supabase's
+// autoRefreshToken interval dies with the worker, so we can't rely on it. An
+// alarm wakes the SW every 25 min to refresh the access token (TTL is 60 min).
+// Refresh token lives in chrome.storage.local with a 60-day TTL, so as long as
+// this fires once per ~50 days the pairing stays valid indefinitely.
+
+const SESSION_REFRESH_ALARM = 'dyno-session-refresh';
+const SESSION_REFRESH_PERIOD_MIN = 25;
+
+async function ensureSessionRefreshAlarm() {
+  const existing = await chrome.alarms.get(SESSION_REFRESH_ALARM);
+  if (!existing) {
+    chrome.alarms.create(SESSION_REFRESH_ALARM, {
+      periodInMinutes: SESSION_REFRESH_PERIOD_MIN,
+      delayInMinutes: 1, // first refresh shortly after install/startup
+    });
+  }
+}
+
+async function refreshSessionSilently(): Promise<{ ok: boolean; reason?: string }> {
+  try {
+    const supa = getSupabase();
+    const { data, error } = await supa.auth.getSession();
+    if (error) {
+      console.warn('[dyno cockpit] getSession error:', error.message);
+      return { ok: false, reason: error.message };
+    }
+    if (!data.session) {
+      // No session at all — user needs to pair (first time, or refresh token wiped).
+      await chrome.storage.local.set({ 'dyno-cockpit-unpaired': true });
+      return { ok: false, reason: 'no-session' };
+    }
+    // getSession() returns a valid session and supabase-js will have already
+    // refreshed if the access_token was close to expiring. Clear any prior
+    // unpaired flag so the UI hides the re-pair prompt.
+    await chrome.storage.local.remove('dyno-cockpit-unpaired');
+    return { ok: true };
+  } catch (e: any) {
+    console.warn('[dyno cockpit] refresh threw:', e?.message ?? e);
+    return { ok: false, reason: e?.message ?? 'unknown' };
+  }
+}
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === SESSION_REFRESH_ALARM) refreshSessionSilently();
+});
+
+chrome.runtime.onStartup.addListener(() => {
+  ensureSessionRefreshAlarm();
+  refreshSessionSilently();
 });
 
 chrome.action.onClicked.addListener((tab) => {
@@ -72,6 +127,10 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       forcedAgent: msg.forcedAgent,
       source: 'site-suggestion',
     }).then(sendResponse);
+    return true;
+  }
+  if (msg?.type === 'refresh-session') {
+    refreshSessionSilently().then(sendResponse);
     return true;
   }
   return false;

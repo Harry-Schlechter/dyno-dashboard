@@ -16,6 +16,14 @@ export function App() {
   useEffect(() => {
     let mounted = true;
     (async () => {
+      // Ask the service worker to refresh the session first. This forces a
+      // refresh-token exchange if the access token has expired since the SW
+      // last ran (Manifest V3 SWs are aggressively killed when idle).
+      try {
+        await chrome.runtime.sendMessage({ type: 'refresh-session' });
+      } catch {
+        // SW might be cold-starting — just continue, getSession below will retry.
+      }
       const session = await getCurrentSession();
       if (!mounted) return;
       setPaired(!!session);
@@ -73,19 +81,31 @@ export function App() {
 }
 
 function UnpairedNotice() {
+  const [hadSession, setHadSession] = useState(false);
+  useEffect(() => {
+    chrome.storage.local.get(['dyno-cockpit-auth'], (result) => {
+      // If we have a stored auth blob but the session check still failed,
+      // the refresh token is gone or revoked — frame it as "session expired".
+      setHadSession(!!result['dyno-cockpit-auth']);
+    });
+  }, []);
   return (
     <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4 }}>
       <Box sx={{ textAlign: 'center' }}>
-        <Typography variant="h3" sx={{ mb: 1 }}>Not paired yet</Typography>
+        <Typography variant="h3" sx={{ mb: 1 }}>
+          {hadSession ? 'Session expired' : 'Not paired yet'}
+        </Typography>
         <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
-          Pair this extension with your Dyno dashboard account to start using the Cockpit.
+          {hadSession
+            ? 'Your pairing expired or was revoked. Re-pair to continue.'
+            : 'Pair this extension with your Dyno dashboard account to start using the Cockpit.'}
         </Typography>
         <Button
           variant="contained"
           startIcon={<OpenInNew />}
           onClick={() => chrome.runtime.openOptionsPage()}
         >
-          Open pairing page
+          {hadSession ? 'Re-pair' : 'Open pairing page'}
         </Button>
       </Box>
     </Box>
