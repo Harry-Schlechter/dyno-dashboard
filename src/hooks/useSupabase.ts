@@ -9,6 +9,8 @@ interface UseSupabaseOptions {
   limit?: number;
   enabled?: boolean;
   isView?: boolean;
+  /** Set true for tables that don't have a user_id column (e.g. workout_exercises joins via workout_id). */
+  skipUserFilter?: boolean;
 }
 
 interface UseSupabaseResult<T> {
@@ -26,6 +28,7 @@ export function useSupabase<T = any>({
   limit,
   enabled = true,
   isView = false,
+  skipUserFilter = false,
 }: UseSupabaseOptions): UseSupabaseResult<T> {
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,7 +43,7 @@ export function useSupabase<T = any>({
       let query = supabase.from(table).select(select);
 
       // Add user_id filter for tables (not views, which may already filter)
-      if (!isView) {
+      if (!isView && !skipUserFilter) {
         query = query.eq('user_id', USER_ID);
       }
 
@@ -75,7 +78,7 @@ export function useSupabase<T = any>({
     } finally {
       setLoading(false);
     }
-  }, [table, select, JSON.stringify(filters), order?.column, order?.ascending, limit, enabled, isView]);
+  }, [table, select, JSON.stringify(filters), order?.column, order?.ascending, limit, enabled, isView, skipUserFilter]);
 
   useEffect(() => {
     fetchData();

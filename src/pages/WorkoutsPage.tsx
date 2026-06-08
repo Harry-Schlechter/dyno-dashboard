@@ -96,6 +96,7 @@ const WorkoutsPage: React.FC = () => {
   const { data: exercises, loading: eLoading } = useSupabase<ExerciseSet & { workout_id: string }>({
     table: 'workout_exercises',
     limit: 2000,
+    skipUserFilter: true, // joins via workout_id, no user_id column
   });
 
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null);

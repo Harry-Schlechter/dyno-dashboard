@@ -41,6 +41,7 @@ export const useWorkouts = (range: '7d' | '30d' | '90d' = '30d') => {
   const exercises = useSupabase<WorkoutExercise>({
     table: 'workout_exercises',
     order: { column: 'exercise_order', ascending: true },
+    skipUserFilter: true, // joins via workout_id, no user_id column
   });
 
   const prs = useSupabase<ExercisePR>({

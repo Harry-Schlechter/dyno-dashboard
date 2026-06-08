@@ -113,7 +113,7 @@ const GolfSection: React.FC = () => {
     // "Trouble holes" — across all scorecards with per-hole detail, average score-vs-par per hole number
     const holeBuckets = new Map<number, { totalDiff: number; count: number; pars: number[] }>();
     for (const r of fullRounds) {
-      if (!r.scorecard_data) continue;
+      if (!Array.isArray(r.scorecard_data)) continue;
       for (const h of r.scorecard_data) {
         const cur = holeBuckets.get(h.hole) ?? { totalDiff: 0, count: 0, pars: [] };
         cur.totalDiff += h.score - h.par;
