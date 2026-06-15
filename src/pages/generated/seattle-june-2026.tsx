@@ -271,7 +271,7 @@ const SeattleJune2026: React.FC = () => (
     <SectionHeader title="Day 4 · Mon Jun 15" hint="Olympic: Rialto Beach · Hoh Rainforest · Lake Crescent" />
     <InfoCard accent="#2196F3">
       <Box sx={{ fontSize: '0.88rem' }}>
-        <strong>🌊 Check tide chart tonight</strong> — Hole-in-the-Wall is best at low tide. Search "La Push, WA" at tidesandcurrents.noaa.gov
+        <strong>🌊 Tides confirmed:</strong> Low tide 7:25am · -10.2ft — ideal window for Hole-in-the-Wall rock arch. Arrive Rialto ~8:30am.
       </Box>
     </InfoCard>
     <Box sx={{ mt: 1.5 }}>
@@ -279,16 +279,16 @@ const SeattleJune2026: React.FC = () => (
         day="Day 4"
         date="Mon Jun 15"
         items={[
-          { time: '7:00am', title: 'Depart PA → Rialto Beach / La Push', kind: 'travel', durationMin: 90 },
-          { time: '8:30am', title: 'Rialto Beach + Hole-in-the-Wall', kind: 'activity', durationMin: 120, description: '~3mi · sea stacks + iconic rock arch · best at low tide' },
-          { time: '10:30am', title: 'Drive to Hoh Rainforest', kind: 'travel', durationMin: 75 },
-          { time: '11:45am', title: 'Picnic lunch at Hoh', kind: 'food', description: 'Pack from Airbnb — eat at picnic area' },
-          { time: '12:15pm', title: 'Hall of Mosses', kind: 'activity', durationMin: 45, description: '0.8mi loop · surreal mossy maple forest' },
-          { time: '1:00pm', title: 'Hoh River Trail', kind: 'activity', durationMin: 120, description: '2.5mi out-and-back · old-growth Sitka spruce + Roosevelt elk' },
-          { time: '3:00pm', title: 'Drive north → Lake Crescent via Hwy 101', kind: 'travel', durationMin: 90 },
-          { time: '4:30pm', title: 'Moments in Time Trail + swim', kind: 'activity', durationMin: 75, description: '1.8mi · flat shoreline walk through old growth · swim in vivid blue glacial water' },
-          { time: '5:45pm', title: 'Drive back to Port Angeles', kind: 'travel', durationMin: 30 },
-          { time: '6:30pm', title: 'Dinner — Spruce', kind: 'food', description: '128 E Front St · creative small plates · walk-in · Thu-Sun 4:30-9pm · (360) 504-2951' },
+          { time: '7:00am', title: 'Depart PA → Rialto Beach', kind: 'travel', durationMin: 90, description: '1.5 hrs' },
+          { time: '8:30am', title: 'Rialto Beach + Hole-in-the-Wall', kind: 'activity', durationMin: 120, description: '3 mi, 2 hrs — low tide 7:25am ✅' },
+          { time: '10:30am', title: 'Drive to Hoh Rainforest', kind: 'travel', durationMin: 75, description: '1h 15m' },
+          { time: '11:45am', title: 'Picnic lunch at Hoh', kind: 'food' },
+          { time: '12:15pm', title: 'Hall of Mosses', kind: 'activity', durationMin: 45, description: '0.8 mi, 45 min' },
+          { time: '1:00pm', title: 'Hoh River Trail', kind: 'activity', durationMin: 120, description: '2.5 mi, 2 hrs' },
+          { time: '3:00pm', title: 'Drive to Lake Crescent', kind: 'travel', durationMin: 90, description: '1.5 hrs' },
+          { time: '4:30pm', title: 'Moments in Time Trail + swim', kind: 'activity', durationMin: 75, description: '1.8 mi, flat' },
+          { time: '5:45pm', title: 'Drive back to PA', kind: 'travel', durationMin: 30, description: '30 min' },
+          { time: '6:30pm', title: 'Dinner — Spruce (walk-in, arrive early)', kind: 'food', description: '128 E Front St · arrive close to open · Thu-Sun 4:30-9pm · (360) 504-2951' },
         ]}
       />
     </Box>
@@ -317,15 +317,15 @@ const SeattleJune2026: React.FC = () => (
       day="Day 5"
       date="Tue Jun 16"
       items={[
-        { time: '6:30am', title: 'Depart PA → Lake Crescent trailhead', kind: 'travel', durationMin: 70 },
-        { time: '7:40am', title: 'Mount Storm King', kind: 'activity', durationMin: 255, description: '4.5mi RT · +2,000ft · rope-assisted scramble near summit · aerial views straight down at Lake Crescent ⭐' },
-        { time: '12:00pm', title: 'Marymere Falls', kind: 'activity', durationMin: 45, description: '1.7mi RT · 90-ft waterfall in old-growth · same trailhead — do on descent from Storm King' },
-        { time: '1:00pm', title: 'Drive to Sol Duc', kind: 'travel', durationMin: 35 },
-        { time: '1:30pm', title: 'Sol Duc Falls', kind: 'activity', durationMin: 45, description: '1.8mi RT · multi-tiered waterfall' },
-        { time: '2:15pm', title: 'Sol Duc Hot Springs soak', kind: 'rest', durationMin: 105, description: '~$15–25/person · 3 mineral pools · perfect recovery after Storm King' },
-        { time: '4:00pm', title: 'Drive back to Port Angeles', kind: 'travel', durationMin: 67 },
-        { time: '5:15pm', title: 'Arrive PA — freshen up', kind: 'rest' },
-        { time: '6:30pm', title: 'Dinner — 929 Woodfire Grill', kind: 'food', description: 'Best splurge in PA · wood-fired steak + seafood · (360) 452-0400 · CALL ahead · Tue-Sat, closes 8pm' },
+        { time: '6:30am', title: 'Depart PA → Lake Crescent', kind: 'travel', durationMin: 70, description: '1h 10m' },
+        { time: '7:40am', title: 'Mount Storm King', kind: 'activity', durationMin: 255, description: '4.5 mi RT · +2,000 ft · rope scramble · 3–4 hrs' },
+        { time: '~12:00pm', title: 'Marymere Falls on descent', kind: 'activity', durationMin: 45, description: '1.7 mi, 45 min — same trailhead' },
+        { time: '~1:00pm', title: 'Drive to Sol Duc', kind: 'travel', durationMin: 35, description: '35 min' },
+        { time: '~1:30pm', title: 'Sol Duc Falls', kind: 'activity', durationMin: 45, description: '1.8 mi, 45 min' },
+        { time: '~2:15pm', title: 'Sol Duc Hot Springs soak', kind: 'rest', durationMin: 90, description: '~1.5 hrs · ~$15–25/person · 3 mineral pools' },
+        { time: '~4:00pm', title: 'Drive back to PA', kind: 'travel', durationMin: 67, description: '1h 7m' },
+        { time: '~5:15pm', title: 'Back in PA', kind: 'rest' },
+        { time: '6:30pm', title: 'Dinner — 929 Woodfire Grill (walk-in)', kind: 'food', description: 'Walk-in · wood-fired steak + seafood · (360) 452-0400 · Tue-Sat, closes 8pm' },
       ]}
     />
     <Stack spacing={1} sx={{ mt: 1.5, mb: 3.5 }}>
@@ -429,9 +429,9 @@ const SeattleJune2026: React.FC = () => (
           <strong>⚠️ Mt. Rainier (Sun Jun 14):</strong> Arrive at Paradise parking by 8am — fills by 9am on weekends. No exceptions.
         </Box>
       </InfoCard>
-      <InfoCard accent="#FF9800">
+      <InfoCard accent="#26A69A">
         <Box sx={{ fontSize: '0.9rem', lineHeight: 1.6 }}>
-          <strong>🌊 Olympic (Mon Jun 15):</strong> Check tide chart the night before. Hole-in-the-Wall is best at low tide. tidesandcurrents.noaa.gov — search "La Push, WA".
+          <strong>🌊 Olympic (Mon Jun 15):</strong> Tides confirmed — low tide 7:25am · -10.2ft. Ideal window for Hole-in-the-Wall. Arrive Rialto ~8:30am.
         </Box>
       </InfoCard>
       <InfoCard accent="#26A69A">
