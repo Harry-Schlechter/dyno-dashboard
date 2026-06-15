@@ -50,9 +50,6 @@ const SeattleJune2026: React.FC = () => (
         <LinkOut emoji="🍷" href="https://maps.google.com/?q=128+E+Front+St+Port+Angeles+WA" label="Spruce" hint="128 E Front St, Port Angeles · Day 3 dinner" />
       </Grid>
       <Grid size={{ xs: 12, sm: 6 }}>
-        <LinkOut emoji="🍺" href="https://maps.google.com/?q=Next+Door+Gastropub+Port+Angeles+WA" label="Next Door Gastropub" hint="Port Angeles · Day 4 dinner · (360) 504-2613" />
-      </Grid>
-      <Grid size={{ xs: 12, sm: 6 }}>
         <LinkOut emoji="🔥" href="https://maps.google.com/?q=929+Woodfire+Grill+Port+Angeles+WA" label="929 Woodfire Grill" hint="Port Angeles · Day 5 dinner · (360) 452-0400" />
       </Grid>
       <Grid size={{ xs: 12, sm: 6 }}>
@@ -271,7 +268,7 @@ const SeattleJune2026: React.FC = () => (
     </Stack>
 
     {/* DAY 4 */}
-    <SectionHeader title="Day 4 · Mon Jun 15" hint="Olympic: Rialto Beach · Hoh Rainforest · Marymere Falls" />
+    <SectionHeader title="Day 4 · Mon Jun 15" hint="Olympic: Rialto Beach · Hoh Rainforest · Lake Crescent" />
     <InfoCard accent="#2196F3">
       <Box sx={{ fontSize: '0.88rem' }}>
         <strong>🌊 Check tide chart tonight</strong> — Hole-in-the-Wall is best at low tide. Search "La Push, WA" at tidesandcurrents.noaa.gov
@@ -288,9 +285,10 @@ const SeattleJune2026: React.FC = () => (
           { time: '11:45am', title: 'Picnic lunch at Hoh', kind: 'food', description: 'Pack from Airbnb — eat at picnic area' },
           { time: '12:15pm', title: 'Hall of Mosses', kind: 'activity', durationMin: 45, description: '0.8mi loop · surreal mossy maple forest' },
           { time: '1:00pm', title: 'Hoh River Trail', kind: 'activity', durationMin: 120, description: '2.5mi out-and-back · old-growth Sitka spruce + Roosevelt elk' },
-          { time: '3:00pm', title: 'Drive north → Marymere Falls via Hwy 101', kind: 'travel', durationMin: 90 },
-          { time: '4:30pm', title: 'Marymere Falls', kind: 'activity', durationMin: 60, description: '1.7mi RT · 90-ft waterfall in old-growth forest · on the way back to PA' },
-          { time: '6:30pm', title: 'Dinner — Next Door Gastropub', kind: 'food', description: 'Craft beers + elevated pub food · (360) 504-2613 · confirm hours' },
+          { time: '3:00pm', title: 'Drive north → Lake Crescent via Hwy 101', kind: 'travel', durationMin: 90 },
+          { time: '4:30pm', title: 'Moments in Time Trail + swim', kind: 'activity', durationMin: 75, description: '1.8mi · flat shoreline walk through old growth · swim in vivid blue glacial water' },
+          { time: '5:45pm', title: 'Drive back to Port Angeles', kind: 'travel', durationMin: 30 },
+          { time: '6:30pm', title: 'Dinner — Spruce', kind: 'food', description: '128 E Front St · creative small plates · walk-in · Thu-Sun 4:30-9pm · (360) 504-2951' },
         ]}
       />
     </Box>
@@ -314,19 +312,19 @@ const SeattleJune2026: React.FC = () => (
     </Stack>
 
     {/* DAY 5 */}
-    <SectionHeader title="Day 5 · Tue Jun 16" hint="Olympic: Klahhane Ridge · Lake Crescent · Sol Duc" />
+    <SectionHeader title="Day 5 · Tue Jun 16" hint="Olympic: Mount Storm King · Marymere Falls · Sol Duc" />
     <ItineraryDay
       day="Day 5"
       date="Tue Jun 16"
       items={[
-        { time: '6:30am', title: 'Depart PA → Hurricane Ridge', kind: 'travel', durationMin: 45, description: 'Road opens 7am — arrive right at open' },
-        { time: '7:15am', title: 'Klahhane Ridge / Mt. Angeles', kind: 'activity', durationMin: 300, description: '7mi RT · +2,200ft · Strenuous · Best panoramic views in Olympic — Strait of Juan de Fuca + Vancouver Island' },
-        { time: '12:00pm', title: 'Drive to Lake Crescent', kind: 'travel', durationMin: 70 },
-        { time: '1:10pm', title: 'Lake Crescent shore walk / swim', kind: 'activity', durationMin: 30, description: 'Vivid blue glacial water — very photogenic' },
-        { time: '1:40pm', title: 'Drive to Sol Duc', kind: 'travel', durationMin: 35 },
-        { time: '2:15pm', title: 'Sol Duc Falls', kind: 'activity', durationMin: 45, description: '1.8mi RT · multi-tiered waterfall' },
-        { time: '3:00pm', title: 'Sol Duc Hot Springs soak', kind: 'rest', durationMin: 90, description: '~$25/person · 3 mineral pools · earned it after Klahhane' },
-        { time: '4:30pm', title: 'Drive back to Port Angeles', kind: 'travel', durationMin: 67 },
+        { time: '6:30am', title: 'Depart PA → Lake Crescent trailhead', kind: 'travel', durationMin: 70 },
+        { time: '7:40am', title: 'Mount Storm King', kind: 'activity', durationMin: 255, description: '4.5mi RT · +2,000ft · rope-assisted scramble near summit · aerial views straight down at Lake Crescent ⭐' },
+        { time: '12:00pm', title: 'Marymere Falls', kind: 'activity', durationMin: 45, description: '1.7mi RT · 90-ft waterfall in old-growth · same trailhead — do on descent from Storm King' },
+        { time: '1:00pm', title: 'Drive to Sol Duc', kind: 'travel', durationMin: 35 },
+        { time: '1:30pm', title: 'Sol Duc Falls', kind: 'activity', durationMin: 45, description: '1.8mi RT · multi-tiered waterfall' },
+        { time: '2:15pm', title: 'Sol Duc Hot Springs soak', kind: 'rest', durationMin: 105, description: '~$15–25/person · 3 mineral pools · perfect recovery after Storm King' },
+        { time: '4:00pm', title: 'Drive back to Port Angeles', kind: 'travel', durationMin: 67 },
+        { time: '5:15pm', title: 'Arrive PA — freshen up', kind: 'rest' },
         { time: '6:30pm', title: 'Dinner — 929 Woodfire Grill', kind: 'food', description: 'Best splurge in PA · wood-fired steak + seafood · (360) 452-0400 · CALL ahead · Tue-Sat, closes 8pm' },
       ]}
     />
