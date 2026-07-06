@@ -19,6 +19,10 @@ import AgentVoiceCard from '../components/common/AgentVoiceCard';
 import InsightsFeed from '../components/home/InsightsFeed';
 import ActivityHeatmap, { HeatmapEntry } from '../components/common/ActivityHeatmap';
 import GolfSection from '../components/workouts/GolfSection';
+import RecoveryRing from '../components/home/RecoveryRing';
+import RecoveryStrip from '../components/home/RecoveryStrip';
+import SleepWidget from '../components/home/SleepWidget';
+import LatestWorkoutCard from '../components/workouts/LatestWorkoutCard';
 
 // Activity type matchers — keep in sync with metricResolver.ts
 const isBasketball = (n: string | null) => !!n && /basketball/i.test(n);
@@ -34,6 +38,12 @@ interface Workout {
   name: string | null;
   duration_min: number | null;
   notes: string | null;
+  source?: 'manual' | 'google_health' | 'agent';
+  activity_type?: string | null;
+  review_status?: 'needs_review' | 'confirmed';
+  avg_hr?: number | null;
+  max_hr?: number | null;
+  session_start?: string | null;
 }
 
 const SportWidget: React.FC<{
@@ -86,6 +96,44 @@ const Stat: React.FC<{ label: string; value: string; sub: string }> = ({ label, 
     <Typography variant="caption" color="text.secondary">{sub}</Typography>
   </Box>
 );
+
+// Fitbit-derived sessions the trainer hasn't tagged yet. Prompts Harry to tell
+// the agent what they were ("I played basketball") so they get named + confirmed.
+const NeedsReviewCard: React.FC<{ workouts: Workout[] }> = ({ workouts }) => {
+  const pending = workouts.filter(w => w.review_status === 'needs_review');
+  if (pending.length === 0) return null;
+
+  return (
+    <Card sx={{ mb: 3, borderLeft: '3px solid #FF9800' }}>
+      <CardContent>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+          <Typography variant="subtitle2" fontWeight={700}>
+            {pending.length} session{pending.length > 1 ? 's' : ''} to tag
+          </Typography>
+          <Chip size="small" label="from Fitbit" sx={{ height: 18, fontSize: '0.6rem' }} />
+        </Box>
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+          Auto-detected from your active minutes. Tell the trainer what each was (e.g. "I played
+          basketball") and it'll name + tag them.
+        </Typography>
+        <Stack spacing={1}>
+          {pending.map(w => {
+            const t = w.session_start ? format(new Date(w.session_start), 'MMM d, h:mm a') : w.date;
+            return (
+              <Box key={w.id} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+                <Typography variant="body2" fontWeight={600}>{t}</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  ~{w.duration_min ?? '?'} min
+                  {w.avg_hr ? ` · HR ${w.avg_hr}${w.max_hr ? `/${w.max_hr}` : ''}` : ''}
+                </Typography>
+              </Box>
+            );
+          })}
+        </Stack>
+      </CardContent>
+    </Card>
+  );
+};
 
 const WorkoutsPage: React.FC = () => {
   const { data: workouts, loading: wLoading } = useSupabase<Workout>({
@@ -168,11 +216,34 @@ const WorkoutsPage: React.FC = () => {
   return (
     <Box>
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" fontWeight={700}>Workouts</Typography>
+        <Typography variant="h4" fontWeight={700}>Fitness</Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          Sport sessions, golf rounds, lifting trends, and personal records
+          Recovery, workouts, sport sessions, golf, lifting trends, and personal records
         </Typography>
       </Box>
+
+      {/* Latest readings — recovery score + recovery vitals */}
+      <Grid container spacing={2.5} sx={{ mb: 3 }}>
+        <Grid size={{ xs: 12, md: 5 }}>
+          <RecoveryRing />
+        </Grid>
+        <Grid size={{ xs: 12, md: 7 }}>
+          <RecoveryStrip />
+        </Grid>
+      </Grid>
+
+      {/* Latest workout + last night's sleep */}
+      <Grid container spacing={2.5} sx={{ mb: 3 }}>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <LatestWorkoutCard />
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <SleepWidget />
+        </Grid>
+      </Grid>
+
+      {/* Fitbit-derived sessions awaiting a tag */}
+      <NeedsReviewCard workouts={workouts} />
 
       {/* Trainer voice + insights */}
       <Grid container spacing={2.5} sx={{ mb: 3 }}>

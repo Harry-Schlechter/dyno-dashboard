@@ -75,7 +75,8 @@ const DashboardRoutes: React.FC = () => {
     <Routes>
       <Route path="/" element={isGuest ? <Navigate to="/spaces" replace /> : <HomePage />} />
       <Route path="/nutrition"     element={ownerOnly(<NutritionPage />)} />
-      <Route path="/workouts"      element={ownerOnly(<WorkoutsPage />)} />
+      <Route path="/fitness"       element={ownerOnly(<WorkoutsPage />)} />
+      <Route path="/workouts"      element={<Navigate to="/fitness" replace />} />
       <Route path="/sleep"         element={ownerOnly(<SleepPage />)} />
       <Route path="/finances"      element={ownerOnly(<FinancesPage />)} />
       <Route path="/tasks"         element={ownerOnly(<TasksPage />)} />

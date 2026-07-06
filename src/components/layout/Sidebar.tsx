@@ -37,7 +37,7 @@ const DRAWER_WIDTH = 200;
 const ALL_NAV_ITEMS = [
   { label: 'Home', path: '/', icon: Home },
   { label: 'Nutrition', path: '/nutrition', icon: Restaurant },
-  { label: 'Workouts', path: '/workouts', icon: FitnessCenter },
+  { label: 'Fitness', path: '/fitness', icon: FitnessCenter },
   { label: 'Sleep', path: '/sleep', icon: Bedtime },
   { label: 'Journal', path: '/journal', icon: Book },
   { label: 'Notes', path: '/notes', icon: StickyNote2 },

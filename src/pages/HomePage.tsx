@@ -9,6 +9,7 @@ import DailySummaryStrip from '../components/home/DailySummaryStrip';
 import InsightsFeed from '../components/home/InsightsFeed';
 import PersonaActivityStrip from '../components/home/PersonaActivityStrip';
 import VitalsStrip from '../components/home/VitalsStrip';
+import RecoveryRing from '../components/home/RecoveryRing';
 import TodayPanel from '../components/home/TodayPanel';
 import BriefingCard from '../components/home/BriefingCard';
 
@@ -49,6 +50,11 @@ const HomePage: React.FC = () => {
           {/* Vitals — replaces Life Score */}
           <Box sx={{ mb: 3 }}>
             <VitalsStrip />
+          </Box>
+
+          {/* Recovery score (Whoop-style) — compact; full detail lives on Fitness */}
+          <Box sx={{ mb: 3 }}>
+            <RecoveryRing />
           </Box>
 
           {/* Yesterday at a glance */}

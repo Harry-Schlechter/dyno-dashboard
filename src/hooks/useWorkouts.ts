@@ -7,6 +7,16 @@ export interface Workout {
   name: string;
   duration_min: number;
   notes: string;
+  // Provenance + tagging (migration 026). Present on all rows post-migration.
+  source?: 'manual' | 'google_health' | 'agent';
+  activity_type?: string | null;
+  tags?: string[];
+  review_status?: 'needs_review' | 'confirmed';
+  avg_hr?: number | null;
+  max_hr?: number | null;
+  active_calories?: number | null;
+  session_start?: string | null;
+  session_end?: string | null;
 }
 
 export interface WorkoutExercise {
