@@ -16,6 +16,12 @@ import LoadingSkeleton from '../components/common/LoadingSkeleton';
 import AgentVoiceCard from '../components/common/AgentVoiceCard';
 import InsightsFeed from '../components/home/InsightsFeed';
 import ActivityHeatmap, { HeatmapEntry } from '../components/common/ActivityHeatmap';
+import { SleepEntry } from '../hooks/useSleep';
+import SleepStagesCard from '../components/sleep/SleepStagesCard';
+import SleepQualityCard from '../components/sleep/SleepQualityCard';
+import StageTrendChart from '../components/sleep/StageTrendChart';
+import SleepDebtCard from '../components/sleep/SleepDebtCard';
+import PeriodAveragesCard from '../components/sleep/PeriodAveragesCard';
 
 type Window = '7d' | '30d' | '90d' | '1y';
 const WINDOW_DAYS: Record<Window, number> = { '7d': 7, '30d': 30, '90d': 90, '1y': 365 };
@@ -64,8 +70,18 @@ const SleepPage: React.FC = () => {
     limit: 500,
   });
 
+  // Typed fetch with the full stage detail for the enrichment cards/charts.
+  const { data: detailed } = useSupabase<SleepEntry>({
+    table: 'sleep',
+    order: { column: 'date', ascending: false },
+    limit: 500,
+  });
+
   const today = useMemo(() => new Date(), []);
   const windowStart = useMemo(() => format(subDays(today, WINDOW_DAYS[win] - 1), 'yyyy-MM-dd'), [today, win]);
+
+  const detailedNight = useMemo(() => detailed.find((s) => s.hours != null) ?? null, [detailed]);
+  const detailedWindow = useMemo(() => detailed.filter((s) => s.date >= windowStart), [detailed, windowStart]);
 
   const filtered = useMemo(
     () => data.filter(d => d.date >= windowStart).sort((a, b) => a.date.localeCompare(b.date)),
@@ -148,7 +164,7 @@ const SleepPage: React.FC = () => {
         <Box>
           <Typography variant="h4" fontWeight={700}>Sleep</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            Hours, bedtime, wake-time, and consistency
+            Quality, stages, hours, consistency, and sleep debt
           </Typography>
         </Box>
         <ToggleButtonGroup size="small" exclusive value={win} onChange={(_, v) => v && setWin(v)}>
@@ -173,6 +189,32 @@ const SleepPage: React.FC = () => {
         </Grid>
       </Grid>
 
+      {/* Last night detail (vs targets) + fixed-window sleep debt */}
+      <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.5, display: 'block', mb: 1 }}>
+        Last night
+      </Typography>
+      <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <SleepQualityCard night={detailedNight} />
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <SleepStagesCard night={detailedNight} />
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <SleepDebtCard entries={detailed} />
+        </Grid>
+      </Grid>
+
+      {/* Period-driven views — follow the 7d/30d/90d/1y filter */}
+      <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+        <Grid size={{ xs: 12, md: 5 }}>
+          <PeriodAveragesCard entries={detailedWindow} windowLabel={win} />
+        </Grid>
+        <Grid size={{ xs: 12, md: 7 }}>
+          <StageTrendChart entries={detailedWindow} />
+        </Grid>
+      </Grid>
+
       <Grid container spacing={2.5}>
         {/* Last night card */}
         <Grid size={{ xs: 12, md: 5 }}>
@@ -180,7 +222,7 @@ const SleepPage: React.FC = () => {
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                 <NightsStay sx={{ fontSize: 18, color: '#764ba2' }} />
-                <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.5 }}>Last night</Typography>
+                <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.5 }}>Last night · timing</Typography>
               </Box>
               {!lastNight || lastNight.hours == null ? (
                 <Typography variant="body2" color="text.secondary">No sleep logged</Typography>
