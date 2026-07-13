@@ -14,10 +14,9 @@ const LatestWorkoutCard: React.FC = () => {
     limit: 20,
   });
 
-  const latest = useMemo(() => {
-    // Prefer the most recent confirmed workout; skip needs_review placeholders.
-    return data.find((w) => w.review_status !== 'needs_review') ?? data[0] ?? null;
-  }, [data]);
+  // The genuinely most recent workout — data is date-desc ordered, so that's data[0].
+  // (Auto-detected sessions count; an untagged one just gets a "needs tag" chip.)
+  const latest = useMemo(() => data[0] ?? null, [data]);
 
   if (!latest) return null;
 
@@ -43,6 +42,10 @@ const LatestWorkoutCard: React.FC = () => {
           <Typography variant="h5" fontWeight={700}>{latest.name || 'Workout'}</Typography>
           {latest.source === 'google_health' && (
             <Chip size="small" label="Fitbit" sx={{ height: 18, fontSize: '0.6rem' }} />
+          )}
+          {latest.review_status === 'needs_review'
+            && (!latest.name || latest.name === 'Active session (needs review)') && (
+            <Chip size="small" label="needs tag" sx={{ height: 18, fontSize: '0.6rem', bgcolor: 'rgba(255,152,0,0.15)', color: '#FF9800' }} />
           )}
         </Box>
         <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>{when}</Typography>

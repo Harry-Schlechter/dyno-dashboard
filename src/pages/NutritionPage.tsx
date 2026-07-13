@@ -13,6 +13,7 @@ import { formatDateShort } from '../lib/formatters';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
 import AgentVoiceCard from '../components/common/AgentVoiceCard';
 import InsightsFeed from '../components/home/InsightsFeed';
+import CollapsibleSection from '../components/common/CollapsibleSection';
 import ActivityHeatmap, { HeatmapEntry } from '../components/common/ActivityHeatmap';
 
 type Window = '7d' | '30d' | '90d';
@@ -137,19 +138,21 @@ const NutritionPage: React.FC = () => {
         </ToggleButtonGroup>
       </Box>
 
-      <Grid container spacing={2.5} sx={{ mb: 2 }}>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <AgentVoiceCard agentId="nutritionist" />
+      <CollapsibleSection title="Your nutritionist & insights">
+        <Grid container spacing={2.5}>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <AgentVoiceCard agentId="nutritionist" />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <InsightsFeed
+              agentId="nutritionist"
+              limit={5}
+              title="Nutrition insights"
+              emptyMessage="Nutritionist is watching macros and meals — nothing flagged yet."
+            />
+          </Grid>
         </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <InsightsFeed
-            agentId="nutritionist"
-            limit={5}
-            title="Nutrition insights"
-            emptyMessage="Nutritionist is watching macros and meals — nothing flagged yet."
-          />
-        </Grid>
-      </Grid>
+      </CollapsibleSection>
 
       <Grid container spacing={2.5}>
         {/* Today */}
@@ -233,12 +236,12 @@ const NutritionPage: React.FC = () => {
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={dailyData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                  <XAxis dataKey="date" tickFormatter={v => format(new Date(v + 'T00:00:00'), 'MMM d')} stroke="#7d8590" fontSize={10} />
-                  <YAxis stroke="#7d8590" fontSize={10} />
+                  <XAxis dataKey="date" tickFormatter={v => format(new Date(v + 'T00:00:00'), 'MMM d')} stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: "#8b96a5", fontSize: 10 }} />
+                  <YAxis stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: "#8b96a5", fontSize: 10 }} />
                   <Tooltip
                     labelFormatter={v => format(new Date(v + 'T00:00:00'), 'EEE, MMM d')}
                     formatter={(v: number, name: string) => name === 'protein' ? [`${Math.round(v)}g`, 'Protein'] : [v, name]}
-                    contentStyle={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8 }}
+                    contentStyle={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8 }} itemStyle={{ color: "#e6edf3" }} labelStyle={{ color: "#8b96a5", fontWeight: 600 }}
                   />
                   <ReferenceLine y={PROTEIN_TARGET} stroke="#FF9800" strokeDasharray="6 4" label={{ value: `Target ${PROTEIN_TARGET}g`, position: 'right', fill: '#FF9800', fontSize: 11 }} />
                   <Bar dataKey="protein" radius={[4, 4, 0, 0]}>
@@ -263,12 +266,12 @@ const NutritionPage: React.FC = () => {
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={dailyData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                  <XAxis dataKey="date" tickFormatter={v => format(new Date(v + 'T00:00:00'), 'MMM d')} stroke="#7d8590" fontSize={10} />
-                  <YAxis stroke="#7d8590" fontSize={10} />
+                  <XAxis dataKey="date" tickFormatter={v => format(new Date(v + 'T00:00:00'), 'MMM d')} stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: "#8b96a5", fontSize: 10 }} />
+                  <YAxis stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: "#8b96a5", fontSize: 10 }} />
                   <Tooltip
                     labelFormatter={v => format(new Date(v + 'T00:00:00'), 'EEE, MMM d')}
                     formatter={(v: number, name: string) => name === 'calories' ? [`${Math.round(v).toLocaleString()} cal`, 'Calories'] : [v, name]}
-                    contentStyle={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8 }}
+                    contentStyle={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8 }} itemStyle={{ color: "#e6edf3" }} labelStyle={{ color: "#8b96a5", fontWeight: 600 }}
                   />
                   <ReferenceLine y={CALORIE_TARGET} stroke="#FF9800" strokeDasharray="6 4" label={{ value: `Target ≤${CALORIE_TARGET.toLocaleString()}`, position: 'right', fill: '#FF9800', fontSize: 11 }} />
                   <Bar dataKey="calories" radius={[4, 4, 0, 0]}>

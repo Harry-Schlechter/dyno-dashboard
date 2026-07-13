@@ -18,6 +18,7 @@ import OnPaceCard from '../components/finance/OnPaceCard';
 import DateRangeFilter, { DateRange, computeRange } from '../components/finance/DateRangeFilter';
 import AgentVoiceCard from '../components/common/AgentVoiceCard';
 import InsightsFeed from '../components/home/InsightsFeed';
+import CollapsibleSection from '../components/common/CollapsibleSection';
 import CategoryPieCard from '../components/finance/CategoryPieCard';
 import SubscriptionsCard from '../components/finance/SubscriptionsCard';
 import CategoryTrendsCard from '../components/finance/CategoryTrendsCard';
@@ -298,10 +299,10 @@ const FinancesPage: React.FC = () => {
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                    <XAxis dataKey="month" stroke="#7d8590" fontSize={11} />
-                    <YAxis stroke="#7d8590" fontSize={11} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
+                    <XAxis dataKey="month" stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: "#8b96a5", fontSize: 11 }} />
+                    <YAxis stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: "#8b96a5", fontSize: 11 }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
                     <Tooltip content={<CustomTooltip />} />
-                    <Legend wrapperStyle={{ fontSize: 12, color: '#7d8590' }} />
+                    <Legend wrapperStyle={{ fontSize: 12, color: '#8b96a5' }} />
                     <Area type="monotone" dataKey="assets" name="Assets" stroke="#4CAF50" fill="url(#assetGrad)" strokeWidth={1.5} />
                     <Area type="monotone" dataKey="liabilities" name="Liabilities" stroke="#F44336" fill="url(#liabGrad)" strokeWidth={1.5} />
                     <Line type="monotone" dataKey="netWorth" name="Net Worth" stroke="#5B8DEF" strokeWidth={2.5} dot={{ r: 3, fill: '#5B8DEF' }} />
@@ -311,17 +312,23 @@ const FinancesPage: React.FC = () => {
             </Card>
           </Grid>
 
-          {/* Financial advisor voice + insights */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <AgentVoiceCard agentId="financial-advisor" />
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <InsightsFeed
-              agentId="financial-advisor"
-              limit={5}
-              title="Financial insights"
-              emptyMessage="Financial advisor is watching spending and net worth — nothing flagged yet."
-            />
+          {/* Financial advisor voice + insights (collapsible) */}
+          <Grid size={{ xs: 12 }}>
+            <CollapsibleSection title="Your advisor & financial insights">
+              <Grid container spacing={2.5}>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <AgentVoiceCard agentId="financial-advisor" />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <InsightsFeed
+                    agentId="financial-advisor"
+                    limit={5}
+                    title="Financial insights"
+                    emptyMessage="Financial advisor is watching spending and net worth — nothing flagged yet."
+                  />
+                </Grid>
+              </Grid>
+            </CollapsibleSection>
           </Grid>
 
           {/* On Pace — current month savings extrapolation */}

@@ -288,7 +288,7 @@ const GolfSection: React.FC = () => {
                     <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.6)' }} />
                     <YAxis tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.6)' }} domain={['dataMin - 2', 'dataMax + 2']} />
                     <Tooltip
-                      contentStyle={{ background: '#1c1c1e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }}
+                      contentStyle={{ background: '#1c1c1e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }} itemStyle={{ color: "#e6edf3" }} labelStyle={{ color: "#8b96a5", fontWeight: 600 }}
                       formatter={(value: any, name: string, props: any) => {
                         if (name === 'score') {
                           return [`${value} (${props.payload.diff >= 0 ? '+' : ''}${props.payload.diff})`, props.payload.course];
@@ -320,7 +320,7 @@ const GolfSection: React.FC = () => {
                     <XAxis dataKey="hole" tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.6)' }} />
                     <YAxis tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.6)' }} />
                     <Tooltip
-                      contentStyle={{ background: '#1c1c1e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }}
+                      contentStyle={{ background: '#1c1c1e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }} itemStyle={{ color: "#e6edf3" }} labelStyle={{ color: "#8b96a5", fontWeight: 600 }}
                       formatter={(value: any, _name: string, props: any) => [
                         `${(value as number).toFixed(2)} (${props.payload.rounds} rounds)`,
                         `Hole ${props.payload.hole} · par ${props.payload.par}`,

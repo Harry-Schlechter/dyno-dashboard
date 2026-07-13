@@ -2,9 +2,9 @@ import React, { useState, useMemo } from 'react';
 import {
   Box, Typography, Card, CardContent, Chip, Stack,
   IconButton, Checkbox, ToggleButton, ToggleButtonGroup,
-  Collapse, Alert,
+  Collapse, Alert, TextField, Button, MenuItem,
 } from '@mui/material';
-import { ExpandMore, ExpandLess } from '@mui/icons-material';
+import { ExpandMore, ExpandLess, Add } from '@mui/icons-material';
 import CalendarTodayRoundedIcon from '@mui/icons-material/CalendarTodayRounded';
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
 import InboxRoundedIcon from '@mui/icons-material/InboxRounded';
@@ -19,9 +19,21 @@ const priorityLabels: Record<number, string> = { 1: 'P1 — High', 2: 'P2 — Me
 const priorityColors: Record<number, string> = { 1: colorSystem.priority.high, 2: colorSystem.priority.medium, 3: colorSystem.priority.low };
 
 const TasksPage: React.FC = () => {
-  const { data: tasks, loading, error, refetch, completeTask } = useTasks();
+  const { data: tasks, loading, error, refetch, completeTask, addTask } = useTasks();
   const [statusFilter, setStatusFilter] = useState<string>('pending');
   const [expanded, setExpanded] = useState<Record<number, boolean>>({ 1: true, 2: true, 3: true });
+  const [newTitle, setNewTitle] = useState('');
+  const [newPriority, setNewPriority] = useState<1 | 2 | 3>(2);
+  const [newDue, setNewDue] = useState('');
+  const [adding, setAdding] = useState(false);
+
+  const handleAdd = async () => {
+    if (!newTitle.trim()) return;
+    setAdding(true);
+    const err = await addTask({ title: newTitle, priority: newPriority, due_date: newDue || null });
+    setAdding(false);
+    if (!err) { setNewTitle(''); setNewDue(''); setNewPriority(2); }
+  };
 
   const filteredTasks = useMemo(() => {
     return tasks.filter(t => statusFilter === 'all' || t.status === statusFilter);
@@ -117,6 +129,45 @@ const TasksPage: React.FC = () => {
           <ToggleButton value="all">All</ToggleButton>
         </ToggleButtonGroup>
       </Box>
+
+      {/* Add task */}
+      <Card sx={{ mb: 3, '&:hover': { transform: 'none' } }}>
+        <CardContent sx={{ py: '14px !important' }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }}>
+            <TextField
+              placeholder="Add a task…"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); }}
+              size="small"
+              fullWidth
+              sx={{ flex: 1 }}
+            />
+            <TextField
+              select label="Priority" value={newPriority} size="small"
+              onChange={(e) => setNewPriority(Number(e.target.value) as 1 | 2 | 3)}
+              sx={{ minWidth: 120 }}
+            >
+              <MenuItem value={1}>P1 — High</MenuItem>
+              <MenuItem value={2}>P2 — Medium</MenuItem>
+              <MenuItem value={3}>P3 — Low</MenuItem>
+            </TextField>
+            <TextField
+              type="date" label="Due" value={newDue} size="small"
+              onChange={(e) => setNewDue(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              sx={{ minWidth: 150 }}
+            />
+            <Button
+              variant="contained" startIcon={<Add />} onClick={handleAdd}
+              disabled={!newTitle.trim() || adding}
+              sx={{ textTransform: 'none', whiteSpace: 'nowrap' }}
+            >
+              Add
+            </Button>
+          </Stack>
+        </CardContent>
+      </Card>
 
       {/* Priority groups */}
       <Stack spacing={3}>

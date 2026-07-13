@@ -35,7 +35,7 @@ const StageTrendChart: React.FC<{ entries: SleepEntry[] }> = ({ entries }) => {
                 <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9E9E9E' }} />
                 <YAxis tick={{ fontSize: 11, fill: '#9E9E9E' }} unit="m" />
                 <Tooltip
-                  contentStyle={{ background: '#1e1e2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }}
+                  contentStyle={{ background: '#1e1e2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }} itemStyle={{ color: "#e6edf3" }} labelStyle={{ color: "#8b96a5", fontWeight: 600 }}
                   formatter={(v: number, name: string) => [`${Math.floor(v / 60)}h ${v % 60}m`, name]}
                 />
                 <Legend wrapperStyle={{ fontSize: 12 }} />

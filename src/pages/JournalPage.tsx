@@ -160,9 +160,9 @@ const JournalPage: React.FC = () => {
               <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={moodChart}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                  <XAxis dataKey="date" stroke="#7d8590" fontSize={12} />
-                  <YAxis stroke="#7d8590" fontSize={12} domain={[0, 5]} />
-                  <Tooltip contentStyle={{ backgroundColor: '#121821', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }} />
+                  <XAxis dataKey="date" stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: "#8b96a5", fontSize: 12 }} />
+                  <YAxis stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: "#8b96a5", fontSize: 12 }} domain={[0, 5]} />
+                  <Tooltip contentStyle={{ backgroundColor: "rgba(18,24,33,0.92)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10 }} itemStyle={{ color: "#e6edf3" }} labelStyle={{ color: "#8b96a5" }} />
                   <Line type="monotone" dataKey="mood" stroke="#5B8DEF" strokeWidth={2} dot={{ r: 3 }} />
                 </LineChart>
               </ResponsiveContainer>
@@ -178,9 +178,9 @@ const JournalPage: React.FC = () => {
               <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={moodChart}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                  <XAxis dataKey="date" stroke="#7d8590" fontSize={12} />
-                  <YAxis stroke="#7d8590" fontSize={12} domain={[0, 5]} />
-                  <Tooltip contentStyle={{ backgroundColor: '#121821', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }} />
+                  <XAxis dataKey="date" stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: "#8b96a5", fontSize: 12 }} />
+                  <YAxis stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: "#8b96a5", fontSize: 12 }} domain={[0, 5]} />
+                  <Tooltip contentStyle={{ backgroundColor: "rgba(18,24,33,0.92)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10 }} itemStyle={{ color: "#e6edf3" }} labelStyle={{ color: "#8b96a5" }} />
                   <Line type="monotone" dataKey="energy" stroke="#4CAF50" strokeWidth={2} dot={{ r: 2 }} name="Energy" />
                   <Line type="monotone" dataKey="stress" stroke="#F44336" strokeWidth={2} dot={{ r: 2 }} name="Stress" />
                 </LineChart>
@@ -198,10 +198,10 @@ const JournalPage: React.FC = () => {
                 <ResponsiveContainer width="100%" height={250}>
                   <ScatterChart>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                    <XAxis dataKey="sleep" name="Sleep (hrs)" stroke="#7d8590" fontSize={12} />
-                    <YAxis dataKey="mood" name="Mood" stroke="#7d8590" fontSize={12} domain={[0, 5]} />
+                    <XAxis dataKey="sleep" name="Sleep (hrs)" stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: "#8b96a5", fontSize: 12 }} />
+                    <YAxis dataKey="mood" name="Mood" stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: "#8b96a5", fontSize: 12 }} domain={[0, 5]} />
                     <ZAxis range={[40, 40]} />
-                    <Tooltip contentStyle={{ backgroundColor: '#121821', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }} />
+                    <Tooltip contentStyle={{ backgroundColor: "rgba(18,24,33,0.92)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10 }} itemStyle={{ color: "#e6edf3" }} labelStyle={{ color: "#8b96a5" }} />
                     <Scatter data={correlationData} fill="#5B8DEF" />
                   </ScatterChart>
                 </ResponsiveContainer>

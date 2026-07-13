@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import {
   Box, Typography, Grid, Card, CardContent, Stack, ToggleButton, ToggleButtonGroup, Chip,
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tabs, Tab,
 } from '@mui/material';
 import { SportsBasketball, Terrain, FitnessCenter, DirectionsRun, EmojiEvents, GolfCourse } from '@mui/icons-material';
 import {
@@ -17,11 +17,11 @@ import { formatDateShort } from '../lib/formatters';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
 import AgentVoiceCard from '../components/common/AgentVoiceCard';
 import InsightsFeed from '../components/home/InsightsFeed';
+import CollapsibleSection from '../components/common/CollapsibleSection';
 import ActivityHeatmap, { HeatmapEntry } from '../components/common/ActivityHeatmap';
 import GolfSection from '../components/workouts/GolfSection';
 import RecoveryRing from '../components/home/RecoveryRing';
 import RecoveryStrip from '../components/home/RecoveryStrip';
-import SleepWidget from '../components/home/SleepWidget';
 import LatestWorkoutCard from '../components/workouts/LatestWorkoutCard';
 
 // Activity type matchers — keep in sync with metricResolver.ts
@@ -99,8 +99,13 @@ const Stat: React.FC<{ label: string; value: string; sub: string }> = ({ label, 
 
 // Fitbit-derived sessions the trainer hasn't tagged yet. Prompts Harry to tell
 // the agent what they were ("I played basketball") so they get named + confirmed.
+const PLACEHOLDER_NAME = 'Active session (needs review)';
 const NeedsReviewCard: React.FC<{ workouts: Workout[] }> = ({ workouts }) => {
-  const pending = workouts.filter(w => w.review_status === 'needs_review');
+  // "Named = tagged": a session only truly needs review if it still has the
+  // auto-generated placeholder name. Once it has a real name it's effectively tagged.
+  const pending = workouts.filter(
+    w => w.review_status === 'needs_review' && (!w.name || w.name === PLACEHOLDER_NAME),
+  );
   if (pending.length === 0) return null;
 
   return (
@@ -148,6 +153,7 @@ const WorkoutsPage: React.FC = () => {
   });
 
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
+  const [tab, setTab] = useState<'overview' | 'lifting' | 'golf'>('overview');
 
   // Workout intensity heatmap — duration (or count) per day
   const workoutHeatmap: HeatmapEntry[] = useMemo(() => {
@@ -222,6 +228,19 @@ const WorkoutsPage: React.FC = () => {
         </Typography>
       </Box>
 
+      {/* Tabs: Overview / Lifting / Golf */}
+      <Tabs
+        value={tab}
+        onChange={(_, v) => setTab(v)}
+        sx={{ mb: 3, borderBottom: '1px solid rgba(255,255,255,0.08)', minHeight: 40 }}
+      >
+        <Tab value="overview" label="Overview" sx={{ textTransform: 'none', minHeight: 40 }} />
+        <Tab value="lifting" label="Lifting" sx={{ textTransform: 'none', minHeight: 40 }} />
+        <Tab value="golf" label="Golf" sx={{ textTransform: 'none', minHeight: 40 }} />
+      </Tabs>
+
+      {tab === 'overview' && (
+      <>
       {/* Latest readings — recovery score + recovery vitals */}
       <Grid container spacing={2.5} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, md: 5 }}>
@@ -232,34 +251,33 @@ const WorkoutsPage: React.FC = () => {
         </Grid>
       </Grid>
 
-      {/* Latest workout + last night's sleep */}
+      {/* Latest workout */}
       <Grid container spacing={2.5} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, md: 6 }}>
           <LatestWorkoutCard />
-        </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <SleepWidget />
         </Grid>
       </Grid>
 
       {/* Fitbit-derived sessions awaiting a tag */}
       <NeedsReviewCard workouts={workouts} />
 
-      {/* Trainer voice + insights */}
-      <Grid container spacing={2.5} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <AgentVoiceCard agentId="trainer" />
+      {/* Trainer voice + insights (collapsible) */}
+      <CollapsibleSection title="Your trainer & training insights">
+        <Grid container spacing={2.5}>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <AgentVoiceCard agentId="trainer" />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <InsightsFeed
+              agentId="trainer"
+              kinds={['milestone', 'pattern', 'anomaly', 'recommendation', 'warning']}
+              limit={5}
+              title="Training insights"
+              emptyMessage="Trainer is tracking PRs and volume — nothing notable yet."
+            />
+          </Grid>
         </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <InsightsFeed
-            agentId="trainer"
-            kinds={['milestone', 'pattern', 'anomaly', 'recommendation', 'warning']}
-            limit={5}
-            title="Training insights"
-            emptyMessage="Trainer is tracking PRs and volume — nothing notable yet."
-          />
-        </Grid>
-      </Grid>
+      </CollapsibleSection>
 
       {/* Sport widgets */}
       <Grid container spacing={2.5} sx={{ mb: 3 }}>
@@ -282,15 +300,12 @@ const WorkoutsPage: React.FC = () => {
           <SportWidget icon={<DirectionsRun />} label="Other cardio" color="#90CAF9" workouts={workouts} matcher={isCardioOther} />
         </Grid>
       </Grid>
+      </>
+      )}
 
-      {/* Golf detail section */}
-      <GolfSection />
+      {tab === 'golf' && <GolfSection />}
 
-      {/* Lifting block */}
-      <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.5, display: 'block', mb: 1 }}>
-        Lifting
-      </Typography>
-
+      {tab === 'lifting' && (
       <Grid container spacing={2.5}>
         {/* Sessions trend */}
         <Grid size={{ xs: 12, md: 8 }}>
@@ -313,11 +328,11 @@ const WorkoutsPage: React.FC = () => {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                  <XAxis dataKey="week" tickFormatter={v => format(new Date(v + 'T00:00:00'), 'MMM d')} stroke="#7d8590" fontSize={10} />
-                  <YAxis stroke="#7d8590" fontSize={10} allowDecimals={false} />
+                  <XAxis dataKey="week" tickFormatter={v => format(new Date(v + 'T00:00:00'), 'MMM d')} stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: "#8b96a5", fontSize: 10 }} />
+                  <YAxis stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: "#8b96a5", fontSize: 10 }} allowDecimals={false} />
                   <Tooltip
                     labelFormatter={v => `Week of ${format(new Date(v + 'T00:00:00'), 'MMM d, yyyy')}`}
-                    contentStyle={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8 }}
+                    contentStyle={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8 }} itemStyle={{ color: "#e6edf3" }} labelStyle={{ color: "#8b96a5", fontWeight: 600 }}
                   />
                   <Area type="monotone" dataKey="sessions" name="Sessions" stroke="#5B8DEF" fill="url(#liftGrad)" strokeWidth={2} />
                   <Line type="monotone" dataKey="ma4" name="4-wk avg" stroke="#FF9800" strokeWidth={1.5} dot={false} />
@@ -393,13 +408,13 @@ const WorkoutsPage: React.FC = () => {
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={exerciseSessions}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                    <XAxis dataKey="date" tickFormatter={v => format(new Date(v + 'T00:00:00'), 'MMM d')} stroke="#7d8590" fontSize={10} />
-                    <YAxis yAxisId="left"  stroke="#7d8590" fontSize={10} label={{ value: 'Est. 1RM (lb)', angle: -90, position: 'insideLeft', fill: '#7d8590', fontSize: 11 }} />
-                    <YAxis yAxisId="right" stroke="#7d8590" fontSize={10} orientation="right" label={{ value: 'Volume (lb)', angle: 90, position: 'insideRight', fill: '#7d8590', fontSize: 11 }} />
+                    <XAxis dataKey="date" tickFormatter={v => format(new Date(v + 'T00:00:00'), 'MMM d')} stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: "#8b96a5", fontSize: 10 }} />
+                    <YAxis yAxisId="left"  stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: "#8b96a5", fontSize: 10 }} label={{ value: 'Est. 1RM (lb)', angle: -90, position: 'insideLeft', fill: '#7d8590', fontSize: 11 }} />
+                    <YAxis yAxisId="right" stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: "#8b96a5", fontSize: 10 }} orientation="right" label={{ value: 'Volume (lb)', angle: 90, position: 'insideRight', fill: '#7d8590', fontSize: 11 }} />
                     <Tooltip
                       labelFormatter={v => format(new Date(v + 'T00:00:00'), 'MMM d, yyyy')}
                       formatter={(v: number, name: string) => [Math.round(v), name]}
-                      contentStyle={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8 }}
+                      contentStyle={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8 }} itemStyle={{ color: "#e6edf3" }} labelStyle={{ color: "#8b96a5", fontWeight: 600 }}
                     />
                     <Line yAxisId="left"  type="monotone" dataKey="best1RM" name="Est. 1RM" stroke="#5B8DEF" strokeWidth={2.5} dot={{ r: 3 }} />
                     <Line yAxisId="right" type="monotone" dataKey="volume" name="Volume" stroke="#764ba2" strokeWidth={1.5} dot={false} strokeDasharray="4 4" />
@@ -427,6 +442,7 @@ const WorkoutsPage: React.FC = () => {
           </Grid>
         )}
       </Grid>
+      )}
     </Box>
   );
 };

@@ -31,5 +31,21 @@ export const useTasks = () => {
     return error;
   }, [result.refetch]);
 
-  return { ...result, completeTask };
+  const addTask = useCallback(async (input: {
+    title: string;
+    priority?: 1 | 2 | 3;
+    due_date?: string | null;
+  }) => {
+    const { error } = await supabase.from('tasks').insert({
+      user_id: USER_ID,
+      title: input.title.trim(),
+      status: 'pending',
+      priority: input.priority ?? 2,
+      due_date: input.due_date ?? null,
+    });
+    if (!error) result.refetch();
+    return error;
+  }, [result.refetch]);
+
+  return { ...result, completeTask, addTask };
 };

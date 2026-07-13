@@ -15,6 +15,7 @@ import {
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
 import AgentVoiceCard from '../components/common/AgentVoiceCard';
 import InsightsFeed from '../components/home/InsightsFeed';
+import CollapsibleSection from '../components/common/CollapsibleSection';
 import ActivityHeatmap, { HeatmapEntry } from '../components/common/ActivityHeatmap';
 import { SleepEntry } from '../hooks/useSleep';
 import SleepStagesCard from '../components/sleep/SleepStagesCard';
@@ -175,19 +176,21 @@ const SleepPage: React.FC = () => {
         </ToggleButtonGroup>
       </Box>
 
-      <Grid container spacing={2.5} sx={{ mb: 2 }}>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <AgentVoiceCard agentId="mental-health" />
+      <CollapsibleSection title="Your coach & sleep insights">
+        <Grid container spacing={2.5}>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <AgentVoiceCard agentId="mental-health" />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <InsightsFeed
+              agentId="mental-health"
+              limit={5}
+              title="Sleep insights"
+              emptyMessage="Mental health is watching your sleep — nothing flagged yet."
+            />
+          </Grid>
         </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <InsightsFeed
-            agentId="mental-health"
-            limit={5}
-            title="Sleep insights"
-            emptyMessage="Mental health is watching your sleep — nothing flagged yet."
-          />
-        </Grid>
-      </Grid>
+      </CollapsibleSection>
 
       {/* Last night detail (vs targets) + fixed-window sleep debt */}
       <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.5, display: 'block', mb: 1 }}>
@@ -327,11 +330,11 @@ const SleepPage: React.FC = () => {
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={histogram} layout="vertical" margin={{ left: 20, right: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                  <XAxis type="number" stroke="#7d8590" fontSize={11} />
-                  <YAxis type="category" dataKey="label" stroke="#7d8590" fontSize={10} width={120} />
+                  <XAxis type="number" stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: "#8b96a5", fontSize: 11 }} />
+                  <YAxis type="category" dataKey="label" stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: "#8b96a5", fontSize: 10 }} width={120} />
                   <Tooltip
                     formatter={(v: number) => [`${v} night${v === 1 ? '' : 's'}`, 'Count']}
-                    contentStyle={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8 }}
+                    contentStyle={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8 }} itemStyle={{ color: "#e6edf3" }} labelStyle={{ color: "#8b96a5", fontWeight: 600 }}
                   />
                   <Bar dataKey="count" radius={[0, 4, 4, 0]}>
                     {histogram.map((entry, i) => <Cell key={i} fill={entry.color} />)}
@@ -355,14 +358,14 @@ const SleepPage: React.FC = () => {
                     domain={[18 * 60, 30 * 60]}
                     ticks={[18 * 60, 21 * 60, 24 * 60, 27 * 60, 30 * 60]}
                     tickFormatter={(v: number) => minutesToClock(v % (24 * 60))}
-                    stroke="#7d8590" fontSize={10}
+                    stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: "#8b96a5", fontSize: 10 }}
                   />
                   <YAxis
                     type="number" dataKey="waketime" name="Wake time"
                     domain={[6 * 60, 14 * 60]}
                     ticks={[6 * 60, 8 * 60, 10 * 60, 12 * 60, 14 * 60]}
                     tickFormatter={(v: number) => minutesToClock(v)}
-                    stroke="#7d8590" fontSize={10}
+                    stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: "#8b96a5", fontSize: 10 }}
                   />
                   <ZAxis type="number" dataKey="hours" range={[40, 200]} />
                   <Tooltip
@@ -373,7 +376,7 @@ const SleepPage: React.FC = () => {
                       return [v, name];
                     }}
                     labelFormatter={() => ''}
-                    contentStyle={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8 }}
+                    contentStyle={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8 }} itemStyle={{ color: "#e6edf3" }} labelStyle={{ color: "#8b96a5", fontWeight: 600 }}
                   />
                   <ReferenceArea x1={22 * 60} x2={25 * 60} y1={6 * 60} y2={9 * 60} fill="#4CAF50" fillOpacity={0.06} />
                   <Scatter data={scatterData} fill="#5B8DEF">
