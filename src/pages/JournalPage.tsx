@@ -14,6 +14,11 @@ import AgentVoiceCard from '../components/common/AgentVoiceCard';
 import InsightsFeed from '../components/home/InsightsFeed';
 import ActivityHeatmap, { HeatmapEntry } from '../components/common/ActivityHeatmap';
 import ErrorMessage from '../components/common/ErrorMessage';
+import CollapsibleSection from '../components/common/CollapsibleSection';
+import { useJournal } from '../hooks/useJournal';
+import OnThisDayCard from '../components/journal/OnThisDayCard';
+import JournalStreakCard from '../components/journal/JournalStreakCard';
+import RecurrenceCard from '../components/journal/RecurrenceCard';
 
 const moodColors: Record<number, string> = { 1: '#F44336', 2: '#FF9800', 3: '#FFB74D', 4: '#5B8DEF', 5: '#4CAF50' };
 
@@ -21,6 +26,7 @@ const JournalPage: React.FC = () => {
   const [range, setRange] = useState<'7d' | '30d' | '90d'>('90d');
   const { data: logs, loading, error, refetch } = useDailyLogs(range);
   const { data: sleepData } = useSleep(range);
+  const journal = useJournal();
   const [selectedLog, setSelectedLog] = useState<DailyLog | null>(null);
   const [calMonth, setCalMonth] = useState(new Date());
 
@@ -76,8 +82,10 @@ const JournalPage: React.FC = () => {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Box>
-          <Typography variant="h4" fontWeight={700}>Journal & Mood</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>Journal entries and mood tracking</Typography>
+          <Typography variant="h4" fontWeight={700}>Reflections</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            On this day, journaling streak, recurring people & themes, mood over time
+          </Typography>
         </Box>
         <ToggleButtonGroup value={range} exclusive onChange={(_, v) => v && setRange(v)} size="small">
           <ToggleButton value="7d">7D</ToggleButton>
@@ -86,19 +94,56 @@ const JournalPage: React.FC = () => {
         </ToggleButtonGroup>
       </Box>
 
-      <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }} sx={{ mb: 2 }}>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <AgentVoiceCard agentId="mental-health" />
+      {/* Reflections — on this day + streak (from the journal corpus) */}
+      <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }} sx={{ mb: 2.5 }}>
+        <Grid size={{ xs: 12, md: 7 }}>
+          <OnThisDayCard entries={journal.onThisDay} />
         </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <InsightsFeed
-            agentId="mental-health"
-            limit={5}
-            title="Mood & journal insights"
-            emptyMessage="Mental health is reading your entries — nothing flagged yet."
+        <Grid size={{ xs: 12, md: 5 }}>
+          <JournalStreakCard
+            current={journal.streak.current}
+            journaledToday={journal.streak.journaledToday}
+            lastDate={journal.streak.lastDate}
+            totalEntries={journal.entries.length}
           />
         </Grid>
       </Grid>
+
+      {/* Recurring people & themes (mention counts — scoped to the journal) */}
+      <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }} sx={{ mb: 2.5 }}>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <RecurrenceCard
+            title="People who recur"
+            items={journal.recurrence.people}
+            color="#5B8DEF"
+            emptyHint="Names you mention across entries will show here (in 2+ entries)."
+          />
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <RecurrenceCard
+            title="Recurring themes"
+            items={journal.recurrence.topics}
+            color="#764ba2"
+            emptyHint="Themes that come up across entries will show here."
+          />
+        </Grid>
+      </Grid>
+
+      <CollapsibleSection title="Your coach & mood insights">
+        <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <AgentVoiceCard agentId="mental-health" />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <InsightsFeed
+              agentId="mental-health"
+              limit={5}
+              title="Mood & journal insights"
+              emptyMessage="Mental health is reading your entries — nothing flagged yet."
+            />
+          </Grid>
+        </Grid>
+      </CollapsibleSection>
 
       <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
         {/* Calendar */}

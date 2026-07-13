@@ -39,7 +39,7 @@ const ALL_NAV_ITEMS = [
   { label: 'Nutrition', path: '/nutrition', icon: Restaurant },
   { label: 'Fitness', path: '/fitness', icon: FitnessCenter },
   { label: 'Sleep', path: '/sleep', icon: Bedtime },
-  { label: 'Journal', path: '/journal', icon: Book },
+  { label: 'Reflections', path: '/journal', icon: Book },
   { label: 'Notes', path: '/notes', icon: StickyNote2 },
   { label: 'Finances', path: '/finances', icon: AccountBalance },
   { label: 'Tasks', path: '/tasks', icon: CheckCircle },
