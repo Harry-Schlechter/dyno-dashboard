@@ -3,132 +3,238 @@
 // Slug:         bangkok-sydney-oct-2026
 
 import React from 'react';
-import { Box, Grid } from '@mui/material';
+import { Box, Grid, Stack } from '@mui/material';
 import {
-  PageHero, SectionHeader, BookingCard, ItineraryDay, ChecklistCard, KeyValueGrid,
+  PageHero, SectionHeader, BookingCard, InfoCard, ChecklistCard, KeyValueGrid,
 } from '../../components/generated';
+
+const T: React.FC<{ children: string }> = ({ children }) => (
+  <Box sx={{ fontSize: '0.875rem', lineHeight: 1.65, color: 'text.secondary' }}>{children}</Box>
+);
 
 const BangkokSydneyOct2026: React.FC = () => (
   <Box>
     <PageHero
       title="Bangkok — Sydney & Family"
-      subtitle="Oct 23–26, 2026 · 4 Days · Culture + Food"
-      tags={['bangkok', 'thailand', 'family', 'culture']}
-      accent="#D4891A"
+      subtitle="Oct 23–26, 2026 · 4 days · Pick your path each day"
+      tags={['bangkok', 'thailand', 'family', 'low-impact']}
+      accent="#26A69A"
     />
 
     {/* HOTEL */}
-    <SectionHeader title="Lodging" />
+    <SectionHeader title="Hotel" />
     <BookingCard
       kind="hotel"
       title="Holiday Inn Bangkok"
       subtitle="971 Phloen Chit Road, Lumpini, Bangkok 10330"
-      when="Oct 23–26 (check-in after midnight Oct 22 arrival)"
-      where="BTS Phloen Chit — walking distance to Lumphini Park & Erawan Shrine"
+      when="Oct 23–26"
+      where="BTS Phloen Chit · walkable to Lumphini Park & Erawan Shrine"
       status="confirmed"
-      notes="Elevator access, ground-floor restaurant. Mom's knee: request ground-floor or low room."
+      notes="Request ground-floor or low room for mom's knee. Elevator access. Ground-floor restaurant."
     />
 
-    {/* ITINERARY */}
-    <SectionHeader title="Itinerary" hint="Designed for low-impact activity — mom's knee" />
+    {/* DAY 1 */}
+    <SectionHeader title="Day 1 — Friday, Oct 23" hint="Land around midnight Oct 22 — sleep in, no hard agenda" />
+    <Grid container spacing={2.5}>
+      <Grid size={{ xs: 12, md: 4 }}>
+        <InfoCard title="Option A — Neighborhood Ease" accent="#26A69A">
+          <T>Lumphini Park (5 min from hotel) — flat paths, lake, paddle boats, good 45-min stroll. Then Erawan Shrine (10 min taxi) — traditional dancers perform offerings. Cool off at Central Embassy mall next door. Home by 4pm before afternoon heat peaks.</T>
+        </InfoCard>
+      </Grid>
+      <Grid size={{ xs: 12, md: 4 }}>
+        <InfoCard title="Option B — Full Rest" accent="#7d8590">
+          <T>Hotel pool, room service, sleep. Save the energy for Day 2's early Grand Palace start. No guilt — you flew in overnight.</T>
+        </InfoCard>
+      </Grid>
+      <Grid size={{ xs: 12, md: 4 }}>
+        <InfoCard title="Option C — Spa & Thai Massage" accent="#9C7BFF">
+          <T>Thai massage near Phloen Chit BTS — excellent spots 5 min walk. Restorative, great for mom's knee. ~$20–40/person for 90 min. Ask hotel concierge for a recommendation.</T>
+        </InfoCard>
+      </Grid>
+    </Grid>
+    <Box sx={{ mt: 2 }}>
+      <SectionHeader title="Dinner — Day 1" />
+      <Grid container spacing={2.5}>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <InfoCard title="Paste Bangkok — Michelin Star" accent="#EC407A">
+            <T>Refined modern Thai using ancient recipes. Quiet, elegant, family-friendly. Near Phloen Chit BTS. Book well in advance — fills up. pastebangkok.com</T>
+          </InfoCard>
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <InfoCard title="Gianni Ristorante" accent="#EC407A">
+            <T>Italian, long-standing Bangkok institution. Good fallback if parents want something familiar on the jet-lag first night.</T>
+          </InfoCard>
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <InfoCard title="Hotel Restaurant" accent="#7d8590">
+            <T>If everyone is too wiped to go out — no shame on arrival night.</T>
+          </InfoCard>
+        </Grid>
+      </Grid>
+    </Box>
+
+    {/* DAY 2 */}
+    <SectionHeader title="Day 2 — Saturday, Oct 24" hint="The headline cultural day — pick your intensity" />
+    <Grid container spacing={2.5}>
+      <Grid size={{ xs: 12, md: 4 }}>
+        <InfoCard title="Option A — Full Royal Day" accent="#26A69A">
+          <T>Grand Palace + Wat Pho (go by 8am before heat peaks) then river ferry to view Wat Arun from the water then dinner cruise. The definitive Bangkok day. 500 THB/person Grand Palace, 200 THB Wat Pho. Dress code: cover shoulders, arms, legs to ankle — guards turn people away, no exceptions.</T>
+        </InfoCard>
+      </Grid>
+      <Grid size={{ xs: 12, md: 4 }}>
+        <InfoCard title="Option B — Grand Palace Only" accent="#FF9800">
+          <T>Grand Palace + Wat Phra Kaew (2.5–3 hrs with licensed guide), then lunch at Supanniga Eating Room Tha Tien, home by 2pm. Lighter day for mom. Still hits the #1 Bangkok sight. Evening dinner out near hotel.</T>
+        </InfoCard>
+      </Grid>
+      <Grid size={{ xs: 12, md: 4 }}>
+        <InfoCard title="Option C — Private Canal Tour" accent="#9C7BFF">
+          <T>Skip the palace — hire a private longtail for a 2-hr Chao Phraya canal tour. 100% boat-based, no walking. Pass temples, markets, and river life. Fully accessible for mom's knee. ~$40–60/boat. Book via hotel concierge or Viator.</T>
+        </InfoCard>
+      </Grid>
+    </Grid>
+    <Box sx={{ mt: 2 }}>
+      <SectionHeader title="Dinner — Day 2" />
+      <Grid container spacing={2.5}>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <InfoCard title="Chao Phraya Dinner Cruise" accent="#EC407A">
+            <T>2-hr cruise with Thai set dinner and live classical dance. Lit-up views of Grand Palace, Wat Arun, Wat Pho. Fully accessible — no walking once aboard. ~$40–60/person. GetYourGuide or chaophrayacruise.com</T>
+          </InfoCard>
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <InfoCard title="Supanniga Eating Room" accent="#EC407A">
+            <T>Traditional Thai, riverside near Wat Pho. Great food, real AC, good prices. Better if you did a long day and want dinner without a boat.</T>
+          </InfoCard>
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <InfoCard title="Near-Hotel Dining" accent="#7d8590">
+            <T>If the group is exhausted — several solid options within a short Grab ride of the Holiday Inn. Ask concierge day-of.</T>
+          </InfoCard>
+        </Grid>
+      </Grid>
+    </Box>
+
+    {/* DAY 3 */}
+    <SectionHeader title="Day 3 — Sunday, Oct 25" hint="Art, silk, and street food — pick a track" />
+    <Grid container spacing={2.5}>
+      <Grid size={{ xs: 12, md: 4 }}>
+        <InfoCard title="Option A — Silk & Museums" accent="#26A69A">
+          <T>Jim Thompson House (flat, guided tours every 30 min, 90 min, 200 THB) then Museum of Siam (AC, fully accessible, interactive Thai history, 1.5 hrs, 100 THB) then IconSiam Sooksiam floor (indoor floating market, great for mom). Strong cultural day, all accessible.</T>
+        </InfoCard>
+      </Grid>
+      <Grid size={{ xs: 12, md: 4 }}>
+        <InfoCard title="Option B — Chatuchak Market (Sunday only)" accent="#FF9800">
+          <T>Bangkok's massive weekend market — open Sat/Sun only. 15,000+ stalls of crafts, antiques, art, and food. Partially covered. Go early (9am) before the heat. Take Grab to the far entrance, browse 2–3 hrs, grab food stalls for lunch. Done by noon.</T>
+        </InfoCard>
+      </Grid>
+      <Grid size={{ xs: 12, md: 4 }}>
+        <InfoCard title="Option C — Massage + Lunch Only" accent="#9C7BFF">
+          <T>Wat Pho Thai massage school (temple setting, 2-hr massage, ~$25) then Issaya Siamese Club for lunch (colonial villa, garden terrace, refined Thai) then hotel rest all afternoon. Minimum walking, maximum recovery before the last night.</T>
+        </InfoCard>
+      </Grid>
+    </Grid>
+    <Box sx={{ mt: 2 }}>
+      <SectionHeader title="Dinner — Day 3" />
+      <Grid container spacing={2.5}>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <InfoCard title="T&K Seafood — Chinatown" accent="#EC407A">
+            <T>Bangkok institution on Yaowarat Road. Outdoor tables, incredible crab and prawns, very local feel. Arrive by 7pm before it packs out — sit at a table, order, enjoy the street energy without walking the strip.</T>
+          </InfoCard>
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <InfoCard title="Issaya Siamese Club" accent="#EC407A">
+            <T>100-year-old Thai colonial villa with garden terrace. Refined modern Thai, one of Bangkok's most beautiful settings. Call ahead: +66 2-672-9040. Pairs naturally with Option C day plan.</T>
+          </InfoCard>
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <InfoCard title="Kin Dee — Yaowarat" accent="#7d8590">
+            <T>Indoor AC, great seafood, quieter than T&K. Good backup if mom needs a calmer environment than the bustling Chinatown strip.</T>
+          </InfoCard>
+        </Grid>
+      </Grid>
+    </Box>
+
+    {/* DAY 4 */}
+    <SectionHeader title="Day 4 — Monday, Oct 26" hint="Morning activity + farewell dinner — conference starts tomorrow" />
+    <Grid container spacing={2.5}>
+      <Grid size={{ xs: 12, md: 4 }}>
+        <InfoCard title="Option A — Cooking Class" accent="#26A69A">
+          <Stack spacing={0.5}>
+            <T>Blue Elephant Cooking School, Silom. Half-day: market tour + cook 4 Thai dishes. Mostly seated — best choice for mom's knee. Cultural, fun, great recipes to bring home.</T>
+            <T>~$80/person · 9am–1pm · Book 2–3 weeks ahead: blueelephant.com | +66 2-673-9353</T>
+          </Stack>
+        </InfoCard>
+      </Grid>
+      <Grid size={{ xs: 12, md: 4 }}>
+        <InfoCard title="Option B — Floating Market" accent="#FF9800">
+          <Stack spacing={0.5}>
+            <T>Damnoen Saduak — depart 6:30am, 1.5 hr drive. Explore by longtail boat (100% boat-based, no walking). Vendors sell food and crafts from wooden boats. Very photogenic.</T>
+            <T>~$30–50/boat tour. Private driver required. Only do this if mom's energy is strong after 3 days.</T>
+          </Stack>
+        </InfoCard>
+      </Grid>
+      <Grid size={{ xs: 12, md: 4 }}>
+        <InfoCard title="Option C — Markets & Chill" accent="#9C7BFF">
+          <T>Or Tor Kor fresh market (best produce and street food in Bangkok, 15 min from hotel) plus Chatuchak browse if you missed Sunday. Done by noon. Lowest effort of the three — rest up before the farewell dinner.</T>
+        </InfoCard>
+      </Grid>
+    </Grid>
+    <Box sx={{ mt: 2 }}>
+      <SectionHeader title="Farewell Dinner — Day 4" hint="All roads lead here — book ASAP" />
+      <BookingCard
+        kind="reservation"
+        title="Cote by Mauro Colagreco"
+        subtitle="Capella Bangkok — Bangkok's #1 restaurant 2026"
+        where="300/2 Charoenkrung Rd, Bang Rak — Capella Bangkok"
+        status="pending"
+        notes="Italian-Argentine chef, Riviera-style cuisine, floor-to-ceiling river views. Fills far in advance — book now."
+        href="https://www.capellabangkok.com/dining/cote"
+        hrefLabel="Book Now"
+      />
+    </Box>
+
+    {/* BOOK NOW */}
+    <SectionHeader title="Book These Now" hint="Some fill weeks out" />
     <Grid container spacing={2.5}>
       <Grid size={{ xs: 12, md: 6 }}>
-        <ItineraryDay
-          day="Day 1"
-          date="Friday, Oct 23"
+        <ChecklistCard
+          title="Reservations"
           items={[
-            { time: 'Morning',   kind: 'rest',     title: 'Sleep in — jet lag recovery',          description: 'Landed midnight. Take the morning slow. Hotel breakfast.' },
-            { time: '11:00am',   kind: 'activity', title: 'Lumphini Park',                        description: "Bangkok's version of Central Park. 5 min from hotel. Flat paths, lake, paddle boats. Great leg-stretcher." },
-            { time: '1:00pm',    kind: 'activity', title: 'Erawan Shrine',                        description: "One of Bangkok's most sacred sites — traditional Thai dancers perform offerings. 10 min walk/taxi from hotel." },
-            { time: '2:00pm',    kind: 'rest',     title: 'Central Embassy — cool off',           description: 'Air-conditioned luxury mall right next door. Thai brands, food floor, rest.' },
-            { time: '4:00pm',    kind: 'rest',     title: 'Hotel rest — peak heat',               description: 'October afternoons hit 32°C. Rest before dinner.' },
-            { time: '7:00pm',    kind: 'food',     title: 'Dinner: Paste Bangkok',                description: 'Michelin-starred refined Thai. Quiet, elegant, family-friendly. Book in advance. Near BTS Phloen Chit.', href: 'https://www.pastebangkok.com' },
+            { label: 'Cote by Mauro Colagreco — Book ASAP', done: false, hint: 'capellabangkok.com | +66 2-098-3888' },
+            { label: 'Paste Bangkok (if Day 1 dinner option)', done: false, hint: 'pastebangkok.com' },
+            { label: 'Chao Phraya Dinner Cruise (if Day 2)', done: false, hint: 'GetYourGuide or chaophrayacruise.com' },
+            { label: 'Blue Elephant Cooking School (if Day 4 Option A)', done: false, hint: 'blueelephant.com | +66 2-673-9353' },
+            { label: 'Issaya Siamese Club (if Day 3 dinner)', done: false, hint: '+66 2-672-9040' },
           ]}
         />
       </Grid>
       <Grid size={{ xs: 12, md: 6 }}>
-        <ItineraryDay
-          day="Day 2"
-          date="Saturday, Oct 24"
+        <ChecklistCard
+          title="Logistics"
           items={[
-            { time: '8:00am',    kind: 'travel',   title: 'Taxi to Grand Palace',                 description: '~30 min. Go early before heat and crowds peak.' },
-            { time: '8:30am',    kind: 'activity', title: 'Grand Palace + Wat Phra Kaew',         description: "Bangkok's most iconic site. Hire licensed guide at entrance (~500-800 THB) for context on royal art. Allow 2.5–3 hrs. Entry: 500 THB/person. ⚠️ Strict dress code: cover shoulders, arms, legs to ankle. No exceptions.", href: 'https://www.royalgrandpalace.th/en/visit', durationMin: 150 },
-            { time: '11:30am',  kind: 'activity', title: 'Wat Pho — Reclining Buddha',           description: '5 min walk from Grand Palace. Massive 46m gold Buddha. Mostly flat and shaded. Entry: 200 THB.', href: 'https://www.watpho.com', durationMin: 45 },
-            { time: '1:00pm',    kind: 'food',     title: 'Lunch: Supanniga Eating Room Tha Tien',description: 'Traditional Thai, riverside, near Wat Pho. Great food, real air conditioning, good prices.' },
-            { time: '2:30pm',    kind: 'travel',   title: 'River ferry → Wat Arun by water',      description: 'Take the Chao Phraya public ferry (~15 THB) to view Wat Arun (Temple of Dawn) from the river. Skip climbing — hundreds of steep stairs. The river view is better anyway.' },
-            { time: '4:00pm',    kind: 'rest',     title: 'BTS back to hotel — rest',             description: 'BTS from Saphan Taksin. Rest before dinner.' },
-            { time: '7:00pm',    kind: 'food',     title: 'Chao Phraya Princess Dinner Cruise',   description: '2-hour cruise with Thai set dinner + live classical dance. Views of Grand Palace, Wat Arun, Wat Pho all lit up. Fully accessible — no walking once aboard. ~$40–60/person. Book via GetYourGuide.', href: 'https://www.getyourguide.com/bangkok-l169/bangkok-chao-phraya-princess-cruise-ticket-t481150/', durationMin: 120 },
-          ]}
-        />
-      </Grid>
-      <Grid size={{ xs: 12, md: 6 }}>
-        <ItineraryDay
-          day="Day 3"
-          date="Sunday, Oct 25"
-          items={[
-            { time: '9:00am',    kind: 'activity', title: 'Jim Thompson House',                   description: 'Beautiful preserved Thai teak house + silk museum. Guided tours run every 30 min. Flat property, no steps. BTS National Stadium. Entry: 200 THB.', href: 'https://www.jimthompsonhouse.com', durationMin: 90 },
-            { time: '11:30am',  kind: 'activity', title: 'Museum of Siam',                       description: 'Interactive, modern museum covering 2,000 years of Thai history. Air conditioned, fully accessible, very engaging. Near Wat Pho. Entry: 100 THB.', durationMin: 90 },
-            { time: '1:30pm',    kind: 'food',     title: 'Lunch: Issaya Siamese Club',           description: '100-year-old Thai colonial villa with a garden terrace. Refined modern Thai. One of Bangkok\'s most beautiful lunch settings. Call ahead: +66 2-672-9040', href: 'https://www.issaya.com' },
-            { time: '4:00pm',    kind: 'activity', title: 'IconSiam — Sooksiam Floor',            description: "Bangkok's mega-mall on the river. Ground floor has Sooksiam — an indoor air-conditioned floating market with regional food, crafts, and cultural performances. Great for mom's knee." },
-            { time: '7:00pm',    kind: 'food',     title: 'Dinner: Chinatown / Yaowarat',        description: 'Taxi to Bangkok\'s Chinatown. T&K Seafood is the iconic spot — sit at a table, enjoy the crab and prawns, watch the street come alive. Get there by 7pm before it gets packed.' },
-          ]}
-        />
-      </Grid>
-      <Grid size={{ xs: 12, md: 6 }}>
-        <ItineraryDay
-          day="Day 4"
-          date="Monday, Oct 26"
-          items={[
-            { time: '9:00am',    kind: 'activity', title: 'Option A: Blue Elephant Cooking School', description: 'Half-day class in a colonial Thai building on Silom. Market tour + cook 4 dishes. Mostly seated. Cultural + fun. ~$80/person. Book: blueelephant.com/cooking-school', href: 'https://www.blueelephant.com/cooking-school-bangkok/', durationMin: 240 },
-            { time: '9:00am',    kind: 'activity', title: 'Option B: Damnoen Saduak Floating Market', description: '1.5-hr drive, then explore by longtail boat (100% boat-based, no walking). Very photogenic. ~$30-50/boat tour. Private driver recommended. Only if mom\'s energy is strong.' },
-            { time: '1:00pm',    kind: 'rest',     title: 'Rest at hotel',                        description: 'Cool down before the evening.' },
-            { time: '3:00pm',    kind: 'activity', title: 'Optional: Wat Traimit — Golden Buddha', description: 'Temple housing a 5.5-ton solid gold Buddha discovered accidentally in the 1950s. Short visit, 30-45 min. Near Chinatown. Accessible.' },
-            { time: '7:00pm',    kind: 'food',     title: 'Farewell Dinner: Côte by Mauro Colagreco', description: "Bangkok's #1 restaurant in 2026 (Top Tables). Italian-Argentine chef at Capella Bangkok. Riviera-style seasonal cuisine. Floor-to-ceiling river views. Book ASAP — fills far in advance.", href: 'https://www.capellabangkok.com/dining/cote' },
+            { label: 'Decide Day 4 morning option (A/B/C)', done: false, hint: 'Option A recommended for mom' },
+            { label: 'Private driver for 4 days', done: false, hint: '~$200–350 total. Recommended for mom. Hotel concierge or Viator.' },
+            { label: 'Download Grab app before flying', done: false, hint: 'Like Uber — works everywhere in Bangkok' },
+            { label: 'Pack sarong/wrap for Grand Palace', done: false, hint: 'Cover shoulders, arms, legs to ankle — guards turn people away, no exceptions' },
+            { label: 'Compression socks for mom on the flight', done: false, hint: 'Post knee-replacement: important for long-haul' },
+            { label: 'Grand Palace tickets', done: false, hint: '500 THB/person (~$14). Can buy at gate or royalgrandpalace.th' },
           ]}
         />
       </Grid>
     </Grid>
 
-    {/* BOOK THESE NOW */}
-    <SectionHeader title="Book These Now" hint="Some fill up weeks in advance" />
-    <Grid container spacing={2.5}>
-      <Grid size={{ xs: 12, md: 6 }}>
-        <ChecklistCard
-          title="Reservations to Make"
-          items={[
-            { label: 'Côte by Mauro Colagreco — Book ASAP, fills weeks out',      done: false, hint: 'capellabangkok.com | +66 2-098-3888' },
-            { label: 'Paste Bangkok — Day 1 dinner',                               done: false, hint: 'pastebangkok.com' },
-            { label: 'Issaya Siamese Club — Day 3 lunch',                          done: false, hint: '+66 2-672-9040' },
-            { label: 'Chao Phraya Dinner Cruise — Day 2 evening',                  done: false, hint: 'GetYourGuide or chaophrayacruise.com' },
-            { label: 'Blue Elephant Cooking School — Day 4 morning (if Option A)', done: false, hint: 'blueelephant.com/cooking-school' },
-          ]}
-        />
-      </Grid>
-      <Grid size={{ xs: 12, md: 6 }}>
-        <ChecklistCard
-          title="Other Logistics"
-          items={[
-            { label: 'Grand Palace tickets — can do at gate or online',   done: false, hint: '500 THB/person (~$14). royalgrandpalace.th' },
-            { label: 'Private driver for 4 days (recommended for mom)',   done: false, hint: '~$200–350 total. Ask hotel concierge or book via Viator.' },
-            { label: 'Grab app — download before arriving',               done: false, hint: 'Like Uber. Works everywhere in Bangkok.' },
-            { label: 'Pack sarong/wrap for Grand Palace dress code',      done: false, hint: 'Must cover shoulders, arms, and legs to ankle. No exceptions.' },
-            { label: 'Compression socks for mom (long-haul flight)',      done: false, hint: 'Helps post-knee-replacement on long flights.' },
-          ]}
-        />
-      </Grid>
-    </Grid>
-
-    {/* PRACTICAL INFO */}
+    {/* PRACTICAL */}
     <SectionHeader title="Need to Know" />
-    <KeyValueGrid items={[
-      { label: 'Hotel',        value: 'Holiday Inn Bangkok, 971 Phloen Chit Rd — BTS Phloen Chit' },
-      { label: 'Transport',    value: 'BTS Skytrain (has elevators) + Grab app. Private driver recommended.' },
-      { label: 'Currency',     value: 'Thai Baht (THB). ~35 THB = $1 USD. ATMs everywhere.' },
-      { label: 'Weather',      value: 'Hot & humid, ~32°C/90°F. Afternoon showers 2–5pm. Plan indoor time then.' },
-      { label: 'Temple dress', value: 'Cover shoulders, upper arms, and legs to ankle. Bring a sarong as backup.' },
-      { label: 'October note', value: 'Tail end of rainy season — showers are short and mostly afternoon. Not a dealbreaker.' },
-      { label: 'Knee tip',     value: 'Ask hotel for ground-floor room. Grab takes you door-to-door. Boat days = no walking.' },
-    ]} />
+    <KeyValueGrid
+      columns={2}
+      items={[
+        { label: 'Hotel', value: 'Holiday Inn Bangkok · 971 Phloen Chit Rd · BTS Phloen Chit' },
+        { label: 'Transport', value: 'BTS Skytrain (has elevators) + Grab app. Private driver highly recommended for mom.' },
+        { label: 'Currency', value: 'Thai Baht (THB). ~35 THB = $1 USD. ATMs everywhere.' },
+        { label: 'Weather', value: 'Hot & humid, ~32°C/90°F. Afternoon showers 2–5pm — plan indoor time then.' },
+        { label: 'Temple dress', value: 'Cover shoulders, upper arms, and legs to ankle. Always carry a sarong as backup.' },
+        { label: "Mom's knee", value: 'Options ranked by effort: C < B < A each day. Grab goes door-to-door. Boat days = zero walking.' },
+      ]}
+    />
   </Box>
 );
 
