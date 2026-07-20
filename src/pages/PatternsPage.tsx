@@ -6,9 +6,12 @@ import {
 import {
   AutoAwesomeRounded, ExpandMore, ExpandLess, ThumbUpOutlined, ThumbDownOutlined,
   CloseOutlined, StarBorderOutlined, StarRounded, InfoOutlined,
+  PushPinOutlined, CheckCircleOutline,
 } from '@mui/icons-material';
 import { formatDistanceToNow } from 'date-fns';
 import { useObservations, Observation, ObservationKind, ObservationSeverity, FeedbackReaction } from '../hooks/useObservations';
+import { useForecast } from '../hooks/useForecast';
+import ForecastPanel from '../components/patterns/ForecastPanel';
 
 const KIND_META: Record<ObservationKind, { label: string; color: string; emoji: string }> = {
   insight:        { label: 'Insight',        color: '#5B8DEF', emoji: '✨' },
@@ -52,13 +55,17 @@ interface CardProps {
   obs: Observation;
   onReact: (id: string, reaction: FeedbackReaction) => Promise<void>;
   onDismiss: (id: string) => Promise<void>;
+  onAcknowledge: (id: string) => Promise<void>;
+  onPin: (id: string, pinned: boolean) => Promise<void>;
 }
 
-const PatternCard: React.FC<CardProps> = ({ obs, onReact, onDismiss }) => {
+const PatternCard: React.FC<CardProps> = ({ obs, onReact, onDismiss, onAcknowledge, onPin }) => {
   const [expanded, setExpanded] = useState(false);
   const [showEvidence, setShowEvidence] = useState(false);
   const [starred, setStarred] = useState(false);
   const [reacted, setReacted] = useState<FeedbackReaction | null>(null);
+  const [acked, setAcked] = useState(!!obs.acknowledged_at);
+  const [pinned, setPinnedState] = useState(!!obs.pinned);
 
   const meta = KIND_META[obs.kind];
   const agentMeta = AGENT_META[obs.agent_id] ?? { label: obs.agent_id, color: '#7d8590' };
@@ -171,6 +178,20 @@ const PatternCard: React.FC<CardProps> = ({ obs, onReact, onDismiss }) => {
           </Box>
 
           <Stack direction="row" spacing={0.25} onClick={e => e.stopPropagation()}>
+            <Tooltip title={pinned ? 'Unpin' : 'Pin (keep watching)'}>
+              <IconButton size="small" sx={{ p: 0.5 }}
+                onClick={e => { e.stopPropagation(); const next = !pinned; setPinnedState(next); onPin(obs.id, next).catch(() => setPinnedState(!next)); }}>
+                <PushPinOutlined sx={{ fontSize: 16, color: pinned ? '#5B8DEF' : 'inherit', transform: pinned ? 'rotate(0deg)' : 'rotate(40deg)' }} />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title={acked ? 'Acknowledged — won\'t nag unless it changes' : 'Acknowledge (stop resurfacing)'}>
+              <span>
+                <IconButton size="small" sx={{ p: 0.5 }} disabled={acked}
+                  onClick={e => { e.stopPropagation(); setAcked(true); onAcknowledge(obs.id).catch(() => setAcked(false)); }}>
+                  <CheckCircleOutline sx={{ fontSize: 16, color: acked ? '#4CAF50' : 'inherit' }} />
+                </IconButton>
+              </span>
+            </Tooltip>
             <Tooltip title={starred ? 'Saved' : 'Save'}>
               <IconButton size="small" onClick={handleStar} sx={{ p: 0.5 }}>
                 {starred
@@ -206,7 +227,8 @@ const PatternsPage: React.FC = () => {
   const [agentFilter, setAgentFilter] = useState<string | null>(null);
   const [kindFilter, setKindFilter] = useState<ObservationKind | null>(null);
 
-  const { data, loading, react, dismiss, error } = useObservations({ limit: 200 });
+  const { data, loading, react, dismiss, acknowledge, setPinned, error } = useObservations({ limit: 200 });
+  const forecast = useForecast();
 
   const filtered = useMemo(() => {
     return data.filter(o => {
@@ -255,8 +277,8 @@ const PatternsPage: React.FC = () => {
             <Typography variant="h4" fontWeight={700}>Patterns</Typography>
           </Box>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            Cross-domain observations from your agents + the weekly analyst pass.
-            Click a card for evidence and context.
+            Next-day forecasts (self-scored) + cross-domain patterns. Acknowledge one to
+            stop it resurfacing; pin to keep watching it.
           </Typography>
         </Box>
       </Box>
@@ -264,6 +286,9 @@ const PatternsPage: React.FC = () => {
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
       )}
+
+      {/* Tomorrow's forecast + track record */}
+      <ForecastPanel />
 
       {/* Filters */}
       <Card sx={{ '&:hover': { transform: 'none' }, mb: 2.5 }}>
@@ -356,7 +381,8 @@ const PatternsPage: React.FC = () => {
       ) : (
         <Stack spacing={1.25}>
           {sorted.map(obs => (
-            <PatternCard key={obs.id} obs={obs} onReact={react} onDismiss={dismiss} />
+            <PatternCard key={obs.id} obs={obs} onReact={react} onDismiss={dismiss}
+              onAcknowledge={acknowledge} onPin={setPinned} />
           ))}
         </Stack>
       )}

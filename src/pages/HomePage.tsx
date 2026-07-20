@@ -11,6 +11,7 @@ import PersonaActivityStrip from '../components/home/PersonaActivityStrip';
 import VitalsStrip from '../components/home/VitalsStrip';
 import RecoveryRing from '../components/home/RecoveryRing';
 import JournalNudge from '../components/home/JournalNudge';
+import TomorrowForecast from '../components/home/TomorrowForecast';
 import TodayPanel from '../components/home/TodayPanel';
 import BriefingCard from '../components/home/BriefingCard';
 
@@ -56,6 +57,11 @@ const HomePage: React.FC = () => {
           {/* Recovery score (Whoop-style) — compact; full detail lives on Fitness */}
           <Box sx={{ mb: 3 }}>
             <RecoveryRing />
+          </Box>
+
+          {/* Tomorrow's recovery forecast (self-scored) */}
+          <Box sx={{ mb: 3 }}>
+            <TomorrowForecast />
           </Box>
 
           {/* Journaling nudge — streak + on this day */}

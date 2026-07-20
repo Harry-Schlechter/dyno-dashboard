@@ -32,6 +32,11 @@ export interface Observation {
   status: 'active' | 'dismissed' | 'archived';
   dismissed_at: string | null;
   dismissed_reason: string | null;
+  acknowledged_at: string | null;
+  pinned: boolean;
+  pattern_key: string | null;
+  magnitude: number | null;
+  surprise: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -135,5 +140,35 @@ export function useObservations(opts: UseObservationsOptions = {}) {
     []
   );
 
-  return { data, loading, error, refetch: fetchData, react, dismiss };
+  // Acknowledge: "I've seen this pattern" — the engine won't resurface it unless
+  // its magnitude materially changes. Keeps obvious patterns from nagging.
+  const acknowledge = useCallback(
+    async (observationId: string) => {
+      const now = new Date().toISOString();
+      const { error: err } = await supabase
+        .from('agent_observations')
+        .update({ acknowledged_at: now })
+        .eq('id', observationId)
+        .eq('user_id', USER_ID);
+      if (err) throw err;
+      setData(prev => prev.map(o => (o.id === observationId ? { ...o, acknowledged_at: now } : o)));
+    },
+    []
+  );
+
+  // Pin: keep a pattern visible + always refreshed (never suppressed).
+  const setPinned = useCallback(
+    async (observationId: string, pinned: boolean) => {
+      const { error: err } = await supabase
+        .from('agent_observations')
+        .update({ pinned })
+        .eq('id', observationId)
+        .eq('user_id', USER_ID);
+      if (err) throw err;
+      setData(prev => prev.map(o => (o.id === observationId ? { ...o, pinned } : o)));
+    },
+    []
+  );
+
+  return { data, loading, error, refetch: fetchData, react, dismiss, acknowledge, setPinned };
 }
