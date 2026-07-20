@@ -36,6 +36,16 @@ export interface GeneratedPageEntry {
 
 export const GENERATED_PAGES: GeneratedPageEntry[] = [
   {
+    slug: 'bangkok-sydney-oct-2026',
+    title: 'Bangkok — Sydney & Family, Oct 2026',
+    emoji: '🏯',
+    kind: 'trip',
+    author: 'travel-agent',
+    createdAt: '2026-07-20',
+    summary: 'Sydney + parents · Oct 23–26 · Culture, temples, riverside dining. Low-impact for mom\'s knee.',
+    component: React.lazy(() => import('./bangkok-sydney-oct-2026')),
+  },
+  {
     slug: 'seattle-june-2026',
     title: 'Seattle — June 2026',
     emoji: '🏔️',
