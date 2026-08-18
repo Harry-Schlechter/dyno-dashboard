@@ -2,6 +2,17 @@
   publish = "build"
   command = "npm run build"
 
+# Voice backend lives on the VPS, reached through the Cloudflare tunnel.
+# Proxy same-origin /api/* → the tunnel so the browser never does a
+# cross-origin call (no CORS, no login hang). The user only ever visits
+# dyno.harryschlechter.com/voice; voice.harryschlechter.com is now just the
+# invisible backend endpoint.
+[[redirects]]
+  from = "/api/*"
+  to = "https://voice.harryschlechter.com/api/:splat"
+  status = 200
+  force = true
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
