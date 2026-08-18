@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Box, Typography, Switch, FormControlLabel, IconButton, Stack } from '@mui/material';
-import { Mic, MicOff, Stop, VolumeUp } from '@mui/icons-material';
+import { Box, Typography, Switch, FormControlLabel, IconButton } from '@mui/material';
+import { Mic, MicOff, VolumeUp } from '@mui/icons-material';
 import { supabase } from '../lib/supabase';
 
 const VOICE_API_URL = process.env.REACT_APP_VOICE_API_URL || '';
@@ -10,303 +10,280 @@ async function authHeader(): Promise<Record<string, string>> {
   return session?.access_token ? { authorization: `Bearer ${session.access_token}` } : {};
 }
 
-// Single-purpose page for voice-mode conversations with the general agent.
-// Tap big button → record → release / 1.5s silence → transcribe → agent reply
-// → autoplay TTS → optionally restart recording for continuous mode.
+// Phone-call-style voice conversation with the general agent.
 //
-// Background follow-ups (deferred specialist tasks) are polled and played
-// after the foreground reply finishes.
+// Speech is handled in the BROWSER for latency + zero server round-trips:
+//  - SpeechRecognition (Web Speech API) streams STT while you talk and
+//    auto-ends on silence.
+//  - The transcript is POSTed to /api/voice-text, which routes it: fast
+//    direct chat (~250ms) for conversation, or the full general agent when
+//    it needs Harry's data.
+//  - speechSynthesis speaks the reply locally (instant, free).
+//  - Barge-in: talking (or tapping) while Dyno speaks interrupts it.
+//
+// Continuous mode auto-restarts listening after Dyno finishes, so it feels
+// like an open phone line.
 
-type State = 'idle' | 'recording' | 'thinking' | 'playing' | 'error';
+type State = 'idle' | 'listening' | 'thinking' | 'speaking' | 'error';
 
 interface Turn {
   id: string;
   transcript: string;
   reply: string;
-  audioUrl: string;
+  route?: string;
   timestamp: number;
 }
 
-const SILENCE_THRESHOLD = 0.02;       // RMS below this = silence
-const SILENCE_HANG_MS = 1200;         // require this long of silence to auto-stop
-const MIN_RECORDING_MS = 800;         // ignore button-bumps shorter than this
-const FOLLOWUP_POLL_INTERVAL_MS = 5000;
+// Strip characters that TTS would read literally / that look wrong in the thread.
+function cleanForSpeech(s: string): string {
+  return s
+    .replace(/[*_#`>|]/g, '')
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'")
+    .replace(/—/g, ', ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Grab whichever SpeechRecognition the browser exposes.
+function getSpeechRecognition(): any {
+  return (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition || null;
+}
 
 const VoicePage: React.FC = () => {
   const [state, setState] = useState<State>('idle');
   const [continuous, setContinuous] = useState(true);
   const [history, setHistory] = useState<Turn[]>([]);
+  const [interim, setInterim] = useState('');       // live partial transcript while talking
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [supported, setSupported] = useState(true);
   const [conversationId] = useState(() => `voice-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}`);
 
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const recordStartRef = useRef<number>(0);
-  const silenceStartRef = useRef<number | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const audioElRef = useRef<HTMLAudioElement | null>(null);
+  const recognitionRef = useRef<any>(null);
+  const threadRef = useRef<HTMLDivElement | null>(null);
   const continuousRef = useRef(continuous);
-  const lastFollowupCheckRef = useRef<string>(new Date().toISOString());
+  const stateRef = useRef<State>('idle');
+  const finalTranscriptRef = useRef('');
   useEffect(() => { continuousRef.current = continuous; }, [continuous]);
+  useEffect(() => { stateRef.current = state; }, [state]);
+  useEffect(() => {
+    if (threadRef.current) threadRef.current.scrollTop = threadRef.current.scrollHeight;
+  }, [history, interim]);
 
-  // ── Recording ──────────────────────────────────────────────────────────
+  // ── TTS (browser speechSynthesis) ────────────────────────────────────────
 
-  const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      mediaRecorderRef.current.stop();
-    }
-    if (audioContextRef.current) {
-      audioContextRef.current.close().catch(() => {});
-      audioContextRef.current = null;
-    }
-  }, []);
-
-  const startRecording = useCallback(async () => {
-    setErrorMsg(null);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-        ? 'audio/webm;codecs=opus'
-        : MediaRecorder.isTypeSupported('audio/mp4')
-          ? 'audio/mp4'
-          : '';
-
-      const mr = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
-      audioChunksRef.current = [];
-      mediaRecorderRef.current = mr;
-      recordStartRef.current = Date.now();
-      silenceStartRef.current = null;
-
-      mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
-      mr.onstop = async () => {
-        stream.getTracks().forEach(t => t.stop());
-        const elapsed = Date.now() - recordStartRef.current;
-        if (elapsed < MIN_RECORDING_MS) {
-          setState('idle');
-          return;
-        }
-        const blob = new Blob(audioChunksRef.current, { type: mr.mimeType || 'audio/webm' });
-        await sendTurn(blob);
-      };
-
-      // Voice activity detection — auto-stop on silence
-      const ctx = new AudioContext();
-      audioContextRef.current = ctx;
-      const source = ctx.createMediaStreamSource(stream);
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 1024;
-      source.connect(analyser);
-      analyserRef.current = analyser;
-
-      const buf = new Float32Array(analyser.fftSize);
-      const tick = () => {
-        if (!audioContextRef.current || mr.state !== 'recording') return;
-        analyser.getFloatTimeDomainData(buf);
-        let sum = 0;
-        for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
-        const rms = Math.sqrt(sum / buf.length);
-        const elapsed = Date.now() - recordStartRef.current;
-        if (rms < SILENCE_THRESHOLD) {
-          if (silenceStartRef.current === null) silenceStartRef.current = Date.now();
-          else if (elapsed > MIN_RECORDING_MS && Date.now() - silenceStartRef.current > SILENCE_HANG_MS) {
-            stopRecording();
-            return;
-          }
-        } else {
-          silenceStartRef.current = null;
-        }
-        requestAnimationFrame(tick);
-      };
-      requestAnimationFrame(tick);
-
-      mr.start();
-      setState('recording');
-    } catch (e: any) {
-      setErrorMsg('Microphone access denied or unavailable');
-      setState('error');
-    }
-  }, [stopRecording]);
-
-  // ── Playback + send ────────────────────────────────────────────────────
-
-  const playAudio = useCallback((url: string): Promise<void> => {
+  const speak = useCallback((text: string): Promise<void> => {
     return new Promise((resolve) => {
-      const a = new Audio(url);
-      audioElRef.current = a;
-      a.onended = () => resolve();
-      a.onerror = () => resolve();
-      a.play().catch(() => resolve());
+      const synth = window.speechSynthesis;
+      if (!synth) return resolve();
+      synth.cancel(); // stop anything currently speaking (barge-in)
+      const u = new SpeechSynthesisUtterance(cleanForSpeech(text));
+      u.rate = 1.05;
+      u.pitch = 1.0;
+      // Prefer a natural-sounding English voice if the device has one.
+      const voices = synth.getVoices();
+      const preferred = voices.find(v => /Samantha|Google US English|Aria|Jenny|Natural/i.test(v.name) && /en/i.test(v.lang))
+        || voices.find(v => /en-US/i.test(v.lang))
+        || voices.find(v => /^en/i.test(v.lang));
+      if (preferred) u.voice = preferred;
+      u.onend = () => resolve();
+      u.onerror = () => resolve();
+      synth.speak(u);
     });
   }, []);
 
-  const sendTurn = useCallback(async (blob: Blob) => {
+  // ── Send transcript to the reply brain ───────────────────────────────────
+
+  const sendText = useCallback(async (text: string) => {
     setState('thinking');
     try {
-      const r = await fetch(`${VOICE_API_URL}/api/voice-turn`, {
+      const r = await fetch(`${VOICE_API_URL}/api/voice-text`, {
         method: 'POST',
-        headers: {
-          'content-type': blob.type || 'audio/webm',
-          'x-conversation-id': conversationId,
-          ...(await authHeader()),
-        },
-        body: blob,
+        headers: { 'content-type': 'application/json', ...(await authHeader()) },
+        body: JSON.stringify({ text, conversation_id: conversationId }),
       });
-      if (!r.ok) {
-        const txt = await r.text();
-        throw new Error(`turn ${r.status}: ${txt}`);
-      }
+      if (!r.ok) throw new Error(`reply ${r.status}: ${await r.text()}`);
       const data = await r.json();
       const turn: Turn = {
         id: crypto.randomUUID(),
-        transcript: data.transcript,
+        transcript: text,
         reply: data.reply,
-        audioUrl: data.audio_url,
+        route: data.route,
         timestamp: Date.now(),
       };
       setHistory(h => [turn, ...h].slice(0, 50));
-      setState('playing');
-      await playAudio(turn.audioUrl);
-      // Continuous mode: restart after agent finishes speaking
-      if (continuousRef.current) {
-        await startRecording();
-      } else {
-        setState('idle');
-      }
+      setState('speaking');
+      await speak(data.reply);
+      // Continuous mode: reopen the mic after Dyno finishes speaking.
+      if (continuousRef.current) startListening();
+      else setState('idle');
     } catch (e: any) {
       console.error(e);
-      setErrorMsg(e.message || 'unknown error');
+      setErrorMsg(e.message || 'reply failed');
       setState('error');
     }
-  }, [conversationId, playAudio, startRecording]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversationId, speak]);
 
-  // ── Follow-up polling ──────────────────────────────────────────────────
+  // ── STT (browser SpeechRecognition) ──────────────────────────────────────
 
-  useEffect(() => {
-    const tick = async () => {
-      // Don't interrupt active turns
-      if (state === 'recording' || state === 'thinking' || state === 'playing') return;
-      try {
-        const since = lastFollowupCheckRef.current;
-        const url = `${VOICE_API_URL}/api/voice-followups?since=${encodeURIComponent(since)}&conversation_id=${encodeURIComponent(conversationId)}`;
-        const r = await fetch(url, { headers: await authHeader() });
-        if (!r.ok) return;
-        const data = await r.json();
-        if (data.items && data.items.length > 0) {
-          lastFollowupCheckRef.current = new Date().toISOString();
-          for (const item of data.items) {
-            const turn: Turn = {
-              id: item.id,
-              transcript: `[follow-up · ${item.assignee}]`,
-              reply: item.text,
-              audioUrl: item.audio_url,
-              timestamp: Date.now(),
-            };
-            setHistory(h => [turn, ...h].slice(0, 50));
-            if (item.audio_url) {
-              setState('playing');
-              await playAudio(item.audio_url);
-              setState('idle');
-            }
-          }
-        }
-      } catch {}
+  const startListening = useCallback(() => {
+    const SR = getSpeechRecognition();
+    if (!SR) { setSupported(false); return; }
+    // Barge-in: kill any speech before we start listening.
+    window.speechSynthesis?.cancel();
+
+    setErrorMsg(null);
+    setInterim('');
+    finalTranscriptRef.current = '';
+
+    const rec = new SR();
+    rec.lang = 'en-US';
+    rec.continuous = false;         // stop automatically at end of an utterance
+    rec.interimResults = true;      // stream partials for the live caption
+
+    rec.onresult = (e: any) => {
+      let interimText = '';
+      let finalText = finalTranscriptRef.current;
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const chunk = e.results[i][0].transcript;
+        if (e.results[i].isFinal) finalText += chunk;
+        else interimText += chunk;
+      }
+      finalTranscriptRef.current = finalText;
+      setInterim(interimText || finalText);
     };
-    const id = setInterval(tick, FOLLOWUP_POLL_INTERVAL_MS);
-    return () => clearInterval(id);
-  }, [state, conversationId, playAudio]);
 
-  // ── Manual button ──────────────────────────────────────────────────────
+    rec.onerror = (e: any) => {
+      if (e.error === 'no-speech' || e.error === 'aborted') { setState('idle'); return; }
+      setErrorMsg(`mic: ${e.error}`);
+      setState('error');
+    };
+
+    rec.onend = () => {
+      const text = finalTranscriptRef.current.trim();
+      setInterim('');
+      if (text) sendText(text);
+      else if (stateRef.current === 'listening') setState('idle');
+    };
+
+    recognitionRef.current = rec;
+    try {
+      rec.start();
+      setState('listening');
+    } catch {
+      // start() throws if already started — ignore.
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sendText]);
+
+  const stopListening = useCallback(() => {
+    try { recognitionRef.current?.stop(); } catch {}
+  }, []);
+
+  // ── Button ───────────────────────────────────────────────────────────────
 
   const onButtonClick = () => {
-    if (state === 'recording') stopRecording();
-    else if (state === 'idle' || state === 'error') startRecording();
-    else if (state === 'playing') {
-      audioElRef.current?.pause();
-      setState('idle');
-    }
+    if (state === 'listening') stopListening();
+    else if (state === 'speaking') { window.speechSynthesis?.cancel(); setState('idle'); }
+    else startListening();
   };
 
-  // Cleanup on unmount
-  useEffect(() => () => stopRecording(), [stopRecording]);
+  // Warm up voice list (some browsers populate async) + cleanup.
+  useEffect(() => {
+    window.speechSynthesis?.getVoices();
+    if (!getSpeechRecognition()) setSupported(false);
+    return () => { try { recognitionRef.current?.abort(); } catch {}; window.speechSynthesis?.cancel(); };
+  }, []);
 
   // ── UI ─────────────────────────────────────────────────────────────────
 
-  const buttonColor = state === 'recording' ? '#F44336'
+  const buttonColor = state === 'listening' ? '#F44336'
                     : state === 'thinking' ? '#FF9800'
-                    : state === 'playing'  ? '#5B8DEF'
+                    : state === 'speaking' ? '#5B8DEF'
                     : '#4CAF50';
-  const buttonLabel = state === 'recording' ? 'Tap to stop'
-                    : state === 'thinking' ? 'Thinking...'
-                    : state === 'playing'  ? 'Speaking...'
+  const buttonLabel = state === 'listening' ? 'Listening…'
+                    : state === 'thinking' ? 'Thinking…'
+                    : state === 'speaking' ? 'Speaking…'
                     : state === 'error'    ? 'Tap to retry'
                     : 'Tap to talk';
-  const ButtonIcon = state === 'recording' ? Stop
+  const ButtonIcon = state === 'listening' ? Mic
                    : state === 'thinking' ? Mic
-                   : state === 'playing'  ? VolumeUp
+                   : state === 'speaking' ? VolumeUp
                    : state === 'error'    ? MicOff
                    : Mic;
 
+  const thread = [...history].reverse();
+
   return (
-    <Box
-      sx={{
-        position: 'fixed', inset: 0,
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        bgcolor: '#0d1117', color: '#e6edf3',
-        p: { xs: 2, sm: 4 },
-        gap: 4,
-      }}
-    >
-      {/* Continuous toggle in corner */}
-      <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
+    <Box sx={{ position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', bgcolor: '#0d1117', color: '#e6edf3' }}>
+      {/* Continuous toggle */}
+      <Box sx={{ position: 'absolute', top: 16, right: 16, zIndex: 2 }}>
         <FormControlLabel
           control={<Switch checked={continuous} onChange={(_, v) => setContinuous(v)} size="small" />}
           label={<Typography variant="caption" color="text.secondary">Continuous</Typography>}
         />
       </Box>
 
-      {/* Big mic button */}
-      <Box onClick={onButtonClick} sx={{ cursor: 'pointer', userSelect: 'none' }}>
-        <Box
-          sx={{
-            width: { xs: 220, sm: 280 }, height: { xs: 220, sm: 280 },
-            borderRadius: '50%',
-            bgcolor: `${buttonColor}22`,
-            border: `4px solid ${buttonColor}`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            transition: 'all 0.2s',
-            boxShadow: state === 'recording' ? `0 0 60px ${buttonColor}80` : 'none',
-            animation: state === 'recording' ? 'pulse 1.2s ease-in-out infinite' : state === 'thinking' ? 'spin 1.5s linear infinite' : 'none',
-            '@keyframes pulse': {
-              '0%, 100%': { transform: 'scale(1)' },
-              '50%': { transform: 'scale(1.06)' },
-            },
-            '@keyframes spin': {
-              from: { transform: 'rotate(0deg)' },
-              to: { transform: 'rotate(360deg)' },
-            },
-          }}
-        >
-          <ButtonIcon sx={{ fontSize: { xs: 88, sm: 110 }, color: buttonColor }} />
-        </Box>
+      {/* Conversation thread */}
+      <Box ref={threadRef} sx={{ flex: 1, width: '100%', maxWidth: 640, overflowY: 'auto', px: { xs: 2, sm: 3 }, pt: 8, pb: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+        {thread.length === 0 && !interim && (
+          <Box sx={{ m: 'auto', textAlign: 'center', color: 'text.secondary' }}>
+            <Typography variant="body2">Tap the mic and start talking.</Typography>
+            {!supported && (
+              <Typography variant="caption" color="error" sx={{ display: 'block', mt: 1 }}>
+                This browser doesn't support speech recognition. Try Chrome.
+              </Typography>
+            )}
+          </Box>
+        )}
+        {thread.map((t) => (
+          <React.Fragment key={t.id}>
+            <Box sx={{ alignSelf: 'flex-end', maxWidth: '85%' }}>
+              <Box sx={{ bgcolor: '#5B8DEF', color: '#fff', px: 1.75, py: 1, borderRadius: '16px 16px 4px 16px', fontSize: 15, lineHeight: 1.4 }}>
+                {t.transcript}
+              </Box>
+            </Box>
+            <Box sx={{ alignSelf: 'flex-start', maxWidth: '85%' }}>
+              <Box sx={{ bgcolor: '#1c2431', color: '#e6edf3', px: 1.75, py: 1, borderRadius: '16px 16px 16px 4px', fontSize: 15, lineHeight: 1.4, border: '1px solid #2a3441' }}>
+                {t.reply || <em style={{ opacity: 0.6 }}>…</em>}
+                <IconButton size="small" onClick={() => speak(t.reply)} sx={{ ml: 0.5, p: 0.25, color: '#5B8DEF' }}>
+                  <VolumeUp sx={{ fontSize: 16 }} />
+                </IconButton>
+              </Box>
+            </Box>
+          </React.Fragment>
+        ))}
+        {/* Live interim caption while listening */}
+        {interim && (
+          <Box sx={{ alignSelf: 'flex-end', maxWidth: '85%' }}>
+            <Box sx={{ bgcolor: '#5B8DEF66', color: '#fff', px: 1.75, py: 1, borderRadius: '16px 16px 4px 16px', fontSize: 15, lineHeight: 1.4, fontStyle: 'italic' }}>
+              {interim}
+            </Box>
+          </Box>
+        )}
       </Box>
-      <Typography variant="h5" sx={{ color: buttonColor, fontWeight: 600, mt: 1 }}>{buttonLabel}</Typography>
 
-      {errorMsg && (
-        <Typography variant="caption" color="error">{errorMsg}</Typography>
-      )}
-
-      {/* Recent turn transcript (just the last one for glanceability) */}
-      {history[0] && (
-        <Stack spacing={0.5} sx={{ maxWidth: 500, width: '100%', textAlign: 'center', mt: 2 }}>
-          <Typography variant="caption" color="text.secondary">You said</Typography>
-          <Typography variant="body2" sx={{ fontStyle: 'italic', mb: 1 }}>
-            {history[0].transcript}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">Dyno</Typography>
-          <Typography variant="body1">{history[0].reply}</Typography>
-        </Stack>
-      )}
+      {/* Mic control */}
+      <Box sx={{ flexShrink: 0, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5, py: { xs: 2, sm: 3 }, borderTop: '1px solid #1c2431' }}>
+        <Box onClick={onButtonClick} sx={{ cursor: 'pointer', userSelect: 'none' }}>
+          <Box
+            sx={{
+              width: { xs: 96, sm: 112 }, height: { xs: 96, sm: 112 }, borderRadius: '50%',
+              bgcolor: `${buttonColor}22`, border: `4px solid ${buttonColor}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s',
+              boxShadow: state === 'listening' ? `0 0 40px ${buttonColor}80` : 'none',
+              animation: state === 'listening' ? 'pulse 1.2s ease-in-out infinite' : state === 'thinking' ? 'spin 1.5s linear infinite' : 'none',
+              '@keyframes pulse': { '0%, 100%': { transform: 'scale(1)' }, '50%': { transform: 'scale(1.06)' } },
+              '@keyframes spin': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(360deg)' } },
+            }}
+          >
+            <ButtonIcon sx={{ fontSize: { xs: 40, sm: 48 }, color: buttonColor }} />
+          </Box>
+        </Box>
+        <Typography variant="caption" sx={{ color: buttonColor, fontWeight: 600 }}>{buttonLabel}</Typography>
+        {errorMsg && <Typography variant="caption" color="error">{errorMsg}</Typography>}
+      </Box>
     </Box>
   );
 };
