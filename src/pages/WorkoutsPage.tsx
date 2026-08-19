@@ -10,6 +10,7 @@ import {
 } from 'recharts';
 import { format, subDays, startOfWeek } from 'date-fns';
 import { useSupabase } from '../hooks/useSupabase';
+import AskSpecialistButton from '../components/chat/AskSpecialistButton';
 import {
   detectPRs, sessionsForExercise, topExercisesByVolume, SetWithDate, ExerciseSet,
 } from '../lib/lifting';
@@ -217,15 +218,24 @@ const WorkoutsPage: React.FC = () => {
   const recentPRs = useMemo(() => detectPRs(setsWithDate).slice(0, 8), [setsWithDate]);
 
   const loading = wLoading || eLoading;
+  const fitnessContext = useMemo(() => {
+    const recent = (workouts || []).slice(0, 12)
+      .map((w: any) => `${w.date}: ${w.activity_type || w.name || 'workout'}${w.duration_min ? ' ' + w.duration_min + 'min' : ''}${w.avg_hr ? ' avgHR ' + w.avg_hr : ''}`).join('; ');
+    return `Fitness page. Recent workouts: ${recent || 'none'}.`;
+  }, [workouts]);
+
   if (loading) return <LoadingSkeleton variant="card" count={3} />;
 
   return (
     <Box>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" fontWeight={700}>Fitness</Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          Recovery, workouts, sport sessions, golf, lifting trends, and personal records
-        </Typography>
+      <Box sx={{ mb: 3, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2 }}>
+        <Box>
+          <Typography variant="h4" fontWeight={700}>Fitness</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            Recovery, workouts, sport sessions, golf, lifting trends, and personal records
+          </Typography>
+        </Box>
+        <AskSpecialistButton context={fitnessContext} />
       </Box>
 
       {/* Tabs: Overview / Lifting / Golf */}

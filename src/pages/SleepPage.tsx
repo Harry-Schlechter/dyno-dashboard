@@ -9,6 +9,7 @@ import {
 } from 'recharts';
 import { format, subDays } from 'date-fns';
 import { useSupabase } from '../hooks/useSupabase';
+import AskSpecialistButton from '../components/chat/AskSpecialistButton';
 import {
   bedtimeMinutes, waketimeMinutes, midpointMinutes, circularStd, circularMean, SleepRow,
 } from '../lib/metricResolver';
@@ -157,6 +158,18 @@ const SleepPage: React.FC = () => {
 
   const winLabel: Record<Window, string> = { '7d': 'Last 7 days', '30d': 'Last 30 days', '90d': 'Last 90 days', '1y': 'Last year' };
 
+  // Context for "Ask Trainer" about sleep — before any early return.
+  const sleepContext = useMemo(() => {
+    const recent = data.slice(0, 10)
+      .map((r: any) => `${r.date}: ${r.hours != null ? r.hours + 'h' : 'n/a'}${r.quality ? ', quality ' + r.quality : ''}`).join('; ');
+    const avg = stats.avgHours != null ? stats.avgHours.toFixed(1) + 'h' : 'n/a';
+    return [
+      `Sleep page. Recent avg: ${avg}/night.`,
+      lastNight ? `Last night: ${lastNight.hours ?? 'n/a'}h${lastNight.quality ? ', quality ' + lastNight.quality : ''}.` : '',
+      recent ? `Recent nights: ${recent}.` : '',
+    ].filter(Boolean).join('\n');
+  }, [data, stats, lastNight]);
+
   if (loading) return <LoadingSkeleton variant="card" count={3} />;
 
   return (
@@ -168,12 +181,15 @@ const SleepPage: React.FC = () => {
             Quality, stages, hours, consistency, and sleep debt
           </Typography>
         </Box>
-        <ToggleButtonGroup size="small" exclusive value={win} onChange={(_, v) => v && setWin(v)}>
-          <ToggleButton value="7d" sx={{ textTransform: 'none' }}>7d</ToggleButton>
-          <ToggleButton value="30d" sx={{ textTransform: 'none' }}>30d</ToggleButton>
-          <ToggleButton value="90d" sx={{ textTransform: 'none' }}>90d</ToggleButton>
-          <ToggleButton value="1y" sx={{ textTransform: 'none' }}>1y</ToggleButton>
-        </ToggleButtonGroup>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <AskSpecialistButton context={sleepContext} label="Trainer" />
+          <ToggleButtonGroup size="small" exclusive value={win} onChange={(_, v) => v && setWin(v)}>
+            <ToggleButton value="7d" sx={{ textTransform: 'none' }}>7d</ToggleButton>
+            <ToggleButton value="30d" sx={{ textTransform: 'none' }}>30d</ToggleButton>
+            <ToggleButton value="90d" sx={{ textTransform: 'none' }}>90d</ToggleButton>
+            <ToggleButton value="1y" sx={{ textTransform: 'none' }}>1y</ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
       </Box>
 
       <CollapsibleSection title="Your coach & sleep insights">

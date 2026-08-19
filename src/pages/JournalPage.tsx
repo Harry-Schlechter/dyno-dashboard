@@ -6,6 +6,7 @@ import {
 import { Close, ChevronLeft, ChevronRight } from '@mui/icons-material';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ScatterChart, Scatter, ZAxis } from 'recharts';
 import { useDailyLogs, DailyLog } from '../hooks/useDailyLogs';
+import AskSpecialistButton from '../components/chat/AskSpecialistButton';
 import { useSleep } from '../hooks/useSleep';
 import { formatDateShort, formatDate } from '../lib/formatters';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths } from 'date-fns';
@@ -75,6 +76,20 @@ const JournalPage: React.FC = () => {
     }).filter(d => d.sleep > 0);
   }, [logs, sleepData]);
 
+  // Context for "Ask Wellness" — before any early return.
+  const journalContext = useMemo(() => {
+    const recent = (logs || []).slice(0, 10)
+      .map((l: DailyLog) => {
+        const bits = [];
+        if (l.mood != null) bits.push(`mood ${l.mood}/5`);
+        if (l.energy != null) bits.push(`energy ${l.energy}/5`);
+        if (l.stress != null) bits.push(`stress ${l.stress}/5`);
+        if (l.journal) bits.push(`"${String(l.journal).slice(0, 80)}"`);
+        return `${l.date}: ${bits.join(', ')}`;
+      }).join('; ');
+    return `Reflections page. Recent daily logs: ${recent || 'none'}.`;
+  }, [logs]);
+
   if (loading) return <LoadingSkeleton variant="card" count={3} />;
   if (error) return <ErrorMessage message={error} onRetry={refetch} />;
 
@@ -87,11 +102,14 @@ const JournalPage: React.FC = () => {
             On this day, journaling streak, recurring people & themes, mood over time
           </Typography>
         </Box>
-        <ToggleButtonGroup value={range} exclusive onChange={(_, v) => v && setRange(v)} size="small">
-          <ToggleButton value="7d">7D</ToggleButton>
-          <ToggleButton value="30d">30D</ToggleButton>
-          <ToggleButton value="90d">90D</ToggleButton>
-        </ToggleButtonGroup>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <AskSpecialistButton context={journalContext} label="Wellness" />
+          <ToggleButtonGroup value={range} exclusive onChange={(_, v) => v && setRange(v)} size="small">
+            <ToggleButton value="7d">7D</ToggleButton>
+            <ToggleButton value="30d">30D</ToggleButton>
+            <ToggleButton value="90d">90D</ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
       </Box>
 
       {/* Reflections — on this day + streak (from the journal corpus) */}

@@ -9,6 +9,7 @@ import {
 } from 'recharts';
 import { format, subDays } from 'date-fns';
 import { useSupabase } from '../hooks/useSupabase';
+import AskSpecialistButton from '../components/chat/AskSpecialistButton';
 import { formatDateShort } from '../lib/formatters';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
 import AgentVoiceCard from '../components/common/AgentVoiceCard';
@@ -120,6 +121,23 @@ const NutritionPage: React.FC = () => {
 
   const winLabel: Record<Window, string> = { '7d': 'Last 7 days', '30d': 'Last 30 days', '90d': 'Last 90 days' };
 
+  // Context for "Ask Nutritionist" — must be before any early return.
+  const nutritionContext = useMemo(() => {
+    const recent = data.slice(0, 20);
+    const byDay = new Map<string, { cal: number; pro: number; n: number }>();
+    recent.forEach(m => {
+      const d = byDay.get(m.date) ?? { cal: 0, pro: 0, n: 0 };
+      d.cal += m.calories ?? 0; d.pro += m.protein_g ?? 0; d.n += 1;
+      byDay.set(m.date, d);
+    });
+    const days = Array.from(byDay.entries()).slice(0, 7)
+      .map(([date, d]) => `${date}: ${Math.round(d.cal)}cal, ${Math.round(d.pro)}g protein (${d.n} meals)`).join('; ');
+    return [
+      `Nutrition page. Protein target: ${PROTEIN_TARGET}g/day. Logging streak: ${streak} days.`,
+      days ? `Recent days: ${days}.` : 'No recent meals logged.',
+    ].join('\n');
+  }, [data, streak]);
+
   if (loading) return <LoadingSkeleton variant="card" count={3} />;
 
   return (
@@ -131,11 +149,14 @@ const NutritionPage: React.FC = () => {
             Protein target: {PROTEIN_TARGET}g/day
           </Typography>
         </Box>
-        <ToggleButtonGroup size="small" exclusive value={win} onChange={(_, v) => v && setWin(v)}>
-          <ToggleButton value="7d" sx={{ textTransform: 'none' }}>7d</ToggleButton>
-          <ToggleButton value="30d" sx={{ textTransform: 'none' }}>30d</ToggleButton>
-          <ToggleButton value="90d" sx={{ textTransform: 'none' }}>90d</ToggleButton>
-        </ToggleButtonGroup>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <AskSpecialistButton context={nutritionContext} />
+          <ToggleButtonGroup size="small" exclusive value={win} onChange={(_, v) => v && setWin(v)}>
+            <ToggleButton value="7d" sx={{ textTransform: 'none' }}>7d</ToggleButton>
+            <ToggleButton value="30d" sx={{ textTransform: 'none' }}>30d</ToggleButton>
+            <ToggleButton value="90d" sx={{ textTransform: 'none' }}>90d</ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
       </Box>
 
       <CollapsibleSection title="Your nutritionist & insights">

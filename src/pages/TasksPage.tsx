@@ -9,6 +9,7 @@ import CalendarTodayRoundedIcon from '@mui/icons-material/CalendarTodayRounded';
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
 import InboxRoundedIcon from '@mui/icons-material/InboxRounded';
 import { useTasks, Task } from '../hooks/useTasks';
+import AskSpecialistButton from '../components/chat/AskSpecialistButton';
 import { formatDate } from '../lib/formatters';
 import { parseISO } from 'date-fns';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
@@ -63,6 +64,13 @@ const TasksPage: React.FC = () => {
     if (!task.due_date || task.status === 'completed') return false;
     return parseISO(task.due_date) < new Date();
   };
+
+  // Context for "Ask Assistant" — before any early return.
+  const tasksContext = useMemo(() => {
+    const pending = (tasks || []).filter((t: Task) => t.status !== 'completed').slice(0, 20)
+      .map((t: Task) => `${t.priority ? '[P' + t.priority + '] ' : ''}${t.title}${t.due_date ? ' (due ' + t.due_date + ')' : ''}`).join('; ');
+    return `Tasks page. Open tasks: ${pending || 'none'}.`;
+  }, [tasks]);
 
   if (loading) return <LoadingSkeleton variant="card" count={3} />;
   if (error) return <ErrorMessage message={error} onRetry={refetch} />;
@@ -122,12 +130,15 @@ const TasksPage: React.FC = () => {
             />
           </Stack>
         </Box>
-        <ToggleButtonGroup value={statusFilter} exclusive onChange={(_, v) => v && setStatusFilter(v)} size="small">
-          <ToggleButton value="pending">Pending</ToggleButton>
-          <ToggleButton value="completed">Completed</ToggleButton>
-          <ToggleButton value="blocked">Blocked</ToggleButton>
-          <ToggleButton value="all">All</ToggleButton>
-        </ToggleButtonGroup>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+          <AskSpecialistButton context={tasksContext} />
+          <ToggleButtonGroup value={statusFilter} exclusive onChange={(_, v) => v && setStatusFilter(v)} size="small">
+            <ToggleButton value="pending">Pending</ToggleButton>
+            <ToggleButton value="completed">Completed</ToggleButton>
+            <ToggleButton value="blocked">Blocked</ToggleButton>
+            <ToggleButton value="all">All</ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
       </Box>
 
       {/* Add task */}
