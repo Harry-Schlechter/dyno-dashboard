@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import { CheckCircle, LinkOff } from '@mui/icons-material';
 import { getSupabase, getCurrentSession, setSessionFromPairing } from '../lib/supabase';
-import { DASHBOARD_URL } from '../lib/config';
+import { DASHBOARD_URL, PAIR_API_URL } from '../lib/config';
 
 interface PairedState {
   email: string;
@@ -40,25 +40,28 @@ export function OptionsApp() {
     }
     setLoading(true);
     try {
-      const supa = getSupabase();
-      // SECURITY DEFINER function bypasses RLS for code-only lookups, validates
-      // expiry/consumed state, and marks consumed atomically. See migration 022.
-      const { data: payload, error: rpcErr } = await supa.rpc('redeem_pairing_code', {
-        p_code: trimmed,
+      // Redeem the code against the pairing endpoint, which mints a FRESH,
+      // INDEPENDENT session for this extension (its own refresh-token lineage)
+      // instead of copying the dashboard's tokens. This is what keeps the
+      // extension paired permanently — the dashboard refreshing no longer
+      // invalidates it. (Old flow: redeem_pairing_code RPC → shared tokens →
+      // constant re-pairing.)
+      const resp = await fetch(`${PAIR_API_URL}/api/pair-session`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ code: trimmed }),
       });
-
-      if (rpcErr) {
-        setError(`Lookup failed: ${rpcErr.message}`);
+      if (!resp.ok) {
+        const body = await resp.json().catch(() => ({}));
+        setError(body.error === 'invalid or expired code'
+          ? 'Code not found, already used, or expired. Generate a fresh one.'
+          : `Pairing failed: ${body.error || resp.status}`);
         setLoading(false);
         return;
       }
-      if (!payload) {
-        setError('Code not found, already used, or expired. Generate a fresh one.');
-        setLoading(false);
-        return;
-      }
+      const payload = await resp.json() as { access_token: string; refresh_token: string };
 
-      const result = await setSessionFromPairing(payload as { access_token: string; refresh_token: string });
+      const result = await setSessionFromPairing(payload);
       if (!result.ok) {
         setError(`Could not apply session: ${result.error}`);
         setLoading(false);

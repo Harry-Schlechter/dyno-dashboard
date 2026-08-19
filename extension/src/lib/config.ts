@@ -7,3 +7,7 @@ export const SUPABASE_ANON_KEY =
 
 export const VOICE_API_URL = 'http://100.85.165.117:9090';
 export const DASHBOARD_URL = 'https://dyno.harryschlechter.com';
+
+// Public backend URL for extension pairing (mints an independent session).
+// Uses the public tunnel host so it works off the tailnet.
+export const PAIR_API_URL = 'https://voice.harryschlechter.com';
