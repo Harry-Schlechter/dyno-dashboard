@@ -29,6 +29,8 @@ import {
   AutoAwesome,
   Settings as SettingsIcon,
   Menu as MenuIcon,
+  RecordVoiceOver,
+  Extension,
 } from '@mui/icons-material';
 import { useAuth, isDemo } from '../../lib/auth';
 
@@ -51,6 +53,14 @@ const ALL_NAV_ITEMS = [
 // Guests only see Spaces.
 const GUEST_NAV_ITEMS = ALL_NAV_ITEMS.filter(i => i.path === '/spaces');
 
+// The demo also surfaces the two non-dashboard surfaces, since they're a big
+// part of what makes the system worth showing.
+const DEMO_NAV_ITEMS = [
+  ...ALL_NAV_ITEMS,
+  { label: 'Voice', path: '/voice', icon: RecordVoiceOver },
+  { label: 'Extension', path: '/extension', icon: Extension },
+];
+
 interface SidebarProps {
   open: boolean;
   onClose: () => void;
@@ -64,7 +74,9 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, onOpen }) => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { user } = useAuth();
 
-  const navItems = user?.role === 'guest' ? GUEST_NAV_ITEMS : ALL_NAV_ITEMS;
+  const navItems = user?.role === 'guest' ? GUEST_NAV_ITEMS
+                 : isDemo() ? DEMO_NAV_ITEMS
+                 : ALL_NAV_ITEMS;
 
   const handleNav = (path: string) => {
     navigate(path);

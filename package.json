@@ -31,7 +31,7 @@
     "start": "react-scripts start",
     "prebuild": "bash scripts/check-generated.sh",
     "build": "react-scripts build",
-    "build:demo": "REACT_APP_DEMO=1 react-scripts build",
+    "build:demo": "REACT_APP_DEMO=1 PUBLIC_URL=/sample react-scripts build && bash scripts/nest-demo.sh",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "check:generated": "bash scripts/check-generated.sh"

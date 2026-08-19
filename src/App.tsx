@@ -21,27 +21,49 @@ import PatternsPage from './pages/PatternsPage';
 import SpacesPage from './pages/SpacesPage';
 import VoicePage from './pages/VoicePage';
 import LoginPage from './pages/LoginPage';
+import DemoLandingPage from './pages/DemoLandingPage';
+import DemoExtensionPage from './pages/DemoExtensionPage';
 
 const IS_DEMO = process.env.REACT_APP_DEMO === '1';
+
+// The demo is served from a sub-path (e.g. /sample) so it can sit alongside the
+// real dashboard on the same domain. PUBLIC_URL carries that prefix at build
+// time; the router needs it too or client-side links 404 on refresh.
+const ROUTER_BASENAME = (() => {
+  const raw = process.env.PUBLIC_URL || '';
+  if (!raw) return undefined;
+  try {
+    // PUBLIC_URL may be absolute ("https://host/sample") or a bare path.
+    const path = raw.startsWith('http') ? new URL(raw).pathname : raw;
+    const trimmed = path.replace(/\/+$/, '');
+    return trimmed && trimmed !== '' ? trimmed : undefined;
+  } catch {
+    return undefined;
+  }
+})();
 
 const App: React.FC = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
-        <BrowserRouter>
+        <BrowserRouter basename={ROUTER_BASENAME}>
           <Routes>
             {/* Login page (hidden in demo) */}
             {!IS_DEMO && <Route path="/login" element={<LoginPage />} />}
 
-            {/* Voice page — owner only, fullscreen, hidden in demo */}
-            {!IS_DEMO && (
-              <Route path="/voice" element={
+            {/* Portfolio explainer — the demo's front door. */}
+            {IS_DEMO && <Route path="/about" element={<DemoLandingPage />} />}
+
+            {/* Voice page — fullscreen. Owner-gated for real; open in demo,
+                where it answers from a local scripted brain. */}
+            <Route path="/voice" element={
+              IS_DEMO ? <VoicePage /> : (
                 <AuthGate roles={['owner']}>
                   <VoicePage />
                 </AuthGate>
-              } />
-            )}
+              )
+            } />
 
             {/* Everything else — gated unless demo */}
             <Route path="/*" element={
@@ -88,6 +110,7 @@ const DashboardRoutes: React.FC = () => {
       <Route path="/correlations"  element={<Navigate to="/patterns" replace />} />
       <Route path="/spaces"        element={<SpacesPage index />} />
       <Route path="/spaces/:slug"  element={<SpacesPage />} />
+      {IS_DEMO && <Route path="/extension" element={<DemoExtensionPage />} />}
     </Routes>
   );
 };
