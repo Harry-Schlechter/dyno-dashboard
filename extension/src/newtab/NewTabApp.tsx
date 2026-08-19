@@ -6,7 +6,7 @@ import {
 } from '@mui/material';
 import {
   Search, Send, OpenInNew, CheckCircleOutline,
-  Stop, PlayArrow, OpenInNew as OpenIcon, Add, Edit, Delete, Link as LinkIcon,
+  Stop, PlayArrow, OpenInNew as OpenIcon, Add, Edit, Delete, Link as LinkIcon, Mic,
 } from '@mui/icons-material';
 import {
   fetchActiveFocus, startFocus, endFocus, FocusSession,
@@ -110,9 +110,24 @@ function HeaderRow() {
         </Typography>
         <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>{dateStr}</Typography>
       </Box>
-      <IconButton size="small" onClick={() => window.open(DASHBOARD_URL, '_blank')} sx={{ color: 'text.secondary' }}>
-        <OpenInNew sx={{ fontSize: 18 }} />
-      </IconButton>
+      <Stack direction="row" spacing={1} alignItems="center">
+        <Button
+          size="small"
+          startIcon={<Mic />}
+          variant="contained"
+          onClick={() => window.open(`${DASHBOARD_URL}/voice`, '_blank')}
+          sx={{
+            background: 'linear-gradient(135deg, #667eea, #764ba2)',
+            whiteSpace: 'nowrap',
+            '&:hover': { background: 'linear-gradient(135deg, #7b8ff0, #764ba2)' },
+          }}
+        >
+          Talk to Dyno
+        </Button>
+        <IconButton size="small" onClick={() => window.open(DASHBOARD_URL, '_blank')} sx={{ color: 'text.secondary' }}>
+          <OpenInNew sx={{ fontSize: 18 }} />
+        </IconButton>
+      </Stack>
     </Stack>
   );
 }
