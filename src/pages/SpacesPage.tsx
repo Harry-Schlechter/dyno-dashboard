@@ -1,9 +1,16 @@
 import React, { Suspense } from 'react';
 import { useParams, Link as RouterLink } from 'react-router-dom';
 import { Box, Typography, Card, CardContent, Stack, Chip } from '@mui/material';
-import { GENERATED_PAGES, GeneratedPageKind } from './generated/registry';
+import { GENERATED_PAGES as REAL_PAGES, GeneratedPageKind } from './generated/registry';
+import { DEMO_GENERATED_PAGES } from './generated/demoRegistry';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
 import { useAuth } from '../lib/auth';
+import { IS_DEMO } from '../lib/demoMode';
+
+// The real Spaces pages are genuine agent output — real trips, venues, people
+// and booking details. The public demo must never render them, so it reads a
+// separate registry of invented pages instead.
+const GENERATED_PAGES = IS_DEMO ? DEMO_GENERATED_PAGES : REAL_PAGES;
 
 const KIND_COLOR: Record<GeneratedPageKind, string> = {
   trip:    '#26A69A',

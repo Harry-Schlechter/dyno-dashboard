@@ -28,7 +28,9 @@ if [[ ! -d "$GEN_DIR" ]]; then
 fi
 
 # Collect generated page files (excluding registry.ts).
-FILES=$(find "$GEN_DIR" -maxdepth 1 -name '*.tsx' -type f | sort)
+# Depth 2 so the demo/ subdirectory is covered too — those pages ship in the
+# public demo and must obey the same rules as agent-authored ones.
+FILES=$(find "$GEN_DIR" -maxdepth 2 -name '*.tsx' -type f | sort)
 
 count=$(echo "$FILES" | grep -c . || true)
 if [[ -z "$FILES" || "$count" -eq 0 ]]; then
@@ -50,6 +52,9 @@ src = open(sys.argv[1]).read()
 # Match: import ... from '<spec>';  (handles multi-line)
 allowed = {
     "../../components/generated",
+    # Demo pages live one level deeper (generated/demo/), so the barrel is
+    # one more ../ away. Same barrel, same guarantees.
+    "../../../components/generated",
     "@mui/material",
     "@mui/icons-material",
     "react",

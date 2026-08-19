@@ -215,13 +215,13 @@ const EVENT_SEEDS: Array<[string, number, string, string, string, string]> = [
   ['Roadmap review',     -1,  '10:00', '11:00', 'work',     'HQ'],
   ['Gym — legs',         -2,  '17:30', '18:45', 'health',   ''],
   ['Quarterly planning', -3,  '10:00', '12:00', 'work',     'HQ'],
-  ['Dentist',            -6,  '08:30', '09:15', 'health',   'Yardley Dental'],
+  ['Dentist',            -6,  '08:30', '09:15', 'health',   'Northside Dental'],
   ['Golf with Jordan',   -8,  '08:00', '12:00', 'personal', 'Riverbend'],
-  ['Venue walkthrough', -12,  '15:00', '16:30', 'personal', 'Yardley'],
+  ['Venue walkthrough', -12,  '15:00', '16:30', 'personal', 'Across town'],
   ['1:1 with manager',    1,  '11:00', '11:30', 'work',     ''],
   ['Gym — push day',      2,  '17:30', '18:30', 'health',   ''],
   ['Team retro',          3,  '15:00', '16:00', 'work',     ''],
-  ['Dinner with Sydney',  5,  '19:00', '21:00', 'personal', 'Downtown'],
+  ['Dinner with Sam',  5,  '19:00', '21:00', 'personal', 'Downtown'],
   ['Gym — legs',          6,  '17:30', '18:45', 'health',   ''],
   ['Sprint planning',     9,  '10:00', '11:30', 'work',     ''],
   ['Long run',           12,  '07:00', '08:15', 'health',   ''],
@@ -926,7 +926,7 @@ const forecast_accuracy = PRED_METRICS.map(([metric]) => {
 // ── Journal entries ─────────────────────────────────────────────────────────
 
 const JOURNAL_SEEDS: Array<[number, string, string, number, string, string[], string[]]> = [
-  [1,  'Long day but a good one. Shipped the migration I have been putting off for three weeks and it went cleanly on the first try. Went to the gym after and hit 315 on deadlifts for a triple, which felt easy. Sydney made dinner. Feeling like the backlog is finally shrinking instead of growing.', 'positive', 8, 'Shipped the migration and hit 315x3.', ['work', 'training'], ['Sydney']],
+  [1,  'Long day but a good one. Shipped the migration I have been putting off for three weeks and it went cleanly on the first try. Went to the gym after and hit 315 on deadlifts for a triple, which felt easy. Sam made dinner. Feeling like the backlog is finally shrinking instead of growing.', 'positive', 8, 'Shipped the migration and hit 315x3.', ['work', 'training'], ['Sam']],
   [3,  'Slept badly, maybe five hours, and it showed all day. Could not focus in the morning block at all. Skipped the gym which I always regret. Ordered lunch out again — that is the third time this week and I can feel it in both the budget and how I feel after.', 'negative', 4, 'Bad sleep, skipped gym, ate out again.', ['sleep', 'work'], []],
   [6,  'Quiet Sunday. Did the grocery run, meal prepped for the week, read on the porch for two hours. No work at all which is rare and I should protect that more. Still had the low-level Sunday dread about the week ahead creeping in around 6pm.', 'mixed', 6, 'Restful Sunday with the usual evening dread.', ['rest', 'work stress'], []],
   [9,  'Felt off all day. Heart rate has been high on the watch and I have been dragging since the weekend. Went easy at the gym, just mobility. Probably fighting something off. Went to bed at 9:30 which is unheard of.', 'negative', 5, 'Run down, took a rest day.', ['health'], []],
@@ -934,17 +934,17 @@ const JOURNAL_SEEDS: Array<[number, string, string, number, string, string[], st
   [17, 'Golf with Jordan at Riverbend. Shot an 86 which I will take. Weather was perfect. Spent the afternoon doing nothing in particular and did not feel guilty about it, which is progress.', 'positive', 9, 'Golf with Jordan, shot 86.', ['golf', 'rest'], ['Jordan']],
   [22, 'Rough one at work. The roadmap review went sideways and I spent the evening replaying it. Ate dinner standing up at the counter at 9pm. Did not journal properly, just needed to get this down.', 'negative', 3, 'Roadmap review went badly.', ['work stress'], []],
   [26, 'Sunday again. Same pattern I keep noticing — fine all day, then the tightness in my chest around dinner thinking about Monday. Went for a walk which helped more than I expected.', 'mixed', 5, 'The Sunday pattern again.', ['work stress', 'rest'], []],
-  [31, 'Good week overall. Three lifts, two runs, slept over seven hours every night but one. Money is boring right now in the best way. Starting to think seriously about the Bangkok trip in October.', 'positive', 8, 'Consistent week, planning Bangkok.', ['training', 'travel'], []],
-  [38, 'Dinner with Sydney at the new place downtown. Talked about the wedding timeline and actually made decisions instead of circling. Feel much better having them written down.', 'positive', 9, 'Wedding planning progress with Sydney.', ['wedding'], ['Sydney']],
+  [31, 'Good week overall. Three lifts, two runs, slept over seven hours every night but one. Money is boring right now in the best way. Starting to think seriously about the Lisbon trip in the spring.', 'positive', 8, 'Consistent week, planning Lisbon.', ['training', 'travel'], []],
+  [38, 'Dinner with Sam at the new place downtown. Talked about the wedding timeline and actually made decisions instead of circling. Feel much better having them written down.', 'positive', 9, 'Wedding planning progress with Sam.', ['wedding'], ['Sam']],
   [45, 'Slow start, strong finish. Deep work block from 2 to 6 with no interruptions was worth more than the entire morning. Should defend that time deliberately rather than hoping for it.', 'positive', 7, 'Afternoon deep work block paid off.', ['work'], []],
   [52, 'Sunday. Predictably tense in the evening. Noting it because the pattern is getting hard to ignore at this point.', 'mixed', 5, 'Sunday tension, again.', ['work stress'], []],
   [56, 'First real week back at full training volume. Legs were wrecked by Thursday but in the good way. Sleep has been excellent, over seven and a half hours most nights, and I can feel the difference in the afternoons.', 'positive', 8, 'Back to full training volume.', ['training', 'sleep'], []],
   [59, 'Sunday. Went for a long walk before the dread could set in and it genuinely helped. Filing that away as something that works rather than something I did once.', 'mixed', 6, 'Walked before the Sunday dread.', ['work stress', 'rest'], []],
   [63, 'Spent the morning on the budget and it was less painful than expected. Everything is roughly where it should be except eating out, which keeps creeping. Not a crisis, just a leak.', 'neutral', 7, 'Budget review — dining is the leak.', ['money'], []],
-  [67, 'Long call with Jordan about the trip. He has done the Bangkok leg twice and had strong opinions about where to stay. Wrote it all down before I forgot it.', 'positive', 8, 'Trip planning with Jordan.', ['travel'], ['Jordan']],
+  [67, 'Long call with Jordan about the trip. He has done that trip twice and had strong opinions about where to stay. Wrote it all down before I forgot it.', 'positive', 8, 'Trip planning with Jordan.', ['travel'], ['Jordan']],
   [70, 'Tough training week and I think I underslept it. Nothing dramatic, just flat. Backing the volume off slightly next week rather than pushing through and paying for it.', 'mixed', 5, 'Flat week, pulling volume back.', ['training', 'health'], []],
   [74, 'Sunday. Quieter than usual — no dread to speak of. Interesting that the weeks where I actually finish things on Friday are the ones where Sunday is fine.', 'positive', 7, 'A Sunday without the dread.', ['work stress', 'rest'], []],
-  [78, 'Sydney and I walked the venue in Yardley. Much better in person than the photos suggested. Narrowing down faster now that we have actually seen a few.', 'positive', 9, 'Venue walkthrough went well.', ['wedding'], ['Sydney']],
+  [78, 'Sam and I walked the venue across town. Much better in person than the photos suggested. Narrowing down faster now that we have actually seen a few.', 'positive', 9, 'Venue walkthrough went well.', ['wedding'], ['Sam']],
   [81, 'Nothing much to report. Worked, lifted, ate reasonably, slept fine. Writing it down anyway because the boring days are the ones that actually add up.', 'neutral', 7, 'An ordinary, solid day.', ['rest'], []],
   [85, 'Sunday. The tightness was back. Third or fourth time I have written this exact sentence now, which is probably the point.', 'mixed', 5, 'The Sunday pattern, noted again.', ['work stress'], []],
   [88, 'Good session — hit a clean triple at 305 on deadlift and it moved well. Two months ago that was a hard single. Progress is slow enough that I only see it in the log.', 'positive', 9, 'Deadlift progress visible in the log.', ['training'], []],
@@ -969,12 +969,12 @@ const journal_entries = JOURNAL_SEEDS.map(([d, raw, sentiment, mood, oneLiner, t
 // ── Notes (user-written and agent-written) ──────────────────────────────────
 
 const NOTE_SEEDS: Array<[string, string, string[], boolean, 'user' | 'agent', string | null, number]> = [
-  ['Bangkok trip — open questions', 'Do we need the visa on arrival or in advance?\nCheck whether the Sydney leg can be booked on the same ticket.\nAsk Jordan about the hotel he used near Sukhumvit.', ['travel'], true, 'user', null, 2],
+  ['Trip — open questions', 'Do we need the visa on arrival or in advance?\nCheck whether both legs can be booked on one ticket.\nAsk Jordan about the place he stayed near the centre.', ['travel'], true, 'user', null, 2],
   ['Weekly review — week of the 12th', 'Training: 3 lifts, 2 runs, all sessions completed.\nSleep: averaged 7h12m, one night under 6h.\nMoney: dining is running hot, everything else on plan.\nThe recovery dip mid-week lines up with the elevated resting HR the health agent flagged.', ['review'], false, 'agent', 'general', 4],
   ['Deadlift programming notes', 'Working sets are at 315 for triples and moving well.\nNext block: push to 325 for doubles before deloading.\nKeep the pause variation on the second session each week.', ['training'], false, 'user', null, 7],
   ['Things to stop doing', 'Checking email before the first deep work block.\nSaying yes to meetings that could be a message.\nOrdering lunch out on weekdays — it is both the money and the afternoon crash.', ['habits'], true, 'user', null, 11],
   ['Sunday pattern — what the journal shows', 'Across 60 days, 5 of 9 work-stress entries fall on a Sunday and Sunday mood averages 5.4 against 7.1 elsewhere. Recording this because it has now appeared in three separate weekly reviews.', ['pattern', 'work stress'], false, 'agent', 'general', 14],
-  ['Wedding — decisions made so far', 'Date locked for the fall.\nVenue shortlist down to three, all in the Yardley area.\nStill open: photographer, and whether we do a rehearsal dinner or something looser.', ['wedding'], false, 'user', null, 20],
+  ['Wedding — decisions made so far', 'Date locked for the fall.\nVenue shortlist down to three, all within an hour of town.\nStill open: photographer, and whether we do a rehearsal dinner or something looser.', ['wedding'], false, 'user', null, 20],
   ['Subscription audit', 'Four active subscriptions totalling $105.97/mo. Music and Streaming Plus overlap for what you actually listen to — worth checking usage before the next renewal.', ['money'], false, 'agent', 'finance', 25],
 ];
 

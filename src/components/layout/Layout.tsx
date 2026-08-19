@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Box } from '@mui/material';
 import Sidebar, { DRAWER_WIDTH } from './Sidebar';
 import DemoBanner from '../common/DemoBanner';
+import SurfaceSwitcher from '../common/SurfaceSwitcher';
 import VoiceButton from '../common/VoiceButton';
 import ChatPanel from '../chat/ChatPanel';
 
@@ -29,6 +30,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         }}
       >
         <DemoBanner />
+        <SurfaceSwitcher />
         <VoiceButton />
         <ChatPanel />
         <Box sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>

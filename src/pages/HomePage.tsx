@@ -14,6 +14,7 @@ import JournalNudge from '../components/home/JournalNudge';
 import TomorrowForecast from '../components/home/TomorrowForecast';
 import TodayPanel from '../components/home/TodayPanel';
 import BriefingCard from '../components/home/BriefingCard';
+import { IS_DEMO } from '../lib/demoMode';
 
 const getGreeting = (): string => {
   const hour = new Date().getHours();
@@ -29,7 +30,7 @@ const HomePage: React.FC = () => {
       {/* Greeting */}
       <Box sx={{ mb: { xs: 2, sm: 3 } }}>
         <Typography variant="h4" fontWeight={700} sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>
-          {getGreeting()}, Harry
+          {getGreeting()}, {IS_DEMO ? 'Sample' : 'Harry'}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
           {format(new Date(), 'EEEE, MMMM d, yyyy')}
