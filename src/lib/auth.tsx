@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from './supabase';
+import { IS_DEMO } from './demoMode';
 
 export type Role = 'owner' | 'guest';
 
@@ -18,8 +19,6 @@ interface AuthState {
 }
 
 const AuthContext = createContext<AuthState | null>(null);
-
-const IS_DEMO = process.env.REACT_APP_DEMO === '1';
 
 const DEMO_USER: AuthUser = {
   id: 'demo',
@@ -108,4 +107,5 @@ export const useAuth = (): AuthState => {
   return ctx;
 };
 
-export const isDemo = () => IS_DEMO;
+// Re-exported for convenience — the real definition lives in demoMode.ts.
+export { isDemo } from './demoMode';

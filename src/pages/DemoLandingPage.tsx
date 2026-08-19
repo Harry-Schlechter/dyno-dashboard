@@ -18,7 +18,8 @@ const ACCENT = '#5B8DEF';
  * why it's interesting before dropping a visitor into a dashboard full of
  * numbers they have no context for.
  *
- * Only mounted when REACT_APP_DEMO=1.
+ * Only routed under /sample (see lib/demoMode.ts). Router links are relative to
+ * the /sample basename, so navigate('/') lands on /sample, not the real app.
  */
 
 const PILLARS = [

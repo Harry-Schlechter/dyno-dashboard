@@ -1,7 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { mockSupabase } from './demo/mockSupabase';
-
-const IS_DEMO = process.env.REACT_APP_DEMO === '1';
+import { IS_DEMO } from './demoMode';
 
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
 const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';

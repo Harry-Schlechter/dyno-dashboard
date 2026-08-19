@@ -3,10 +3,10 @@ import { Box, Typography, Switch, FormControlLabel, IconButton } from '@mui/mate
 import { Mic, MicOff, VolumeUp } from '@mui/icons-material';
 import { supabase } from '../lib/supabase';
 import { demoReply, DEMO_VOICE_SUGGESTIONS } from '../lib/demo/demoVoice';
+import { IS_DEMO } from '../lib/demoMode';
 import { Link as RouterLink } from 'react-router-dom';
 
 const VOICE_API_URL = process.env.REACT_APP_VOICE_API_URL || '';
-const IS_DEMO = process.env.REACT_APP_DEMO === '1';
 
 async function authHeader(): Promise<Record<string, string>> {
   const { data: { session } } = await supabase.auth.getSession();

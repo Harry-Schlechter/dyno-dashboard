@@ -13,6 +13,20 @@
   status = 200
   force = true
 
+# Public portfolio demo. Same bundle, same deploy — /sample just tells the app
+# at runtime to bypass auth and read the in-memory fixture instead of Supabase
+# (see src/lib/demoMode.ts). Listed before the catch-all so the intent is
+# explicit rather than incidental.
+[[redirects]]
+  from = "/sample"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/sample/*"
+  to = "/index.html"
+  status = 200
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

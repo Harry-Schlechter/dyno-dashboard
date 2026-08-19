@@ -23,24 +23,11 @@ import VoicePage from './pages/VoicePage';
 import LoginPage from './pages/LoginPage';
 import DemoLandingPage from './pages/DemoLandingPage';
 import DemoExtensionPage from './pages/DemoExtensionPage';
+import { IS_DEMO, ROUTER_BASENAME } from './lib/demoMode';
 
-const IS_DEMO = process.env.REACT_APP_DEMO === '1';
-
-// The demo is served from a sub-path (e.g. /sample) so it can sit alongside the
-// real dashboard on the same domain. PUBLIC_URL carries that prefix at build
-// time; the router needs it too or client-side links 404 on refresh.
-const ROUTER_BASENAME = (() => {
-  const raw = process.env.PUBLIC_URL || '';
-  if (!raw) return undefined;
-  try {
-    // PUBLIC_URL may be absolute ("https://host/sample") or a bare path.
-    const path = raw.startsWith('http') ? new URL(raw).pathname : raw;
-    const trimmed = path.replace(/\/+$/, '');
-    return trimmed && trimmed !== '' ? trimmed : undefined;
-  } catch {
-    return undefined;
-  }
-})();
+// Demo mode is decided at runtime from the URL path (/sample), not at build
+// time — the demo and the real dashboard ship in one bundle and one deploy.
+// See lib/demoMode.ts.
 
 const App: React.FC = () => {
   return (

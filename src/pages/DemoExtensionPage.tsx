@@ -11,7 +11,7 @@ const ACCENT = '#5B8DEF';
  * inside the demo (it's a separate MV3 build that pairs with a real account),
  * so this page explains what it does and mocks up the side panel.
  *
- * Only mounted when REACT_APP_DEMO=1.
+ * Only routed under /sample (see lib/demoMode.ts).
  */
 
 const SURFACES = [
