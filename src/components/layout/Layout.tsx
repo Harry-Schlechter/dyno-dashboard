@@ -3,6 +3,7 @@ import { Box } from '@mui/material';
 import Sidebar, { DRAWER_WIDTH } from './Sidebar';
 import DemoBanner from '../common/DemoBanner';
 import VoiceButton from '../common/VoiceButton';
+import ChatPanel from '../chat/ChatPanel';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -29,6 +30,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       >
         <DemoBanner />
         <VoiceButton />
+        <ChatPanel />
         <Box sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
           {children}
         </Box>

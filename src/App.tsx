@@ -5,6 +5,7 @@ import { theme } from './theme/theme';
 import Layout from './components/layout/Layout';
 import AuthGate from './components/AuthGate';
 import { AuthProvider } from './lib/auth';
+import { ChatProvider } from './components/chat/ChatContext';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from './lib/auth';
 import HomePage from './pages/HomePage';
@@ -35,6 +36,7 @@ const App: React.FC = () => {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
+        <ChatProvider>
         <BrowserRouter basename={ROUTER_BASENAME}>
           <Routes>
             {/* Login page (hidden in demo) */}
@@ -69,6 +71,7 @@ const App: React.FC = () => {
             } />
           </Routes>
         </BrowserRouter>
+        </ChatProvider>
       </AuthProvider>
     </ThemeProvider>
   );

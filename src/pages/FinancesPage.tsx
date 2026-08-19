@@ -11,6 +11,7 @@ import {
   PieChart, Pie, Cell, Legend, BarChart, Bar, ReferenceLine,
 } from 'recharts';
 import { useFinances } from '../hooks/useFinances';
+import AskSpecialistButton from '../components/chat/AskSpecialistButton';
 import { formatCurrency, formatDateShort, formatNumber, formatPercent, formatMonth } from '../lib/formatters';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
 import ErrorMessage from '../components/common/ErrorMessage';
@@ -212,14 +213,34 @@ const FinancesPage: React.FC = () => {
     return filtered;
   }, [creditTransactions, searchTerm, accountFilter]);
 
+  // Compact page context for the "Ask Financial Advisor" chat (must be declared
+  // before any early return — React hooks rules).
+  const financeContext = useMemo(() => {
+    const nw = currentNetWorth ? formatCurrency(currentNetWorth.net_worth) : 'n/a';
+    const nwChg = netWorthChange !== null ? `${netWorthChange >= 0 ? '+' : ''}${formatCurrency(netWorthChange)}` : '';
+    const topCats = (monthlySpending || []).slice(0, 8)
+      .map((c: any) => `${c.category || c.name}: ${formatCurrency(c.amount || c.total || 0)}`).join(', ');
+    const recentTx = (transactions || []).slice(0, 12)
+      .map((t: any) => `${t.date} ${formatCurrency(t.amount)} ${t.merchant_name || t.description || ''}`.trim()).join('; ');
+    return [
+      `Finances page (${rangeLabel}).`,
+      `Net worth: ${nw}${nwChg ? ` (change ${nwChg})` : ''}.`,
+      topCats ? `Spending by category: ${topCats}.` : '',
+      recentTx ? `Recent transactions: ${recentTx}.` : '',
+    ].filter(Boolean).join('\n');
+  }, [currentNetWorth, netWorthChange, monthlySpending, transactions, rangeLabel]);
+
   if (loading) return <LoadingSkeleton variant="card" count={4} />;
   if (error) return <ErrorMessage message={error} onRetry={refetch} />;
 
   return (
     <Box>
-      <Box sx={{ mb: { xs: 2, sm: 2.5, md: 3 } }}>
-        <Typography variant="h4" fontWeight={700}>Finances</Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>Net worth, investments, and spending</Typography>
+      <Box sx={{ mb: { xs: 2, sm: 2.5, md: 3 }, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2 }}>
+        <Box>
+          <Typography variant="h4" fontWeight={700}>Finances</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>Net worth, investments, and spending</Typography>
+        </Box>
+        <AskSpecialistButton context={financeContext} />
       </Box>
 
       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3 }}>
