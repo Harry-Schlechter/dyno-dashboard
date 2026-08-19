@@ -225,9 +225,16 @@ const VoicePage: React.FC = () => {
   };
 
   // Warm up voice list (some browsers populate async) + cleanup.
+  // Also ping /api/voice-start so the server refreshes Dyno's briefing (recent
+  // health, finances, tasks, context) at the start of the conversation.
   useEffect(() => {
     window.speechSynthesis?.getVoices();
     if (!getSpeechRecognition()) setSupported(false);
+    (async () => {
+      try {
+        await fetch(`${VOICE_API_URL}/api/voice-start`, { method: 'POST', headers: await authHeader() });
+      } catch { /* non-fatal */ }
+    })();
     return () => { try { recognitionRef.current?.abort(); } catch {}; window.speechSynthesis?.cancel(); };
   }, []);
 
