@@ -1,12 +1,13 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
   Box, Card, CardContent, Typography, IconButton, Stack, TextField,
-  Button, Chip, Skeleton, Tooltip, Collapse, Avatar,
+  Button, Skeleton, Tooltip, Collapse, Avatar,
   Dialog, DialogTitle, DialogContent, DialogActions,
+  Select, MenuItem,
 } from '@mui/material';
 import {
   PlayArrow, Stop, Edit, Refresh, Send, OpenInNew,
-  CheckCircleOutline, Close, AutoAwesome, AttachFile,
+  CheckCircleOutline, Close, AttachFile,
   Add, Delete, Link as LinkIcon, StickyNote2, Mic,
 } from '@mui/icons-material';
 import { DASHBOARD_URL } from '../../lib/config';
@@ -290,29 +291,19 @@ function CaptureBox({ tabCtx, focus, onSubmit }: { tabCtx: TabContext | null; fo
           />
         </Collapse>
 
-        <Box sx={{ mt: 1, display: 'flex', gap: 0.5, flexWrap: 'wrap', alignItems: 'center' }}>
-          <Chip
+        <Box sx={{ mt: 1 }}>
+          <Select
             size="small"
-            label="Auto"
-            icon={<AutoAwesome sx={{ fontSize: 12 }} />}
-            color={forcedAgent === null ? 'primary' : 'default'}
-            onClick={() => setForcedAgent(null)}
-            variant={forcedAgent === null ? 'filled' : 'outlined'}
-            sx={{ height: 22 }}
-          />
-          {AGENTS.map((a) => (
-            <Chip
-              key={a.id}
-              size="small"
-              label={`${a.emoji} ${a.label}`}
-              onClick={() => setForcedAgent(forcedAgent === a.id ? null : a.id)}
-              variant={forcedAgent === a.id ? 'filled' : 'outlined'}
-              sx={{
-                height: 22,
-                ...(forcedAgent === a.id && { bgcolor: a.color + '40', borderColor: a.color }),
-              }}
-            />
-          ))}
+            fullWidth
+            value={forcedAgent ?? 'auto'}
+            onChange={(e) => setForcedAgent(e.target.value === 'auto' ? null : (e.target.value as string))}
+            sx={{ fontSize: '0.8rem', '.MuiSelect-select': { py: 0.75 } }}
+          >
+            <MenuItem value="auto" sx={{ fontSize: '0.8rem' }}>Auto — route to the right agent</MenuItem>
+            {AGENTS.map((a) => (
+              <MenuItem key={a.id} value={a.id} sx={{ fontSize: '0.8rem' }}>{a.label}</MenuItem>
+            ))}
+          </Select>
         </Box>
 
         <Stack direction="row" alignItems="center" sx={{ mt: 1 }} spacing={0.5}>
@@ -434,6 +425,7 @@ function QueueCard({ queue, loading, onChange }: { queue: QueueItem[]; loading: 
 
 function LinksCard({ links, loading, onChange }: { links: CockpitLink[]; loading: boolean; onChange: (l: CockpitLink[]) => void }) {
   const [editor, setEditor] = useState<{ mode: 'add' } | { mode: 'edit'; link: CockpitLink } | null>(null);
+  const [editMode, setEditMode] = useState(false);
 
   if (loading) return <Skeleton variant="rounded" height={120} />;
 
@@ -455,9 +447,16 @@ function LinksCard({ links, loading, onChange }: { links: CockpitLink[]; loading
             <LinkIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
             <Typography variant="overline" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>Quick links</Typography>
           </Stack>
-          <Button size="small" startIcon={<Add sx={{ fontSize: 14 }} />} onClick={() => setEditor({ mode: 'add' })} sx={{ minHeight: 0, py: 0.25, fontSize: '0.7rem' }}>
-            Add
-          </Button>
+          <Stack direction="row" spacing={0.5}>
+            {links.length > 0 && (
+              <Button size="small" onClick={() => setEditMode((v) => !v)} sx={{ minHeight: 0, py: 0.25, fontSize: '0.7rem' }}>
+                {editMode ? 'Done' : 'Edit'}
+              </Button>
+            )}
+            <Button size="small" startIcon={<Add sx={{ fontSize: 14 }} />} onClick={() => setEditor({ mode: 'add' })} sx={{ minHeight: 0, py: 0.25, fontSize: '0.7rem' }}>
+              Add
+            </Button>
+          </Stack>
         </Stack>
 
         {links.length === 0 ? (
@@ -466,7 +465,15 @@ function LinksCard({ links, loading, onChange }: { links: CockpitLink[]; loading
           </Typography>
         ) : (
           <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 0.75 }}>
-            {links.map((l) => <LinkTile key={l.id} link={l} onEdit={() => setEditor({ mode: 'edit', link: l })} onDelete={() => handleDelete(l.id)} />)}
+            {links.map((l) => (
+              <LinkTile
+                key={l.id}
+                link={l}
+                editMode={editMode}
+                onEdit={() => setEditor({ mode: 'edit', link: l })}
+                onDelete={() => handleDelete(l.id)}
+              />
+            ))}
           </Box>
         )}
       </CardContent>
@@ -481,49 +488,48 @@ function LinksCard({ links, loading, onChange }: { links: CockpitLink[]; loading
   );
 }
 
-function LinkTile({ link, onEdit, onDelete }: { link: CockpitLink; onEdit: () => void; onDelete: () => void }) {
+function LinkTile({ link, editMode, onEdit, onDelete }: { link: CockpitLink; editMode: boolean; onEdit: () => void; onDelete: () => void }) {
   const host = hostnameOf(link.url);
   const favicon = `https://www.google.com/s2/favicons?sz=64&domain=${host}`;
   return (
     <Box
-      onClick={() => chrome.tabs.create({ url: link.url })}
+      onClick={() => { if (!editMode) chrome.tabs.create({ url: link.url }); }}
       sx={{
         position: 'relative',
         p: 1, borderRadius: 1.5,
         bgcolor: 'rgba(255,255,255,0.03)',
         border: '1px solid rgba(255,255,255,0.06)',
-        cursor: 'pointer',
+        cursor: editMode ? 'default' : 'pointer',
         textAlign: 'center',
         transition: 'all 0.15s',
-        '&:hover': {
-          bgcolor: 'rgba(91,141,239,0.12)',
-          borderColor: 'rgba(91,141,239,0.4)',
-          '& .link-actions': { opacity: 1 },
-        },
+        ...(!editMode && {
+          '&:hover': {
+            bgcolor: 'rgba(91,141,239,0.12)',
+            borderColor: 'rgba(91,141,239,0.4)',
+          },
+        }),
       }}
     >
       <Box sx={{ fontSize: '1.25rem', lineHeight: 1, mb: 0.5 }}>
-        {link.emoji ? (
-          <span>{link.emoji}</span>
-        ) : (
-          <img src={favicon} alt="" width={20} height={20} style={{ borderRadius: 4, verticalAlign: 'middle' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-        )}
+        <img src={favicon} alt="" width={20} height={20} style={{ borderRadius: 4, verticalAlign: 'middle' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
       </Box>
       <Typography variant="caption" sx={{ fontWeight: 600, lineHeight: 1.2, display: 'block' }} noWrap>
         {link.title}
       </Typography>
-      <Box className="link-actions" sx={{ position: 'absolute', top: 2, right: 2, display: 'flex', gap: 0.25, opacity: 0, transition: 'opacity 0.15s' }}>
-        <Tooltip title="Edit">
-          <IconButton size="small" sx={{ p: 0.2 }} onClick={(e) => { e.stopPropagation(); onEdit(); }}>
-            <Edit sx={{ fontSize: 12 }} />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Delete">
-          <IconButton size="small" sx={{ p: 0.2 }} onClick={(e) => { e.stopPropagation(); onDelete(); }}>
-            <Delete sx={{ fontSize: 12 }} />
-          </IconButton>
-        </Tooltip>
-      </Box>
+      {editMode && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5, mt: 0.5 }}>
+          <Tooltip title="Edit">
+            <IconButton size="small" sx={{ p: 0.3 }} onClick={(e) => { e.stopPropagation(); onEdit(); }}>
+              <Edit sx={{ fontSize: 14 }} />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Delete">
+            <IconButton size="small" sx={{ p: 0.3, color: 'error.main' }} onClick={(e) => { e.stopPropagation(); onDelete(); }}>
+              <Delete sx={{ fontSize: 14 }} />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      )}
     </Box>
   );
 }
@@ -531,14 +537,12 @@ function LinkTile({ link, onEdit, onDelete }: { link: CockpitLink; onEdit: () =>
 function LinkEditorDialog({ open, initial, onClose, onSaved }: { open: boolean; initial?: CockpitLink; onClose: () => void; onSaved: () => void }) {
   const [title, setTitle] = useState('');
   const [url, setUrl] = useState('');
-  const [emoji, setEmoji] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (open) {
       setTitle(initial?.title ?? '');
       setUrl(initial?.url ?? '');
-      setEmoji(initial?.emoji ?? '');
     }
   }, [open, initial]);
 
@@ -548,9 +552,9 @@ function LinkEditorDialog({ open, initial, onClose, onSaved }: { open: boolean; 
     let fullUrl = url.trim();
     if (!/^https?:\/\//i.test(fullUrl)) fullUrl = 'https://' + fullUrl;
     if (initial) {
-      await updateLink(initial.id, { title: title.trim(), url: fullUrl, emoji: emoji.trim() || null });
+      await updateLink(initial.id, { title: title.trim(), url: fullUrl });
     } else {
-      await createLink({ title: title.trim(), url: fullUrl, emoji: emoji.trim() || undefined });
+      await createLink({ title: title.trim(), url: fullUrl });
     }
     setSaving(false);
     onSaved();
@@ -563,7 +567,6 @@ function LinkEditorDialog({ open, initial, onClose, onSaved }: { open: boolean; 
         <Stack spacing={1.5} sx={{ mt: 0.5 }}>
           <TextField autoFocus size="small" label="Title" value={title} onChange={(e) => setTitle(e.target.value)} fullWidth />
           <TextField size="small" label="URL" placeholder="https://…" value={url} onChange={(e) => setUrl(e.target.value)} fullWidth />
-          <TextField size="small" label="Emoji (optional)" placeholder="🐙" value={emoji} onChange={(e) => setEmoji(e.target.value)} inputProps={{ maxLength: 4 }} sx={{ width: 140 }} />
         </Stack>
       </DialogContent>
       <DialogActions>
