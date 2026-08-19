@@ -224,6 +224,40 @@ const VoicePage: React.FC = () => {
     else startListening();
   };
 
+  // Poll for completed background tasks (delegated to specialist agents) and
+  // speak them mid-conversation, so "have the trainer analyze X" comes back
+  // spoken when it's done without blocking the chat.
+  const lastFollowupRef = useRef<string>(new Date().toISOString());
+  useEffect(() => {
+    let stop = false;
+    const tick = async () => {
+      // Don't interrupt an active turn.
+      if (stateRef.current === 'listening' || stateRef.current === 'thinking' || stateRef.current === 'speaking') return;
+      try {
+        const since = lastFollowupRef.current;
+        const url = `${VOICE_API_URL}/api/voice-followups?since=${encodeURIComponent(since)}&conversation_id=${encodeURIComponent(conversationId)}`;
+        const r = await fetch(url, { headers: await authHeader() });
+        if (!r.ok) return;
+        const data = await r.json();
+        if (data.items && data.items.length > 0) {
+          lastFollowupRef.current = new Date().toISOString();
+          for (const item of data.items) {
+            if (stop) return;
+            const who = (item.assignee || 'update').replace(/-/g, ' ');
+            const turn: Turn = { id: crypto.randomUUID(), transcript: `↳ ${who} finished`, reply: item.text, route: 'followup', timestamp: Date.now() };
+            setHistory(h => [turn, ...h].slice(0, 50));
+            setState('speaking');
+            await speak(item.text);
+            setState('idle');
+          }
+        }
+      } catch { /* keep polling */ }
+    };
+    const id = setInterval(tick, 5000);
+    return () => { stop = true; clearInterval(id); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversationId, speak]);
+
   // Warm up voice list (some browsers populate async) + cleanup.
   // Also ping /api/voice-start so the server refreshes Dyno's briefing (recent
   // health, finances, tasks, context) at the start of the conversation.
