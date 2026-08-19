@@ -94,8 +94,34 @@ const VoicePage: React.FC = () => {
 
   // ── Send transcript to the reply brain ───────────────────────────────────
 
+  // Poll /api/voice-job until the async agent result is ready (or times out).
+  const pollJob = useCallback(async (jobId: string): Promise<string | null> => {
+    const deadline = Date.now() + 90_000; // agent turns can run long
+    while (Date.now() < deadline) {
+      await new Promise(res => setTimeout(res, 1200));
+      try {
+        const r = await fetch(`${VOICE_API_URL}/api/voice-job?id=${encodeURIComponent(jobId)}`, {
+          headers: await authHeader(),
+        });
+        if (!r.ok) continue;
+        const d = await r.json();
+        if (d.status === 'done')  return d.reply as string;
+        if (d.status === 'error') return null;
+        if (d.status === 'unknown') return null;
+      } catch { /* keep polling */ }
+    }
+    return null;
+  }, []);
+
+  const finishTurn = useCallback(() => {
+    if (continuousRef.current) startListening();
+    else setState('idle');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const sendText = useCallback(async (text: string) => {
     setState('thinking');
+    const turnId = crypto.randomUUID();
     try {
       const r = await fetch(`${VOICE_API_URL}/api/voice-text`, {
         method: 'POST',
@@ -104,26 +130,35 @@ const VoicePage: React.FC = () => {
       });
       if (!r.ok) throw new Error(`reply ${r.status}: ${await r.text()}`);
       const data = await r.json();
-      const turn: Turn = {
-        id: crypto.randomUUID(),
-        transcript: text,
-        reply: data.reply,
-        route: data.route,
-        timestamp: Date.now(),
-      };
+
+      // Add the turn (reply is either the final answer, or the ack for async).
+      const turn: Turn = { id: turnId, transcript: text, reply: data.reply, route: data.route, timestamp: Date.now() };
       setHistory(h => [turn, ...h].slice(0, 50));
       setState('speaking');
       await speak(data.reply);
-      // Continuous mode: reopen the mic after Dyno finishes speaking.
-      if (continuousRef.current) startListening();
-      else setState('idle');
+
+      // Async agent path: speak the ack, then wait for and speak the real answer.
+      if (data.done === false && data.job_id) {
+        setState('thinking');
+        const answer = await pollJob(data.job_id);
+        if (answer) {
+          setHistory(h => h.map(t => t.id === turnId ? { ...t, reply: answer } : t));
+          setState('speaking');
+          await speak(answer);
+        } else {
+          const miss = "Sorry, I couldn't pull that up.";
+          setHistory(h => h.map(t => t.id === turnId ? { ...t, reply: miss } : t));
+          await speak(miss);
+        }
+      }
+      finishTurn();
     } catch (e: any) {
       console.error(e);
       setErrorMsg(e.message || 'reply failed');
       setState('error');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversationId, speak]);
+  }, [conversationId, speak, pollJob, finishTurn]);
 
   // ── STT (browser SpeechRecognition) ──────────────────────────────────────
 
