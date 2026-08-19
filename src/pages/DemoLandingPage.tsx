@@ -9,6 +9,7 @@ import {
   AutoAwesome,
   Timeline,
   Storage,
+  Forum,
 } from '@mui/icons-material';
 
 const ACCENT = '#5B8DEF';
@@ -26,7 +27,7 @@ const PILLARS = [
   {
     icon: Storage,
     title: 'Ingest',
-    body: 'Sleep, workouts, vitals, meals, spending, calendar and journal flow in from wearables, bank feeds and chat — continuously, without manual entry.',
+    body: 'Sleep, vitals and workouts sync from wearables; spending from bank feeds. Everything else gets typed into Telegram in plain language and parsed into structured rows.',
   },
   {
     icon: Insights,
@@ -41,7 +42,7 @@ const PILLARS = [
   {
     icon: RecordVoiceOver,
     title: 'Act',
-    body: 'Talk to it like a phone call, or capture anything from the browser. Answers route to a fast model for chat and an agent for real data questions.',
+    body: 'Ten specialist personas you message in Telegram, a phone-call voice mode, and browser capture — all reading and writing the same database.',
   },
 ];
 
@@ -190,19 +191,34 @@ const DemoLandingPage: React.FC = () => {
         </Stack>
 
         {/* ── Surfaces ─────────────────────────────────────────────────── */}
-        <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>Three ways in</Typography>
+        <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>Four ways in</Typography>
         <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
-          The dashboard is only one surface. The system is designed to be reachable without opening it.
+          The dashboard is the visual layer, not the whole system. Most of what it shows was
+          captured somewhere else.
         </Typography>
 
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
             gap: 2,
             mb: 7,
           }}
         >
+          <Card
+            onClick={() => navigate('/telegram')}
+            sx={{ p: 2.5, cursor: 'pointer', border: `1px solid ${ACCENT}44`, '&:hover': { transform: 'translateY(-2px)' } }}
+          >
+            <Forum sx={{ color: ACCENT, mb: 1 }} />
+            <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.75 }}>
+              Telegram <Chip label="primary" size="small" sx={{ ml: 0.5, height: 18, fontSize: 10, bgcolor: 'rgba(91,141,239,0.15)', color: ACCENT }} />
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.65 }}>
+              Where the system actually lives. Ten agent personas, each owning a topic in one
+              supergroup — type "chicken salad bowl" and it becomes structured data. It also starts
+              conversations, rather than only answering them.
+            </Typography>
+          </Card>
           <Card sx={{ p: 2.5, '&:hover': { transform: 'none' } }}>
             <AutoAwesome sx={{ color: ACCENT, mb: 1 }} />
             <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.75 }}>The dashboard</Typography>

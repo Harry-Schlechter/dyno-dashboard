@@ -31,6 +31,7 @@ import {
   Menu as MenuIcon,
   RecordVoiceOver,
   Extension,
+  Forum,
 } from '@mui/icons-material';
 import { useAuth, isDemo } from '../../lib/auth';
 
@@ -57,6 +58,7 @@ const GUEST_NAV_ITEMS = ALL_NAV_ITEMS.filter(i => i.path === '/spaces');
 // part of what makes the system worth showing.
 const DEMO_NAV_ITEMS = [
   ...ALL_NAV_ITEMS,
+  { label: 'Telegram', path: '/telegram', icon: Forum },
   { label: 'Voice', path: '/voice', icon: RecordVoiceOver },
   { label: 'Extension', path: '/extension', icon: Extension },
 ];

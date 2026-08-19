@@ -10,10 +10,15 @@ const daysAgo = (n: number) => {
 const range = (n: number) => Array.from({ length: n }, (_, i) => i);
 const hoursAgo = (n: number) => new Date(Date.now() - n * 3600 * 1000).toISOString();
 
+// Every daily series covers this window so no page has a short tail and the
+// 90-day range filters in the UI are fully populated. Transactions run longer
+// because the spending comparisons need a trailing baseline to measure against.
+const DAYS = 90;
+
 // ── Daily logs (last 60 days) ───────────────────────────────────────────────
 
 // mood/energy/stress are 1-10 numeric in the real schema, not labels.
-const daily_logs = range(60).map(i => {
+const daily_logs = range(DAYS).map(i => {
   const inDip = i >= 8 && i <= 13;   // matches the recovery dip below
   return {
     id: `dl-${i}`,
@@ -36,7 +41,7 @@ const daily_logs = range(60).map(i => {
 
 // ── Sleep (60 days) ─────────────────────────────────────────────────────────
 
-const sleep = range(60).map(i => {
+const sleep = range(DAYS).map(i => {
   const inDip = i >= 8 && i <= 13;
   const hours = Math.round((7.2 + (Math.random() - 0.5) * 1.4 - (inDip ? 0.5 : 0)) * 100) / 100;
   const timeInBed = Math.round(hours * 60 / 0.9);
@@ -74,19 +79,23 @@ const MEAL_ROTATION = [
   ['snack',     'Protein shake',                     280, 30, 25, 5,  2],
 ] as const;
 
-const meals = range(60).map(i => {
+// Four meals a day, every day in the window — the Nutrition page breaks meals
+// out per day, so a partial tail would show empty days.
+const meals = range(DAYS * 4).map(i => {
   const [meal_type, description, calories, protein_g, carbs_g, fat_g, fiber_g] =
     MEAL_ROTATION[i % 4];
+  // Vary portions slightly so the daily totals aren't identical bars.
+  const jitter = (v: number) => Math.round(v * (1 + (Math.random() - 0.5) * 0.18));
   return {
     id: `m-${i}`,
     user_id: 'demo',
     date: daysAgo(Math.floor(i / 4)),
     meal_type,
     description,
-    calories,
-    protein_g,
-    carbs_g,
-    fat_g,
+    calories: jitter(calories),
+    protein_g: jitter(protein_g),
+    carbs_g: jitter(carbs_g),
+    fat_g: jitter(fat_g),
     fiber_g,
   };
 });
@@ -102,7 +111,8 @@ const WORKOUT_ROTATION = [
   ['Tempo run',     'cardio',   'run'],
 ] as const;
 
-const workouts = range(30).map(i => {
+// Every other day across the whole window.
+const workouts = range(Math.floor(DAYS / 2)).map(i => {
   const [name, activity_type, kind] = WORKOUT_ROTATION[i % 6];
   const isLift = kind === 'lift';
   return {
@@ -134,8 +144,16 @@ const LIFT_PLAN: Array<[string, number, number, number]> = [
 
 const workout_exercises = workouts.flatMap((w, wi) =>
   w.workout_type !== 'lift' ? [] :
-    LIFT_PLAN.flatMap(([exercise_name, sets, reps, weight], ei) =>
-      range(sets).map(s => ({
+    LIFT_PLAN.flatMap(([exercise_name, sets, reps, topWeight], ei) => {
+      // wi counts backwards from today, so older sessions get lighter weight.
+      // Roughly 10% of working weight gained across the window, stepped in 5lb
+      // increments — that's what makes the strength trend visible on Fitness.
+      const stepsBack = Math.floor(wi / 6);
+      const weight = Math.max(
+        Math.round((topWeight * 0.9) / 5) * 5,
+        topWeight - stepsBack * 5,
+      );
+      return range(sets).map(s => ({
         id: `we-${wi}-${ei}-${s}`,
         workout_id: w.id,
         user_id: 'demo',
@@ -146,8 +164,8 @@ const workout_exercises = workouts.flatMap((w, wi) =>
         weight_lbs: weight,
         rpe: Math.min(10, 7 + Math.round(s / 2)),
         is_pr: false,
-      })),
-    ),
+      }));
+    }),
 );
 
 const exercise_prs = [
@@ -265,10 +283,12 @@ const TXN_CATEGORIES: Array<[string, number, string, number]> = [
 
 const DAYS_OF_HISTORY = 120;
 
-// Recurring spend, generated per category on its own cadence.
-const recurring_txns = TXN_CATEGORIES.flatMap(([cat, base, merchant, everyN]) =>
+// Recurring spend, generated per category on its own cadence. Each category
+// gets a different starting offset so charges land on staggered days instead of
+// every merchant billing on the same date.
+const recurring_txns = TXN_CATEGORIES.flatMap(([cat, base, merchant, everyN], ci) =>
   range(Math.floor(DAYS_OF_HISTORY / everyN)).map((k) => {
-    const day = k * everyN + (k % 2);
+    const day = k * everyN + (ci * 2) % everyN;
     // The dining anomaly the observation engine reports: weekday lunches out
     // have crept up over the last month. Without this the "62% above average"
     // insight would be describing data that doesn't show it.
@@ -289,17 +309,26 @@ const recurring_txns = TXN_CATEGORIES.flatMap(([cat, base, merchant, everyN]) =>
   }),
 );
 
+// Deliberately round figures. Everything in this file is invented, and an
+// oddly precise paycheck would read as somebody's real number — so the demo
+// uses flat amounts that are obviously synthetic. Kept in sync with
+// DEFAULT_SEMI_MONTHLY_PAYCHECK in lib/finance.ts, which the projection math
+// reads.
+const DEMO_PAYCHECK = 5000;   // semi-monthly → $10,000/mo, $120,000/yr
+const DEMO_RENT = 2200;
+const DEMO_SAVINGS_TRANSFER = 1500;
+
 // Rent on the 1st, salary on the 15th and the last day — semi-monthly.
-const fixed_txns = range(5).flatMap(m => {
+const fixed_txns = range(6).flatMap(m => {
   const monthStart = new Date(today.getFullYear(), today.getMonth() - m, 1);
   const iso2 = (d: Date) => d.toISOString().slice(0, 10);
   const mid = new Date(today.getFullYear(), today.getMonth() - m, 15);
   const end = new Date(today.getFullYear(), today.getMonth() - m + 1, 0);
   const rows = [
-    { id: `tx-rent-${m}`, date: iso2(monthStart), amount: -2150, cat: 'rent', name: 'Apartment' },
-    { id: `tx-pay-a-${m}`, date: iso2(mid), amount: 4055.10, cat: 'income', name: 'Employer' },
-    { id: `tx-pay-b-${m}`, date: iso2(end), amount: 4055.10, cat: 'income', name: 'Employer' },
-    { id: `tx-xfer-${m}`, date: iso2(mid), amount: -1200, cat: 'transfer', name: 'Savings Transfer' },
+    { id: `tx-rent-${m}`, date: iso2(monthStart), amount: -DEMO_RENT, cat: 'rent', name: 'Apartment' },
+    { id: `tx-pay-a-${m}`, date: iso2(mid), amount: DEMO_PAYCHECK, cat: 'income', name: 'Employer' },
+    { id: `tx-pay-b-${m}`, date: iso2(end), amount: DEMO_PAYCHECK, cat: 'income', name: 'Employer' },
+    { id: `tx-xfer-${m}`, date: iso2(mid), amount: -DEMO_SAVINGS_TRANSFER, cat: 'transfer', name: 'Savings Transfer' },
   ];
   return rows
     .filter(r => r.date <= daysAgo(0))
@@ -411,7 +440,7 @@ const investment_holdings = HOLDING_SEEDS.map(([id, account_id, ticker, quantity
   };
 });
 
-const financial_investment_activity = range(20).map(i => {
+const financial_investment_activity = range(Math.floor(DAYS / 7) + 6).map(i => {
   const kind = (i % 3 === 0 ? '401k' : i % 3 === 1 ? 'dividend' : 'buy') as '401k' | 'dividend' | 'buy';
   const ticker = ['VTI', 'VOO', 'BND'][i % 3];
   return {
@@ -486,7 +515,7 @@ const monthly_spending_by_category = range(6).flatMap(m =>
 
 // ── Misc ────────────────────────────────────────────────────────────────────
 
-const golf_rounds = range(8).map(i => ({
+const golf_rounds = range(Math.floor(DAYS / 14)).map(i => ({
   id: `g-${i}`,
   user_id: 'demo',
   date: daysAgo(i * 14),
@@ -655,7 +684,7 @@ const daily_macros = daily_logs.map(d => ({
 // observation engine "notices" below. Demo viewers should be able to see the
 // signal in the chart that the agent claims to have found.
 
-const vitals = range(60).map(i => {
+const vitals = range(DAYS).map(i => {
   // i counts backwards from today; the dip sits ~8-13 days ago.
   const inDip = i >= 8 && i <= 13;
   const rhr = 54 + Math.sin(i / 9) * 2 + (inDip ? 6 : 0) + (Math.random() - 0.5);
@@ -830,14 +859,15 @@ const PRED_METRICS: Array<[string, string, number, string, string, number]> = [
   ['dining_spend', '$28',    28,   '±$14',  'Weekday dining averages $28 when a lunch is not logged at home.', 0.50],
 ];
 
-// Scored history: 45 past predictions, roughly 70% hit rate, so the accuracy
-// view has something honest to show (including misses).
-const scored_predictions = range(45).map(i => {
+// Scored history: every metric predicted every day across the window, then
+// graded the next morning. That's DAYS × 5 rows, so the accuracy view has a
+// real sample behind its percentages instead of a handful of points.
+const scored_predictions = range(DAYS * PRED_METRICS.length).map(i => {
   const [metric, predicted, num, band, rationale, hitRate] = PRED_METRICS[i % PRED_METRICS.length];
   const dayOffset = Math.floor(i / PRED_METRICS.length) + 1;
   // Deterministic spread per metric so the published hit rate matches hitRate
   // instead of drifting with Math.random().
-  const hit = ((dayOffset - 1) % 9) < Math.round(hitRate * 9);
+  const hit = ((dayOffset - 1) % 100) < Math.round(hitRate * 100);
   const errPct = hit ? (Math.random() * 0.04) : (0.09 + Math.random() * 0.08);
   const actualNum = Math.round(num * (1 + (i % 2 ? errPct : -errPct)) * 100) / 100;
   return {
@@ -908,6 +938,16 @@ const JOURNAL_SEEDS: Array<[number, string, string, number, string, string[], st
   [38, 'Dinner with Sydney at the new place downtown. Talked about the wedding timeline and actually made decisions instead of circling. Feel much better having them written down.', 'positive', 9, 'Wedding planning progress with Sydney.', ['wedding'], ['Sydney']],
   [45, 'Slow start, strong finish. Deep work block from 2 to 6 with no interruptions was worth more than the entire morning. Should defend that time deliberately rather than hoping for it.', 'positive', 7, 'Afternoon deep work block paid off.', ['work'], []],
   [52, 'Sunday. Predictably tense in the evening. Noting it because the pattern is getting hard to ignore at this point.', 'mixed', 5, 'Sunday tension, again.', ['work stress'], []],
+  [56, 'First real week back at full training volume. Legs were wrecked by Thursday but in the good way. Sleep has been excellent, over seven and a half hours most nights, and I can feel the difference in the afternoons.', 'positive', 8, 'Back to full training volume.', ['training', 'sleep'], []],
+  [59, 'Sunday. Went for a long walk before the dread could set in and it genuinely helped. Filing that away as something that works rather than something I did once.', 'mixed', 6, 'Walked before the Sunday dread.', ['work stress', 'rest'], []],
+  [63, 'Spent the morning on the budget and it was less painful than expected. Everything is roughly where it should be except eating out, which keeps creeping. Not a crisis, just a leak.', 'neutral', 7, 'Budget review — dining is the leak.', ['money'], []],
+  [67, 'Long call with Jordan about the trip. He has done the Bangkok leg twice and had strong opinions about where to stay. Wrote it all down before I forgot it.', 'positive', 8, 'Trip planning with Jordan.', ['travel'], ['Jordan']],
+  [70, 'Tough training week and I think I underslept it. Nothing dramatic, just flat. Backing the volume off slightly next week rather than pushing through and paying for it.', 'mixed', 5, 'Flat week, pulling volume back.', ['training', 'health'], []],
+  [74, 'Sunday. Quieter than usual — no dread to speak of. Interesting that the weeks where I actually finish things on Friday are the ones where Sunday is fine.', 'positive', 7, 'A Sunday without the dread.', ['work stress', 'rest'], []],
+  [78, 'Sydney and I walked the venue in Yardley. Much better in person than the photos suggested. Narrowing down faster now that we have actually seen a few.', 'positive', 9, 'Venue walkthrough went well.', ['wedding'], ['Sydney']],
+  [81, 'Nothing much to report. Worked, lifted, ate reasonably, slept fine. Writing it down anyway because the boring days are the ones that actually add up.', 'neutral', 7, 'An ordinary, solid day.', ['rest'], []],
+  [85, 'Sunday. The tightness was back. Third or fourth time I have written this exact sentence now, which is probably the point.', 'mixed', 5, 'The Sunday pattern, noted again.', ['work stress'], []],
+  [88, 'Good session — hit a clean triple at 305 on deadlift and it moved well. Two months ago that was a hard single. Progress is slow enough that I only see it in the log.', 'positive', 9, 'Deadlift progress visible in the log.', ['training'], []],
 ];
 
 const journal_entries = JOURNAL_SEEDS.map(([d, raw, sentiment, mood, oneLiner, topics, people], i) => ({

@@ -1,4 +1,5 @@
 import { Transaction } from '../hooks/useFinances';
+import { IS_DEMO } from './demoMode';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Filter rules — single source of truth for "real" income / spend
@@ -179,7 +180,17 @@ export const computeNetWorthBreakdown = (
 
 // Current net semi-monthly paycheck (post-raise, 2026-04). User is paid twice monthly
 // (24 checks/year), not biweekly. Editable later via settings.
-export const DEFAULT_SEMI_MONTHLY_PAYCHECK = 4055.10;
+//
+// The public demo must never expose the real figure — projections and "on pace"
+// math read this constant, so overriding it here (rather than only in the
+// fixture's transactions) is what keeps the real number out of the /sample
+// build entirely.
+const REAL_SEMI_MONTHLY_PAYCHECK = 4055.10;
+const DEMO_SEMI_MONTHLY_PAYCHECK = 5000;
+
+export const DEFAULT_SEMI_MONTHLY_PAYCHECK = IS_DEMO
+  ? DEMO_SEMI_MONTHLY_PAYCHECK
+  : REAL_SEMI_MONTHLY_PAYCHECK;
 
 export const expectedMonthlyIncome = (semiMonthlyPaycheck = DEFAULT_SEMI_MONTHLY_PAYCHECK): number =>
   semiMonthlyPaycheck * 2;

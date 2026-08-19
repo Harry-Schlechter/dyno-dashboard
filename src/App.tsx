@@ -23,6 +23,7 @@ import VoicePage from './pages/VoicePage';
 import LoginPage from './pages/LoginPage';
 import DemoLandingPage from './pages/DemoLandingPage';
 import DemoExtensionPage from './pages/DemoExtensionPage';
+import DemoTelegramPage from './pages/DemoTelegramPage';
 import { IS_DEMO, ROUTER_BASENAME } from './lib/demoMode';
 
 // Demo mode is decided at runtime from the URL path (/sample), not at build
@@ -97,6 +98,7 @@ const DashboardRoutes: React.FC = () => {
       <Route path="/correlations"  element={<Navigate to="/patterns" replace />} />
       <Route path="/spaces"        element={<SpacesPage index />} />
       <Route path="/spaces/:slug"  element={<SpacesPage />} />
+      {IS_DEMO && <Route path="/telegram" element={<DemoTelegramPage />} />}
       {IS_DEMO && <Route path="/extension" element={<DemoExtensionPage />} />}
     </Routes>
   );
