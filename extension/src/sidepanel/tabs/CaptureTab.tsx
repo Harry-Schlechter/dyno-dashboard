@@ -115,6 +115,15 @@ function FocusHeader({ focus, loading, onChange }: { focus: FocusSession | null;
                 {focus.title}
               </Typography>
             </Box>
+            <Tooltip title="Talk to Dyno">
+              <IconButton
+                size="small"
+                onClick={() => chrome.tabs.create({ url: `${DASHBOARD_URL}/voice` })}
+                sx={{ color: '#8ba4f5' }}
+              >
+                <Mic sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Tooltip>
             <Tooltip title="End focus">
               <IconButton size="small" onClick={handleEnd}><Stop sx={{ fontSize: 18 }} /></IconButton>
             </Tooltip>
