@@ -7,8 +7,9 @@ import {
 import {
   PlayArrow, Stop, Edit, Refresh, Send, OpenInNew,
   CheckCircleOutline, Close, AutoAwesome, AttachFile,
-  Add, Delete, Link as LinkIcon, StickyNote2,
+  Add, Delete, Link as LinkIcon, StickyNote2, Mic,
 } from '@mui/icons-material';
+import { DASHBOARD_URL } from '../../lib/config';
 import {
   fetchActiveFocus, startFocus, endFocus,
   createCapture, fetchQueue, markQueueItem,
@@ -135,6 +136,19 @@ function FocusHeader({ focus, loading, onChange }: { focus: FocusSession | null;
               </Typography>
             </Box>
             <Button size="small" startIcon={<PlayArrow />} onClick={() => setEditing(true)} variant="outlined">Start</Button>
+            <Button
+              size="small"
+              startIcon={<Mic />}
+              variant="contained"
+              onClick={() => chrome.tabs.create({ url: `${DASHBOARD_URL}/voice` })}
+              sx={{
+                background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                whiteSpace: 'nowrap',
+                '&:hover': { background: 'linear-gradient(135deg, #7b8ff0, #764ba2)' },
+              }}
+            >
+              Talk to Dyno
+            </Button>
           </Stack>
         ) : (
           <Stack spacing={1}>

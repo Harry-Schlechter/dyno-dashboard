@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Box } from '@mui/material';
 import Sidebar, { DRAWER_WIDTH } from './Sidebar';
+import DemoBanner from '../common/DemoBanner';
+import VoiceButton from '../common/VoiceButton';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -20,13 +22,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: { xs: 2, sm: 2.5, md: 3 },
           width: { xs: '100%', md: `calc(100% - ${DRAWER_WIDTH}px)` },
           minHeight: '100vh',
           backgroundColor: 'background.default',
         }}
       >
-        {children}
+        <DemoBanner />
+        <VoiceButton />
+        <Box sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
+          {children}
+        </Box>
       </Box>
     </Box>
   );
