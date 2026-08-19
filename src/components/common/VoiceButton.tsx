@@ -4,6 +4,7 @@ import { Mic, ChatBubbleOutline } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../lib/auth';
 import { useChat } from '../chat/ChatContext';
+import { isDemo } from '../../lib/demoMode';
 
 // Global top-right controls on every dashboard page (owner-only):
 //   • mic  → the full /voice interface
@@ -17,6 +18,10 @@ const VoiceButton: React.FC = () => {
 
   if (user?.role !== 'owner') return null;
   if (location.pathname.startsWith('/voice')) return null;
+  // Hidden in the demo: the chat FAB posts to the private voice backend, which
+  // a public visitor can't reach, and the mic duplicates the SurfaceSwitcher's
+  // Voice link. Better to omit both than to ship two dead buttons.
+  if (isDemo()) return null;
 
   const gradient = (theme: any) => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`;
 

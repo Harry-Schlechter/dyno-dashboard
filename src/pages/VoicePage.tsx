@@ -2,9 +2,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Box, Typography, Switch, FormControlLabel, IconButton } from '@mui/material';
 import { Mic, MicOff, VolumeUp } from '@mui/icons-material';
 import { supabase } from '../lib/supabase';
-import { demoReply, DEMO_VOICE_SUGGESTIONS } from '../lib/demo/demoVoice';
-import { IS_DEMO } from '../lib/demoMode';
-import { Link as RouterLink } from 'react-router-dom';
 
 const VOICE_API_URL = process.env.REACT_APP_VOICE_API_URL || '';
 
@@ -126,19 +123,6 @@ const VoicePage: React.FC = () => {
     setState('thinking');
     const turnId = crypto.randomUUID();
 
-    // Demo mode: answer locally instead of calling the private voice backend.
-    // STT, TTS, barge-in and continuous mode all still run for real.
-    if (IS_DEMO) {
-      const { reply, route, latency } = demoReply(text);
-      await new Promise(res => setTimeout(res, latency));
-      const turn: Turn = { id: turnId, transcript: text, reply, route, timestamp: Date.now() };
-      setHistory(h => [turn, ...h].slice(0, 50));
-      setState('speaking');
-      await speak(reply);
-      finishTurn();
-      return;
-    }
-
     try {
       const r = await fetch(`${VOICE_API_URL}/api/voice-text`, {
         method: 'POST',
@@ -246,7 +230,6 @@ const VoicePage: React.FC = () => {
   // spoken when it's done without blocking the chat.
   const lastFollowupRef = useRef<string>(new Date().toISOString());
   useEffect(() => {
-    if (IS_DEMO) return;   // no backend to poll in demo mode
     let stop = false;
     const tick = async () => {
       // Don't interrupt an active turn.
@@ -282,13 +265,11 @@ const VoicePage: React.FC = () => {
   useEffect(() => {
     window.speechSynthesis?.getVoices();
     if (!getSpeechRecognition()) setSupported(false);
-    if (!IS_DEMO) {
-      (async () => {
-        try {
-          await fetch(`${VOICE_API_URL}/api/voice-start`, { method: 'POST', headers: await authHeader() });
-        } catch { /* non-fatal */ }
-      })();
-    }
+    (async () => {
+      try {
+        await fetch(`${VOICE_API_URL}/api/voice-start`, { method: 'POST', headers: await authHeader() });
+      } catch { /* non-fatal */ }
+    })();
     return () => { try { recognitionRef.current?.abort(); } catch {}; window.speechSynthesis?.cancel(); };
   }, []);
 
@@ -313,17 +294,6 @@ const VoicePage: React.FC = () => {
 
   return (
     <Box sx={{ position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', bgcolor: '#0d1117', color: '#e6edf3' }}>
-      {/* Back to the dashboard — the voice page is fullscreen with no sidebar. */}
-      {IS_DEMO && (
-        <Box sx={{ position: 'absolute', top: 16, left: 16, zIndex: 2 }}>
-          <RouterLink to="/" style={{ textDecoration: 'none' }}>
-            <Typography variant="caption" sx={{ color: '#7d8590', '&:hover': { color: '#5B8DEF' } }}>
-              ← Back to dashboard
-            </Typography>
-          </RouterLink>
-        </Box>
-      )}
-
       {/* Continuous toggle */}
       <Box sx={{ position: 'absolute', top: 16, right: 16, zIndex: 2 }}>
         <FormControlLabel
@@ -335,35 +305,12 @@ const VoicePage: React.FC = () => {
       {/* Conversation thread */}
       <Box ref={threadRef} sx={{ flex: 1, width: '100%', maxWidth: 640, overflowY: 'auto', px: { xs: 2, sm: 3 }, pt: 8, pb: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
         {thread.length === 0 && !interim && (
-          <Box sx={{ m: 'auto', textAlign: 'center', color: 'text.secondary', width: '100%' }}>
+          <Box sx={{ m: 'auto', textAlign: 'center', color: 'text.secondary' }}>
             <Typography variant="body2">Tap the mic and start talking.</Typography>
             {!supported && (
               <Typography variant="caption" color="error" sx={{ display: 'block', mt: 1 }}>
                 This browser doesn't support speech recognition. Try Chrome.
               </Typography>
-            )}
-            {IS_DEMO && (
-              <Box sx={{ mt: 3 }}>
-                <Typography variant="caption" sx={{ display: 'block', mb: 1.5 }}>
-                  Demo mode — replies come from a scripted brain reading the sample data.
-                  {!supported && ' No mic? Tap a question below.'}
-                </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'center' }}>
-                  {DEMO_VOICE_SUGGESTIONS.map(s => (
-                    <Box
-                      key={s}
-                      onClick={() => sendText(s)}
-                      sx={{
-                        px: 1.5, py: 0.75, borderRadius: 99, fontSize: 13, cursor: 'pointer',
-                        border: '1px solid #2a3441', color: '#e6edf3',
-                        '&:hover': { borderColor: '#5B8DEF', color: '#5B8DEF' },
-                      }}
-                    >
-                      {s}
-                    </Box>
-                  ))}
-                </Box>
-              </Box>
             )}
           </Box>
         )}

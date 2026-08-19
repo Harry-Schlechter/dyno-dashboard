@@ -25,6 +25,7 @@ import LoginPage from './pages/LoginPage';
 import DemoLandingPage from './pages/DemoLandingPage';
 import DemoExtensionPage from './pages/DemoExtensionPage';
 import DemoTelegramPage from './pages/DemoTelegramPage';
+import DemoVoicePage from './pages/DemoVoicePage';
 import { IS_DEMO, ROUTER_BASENAME } from './lib/demoMode';
 
 // Demo mode is decided at runtime from the URL path (/sample), not at build
@@ -45,15 +46,16 @@ const App: React.FC = () => {
             {/* Portfolio explainer — the demo's front door. */}
             {IS_DEMO && <Route path="/about" element={<DemoLandingPage />} />}
 
-            {/* Voice page — fullscreen. Owner-gated for real; open in demo,
-                where it answers from a local scripted brain. */}
-            <Route path="/voice" element={
-              IS_DEMO ? <VoicePage /> : (
+            {/* Voice — fullscreen and owner-gated. The demo has its own
+                in-layout version (see DashboardRoutes), so this route stays
+                exactly as it was for the real dashboard. */}
+            {!IS_DEMO && (
+              <Route path="/voice" element={
                 <AuthGate roles={['owner']}>
                   <VoicePage />
                 </AuthGate>
-              )
-            } />
+              } />
+            )}
 
             {/* Everything else — gated unless demo */}
             <Route path="/*" element={
@@ -102,6 +104,7 @@ const DashboardRoutes: React.FC = () => {
       <Route path="/spaces"        element={<SpacesPage index />} />
       <Route path="/spaces/:slug"  element={<SpacesPage />} />
       {IS_DEMO && <Route path="/telegram" element={<DemoTelegramPage />} />}
+      {IS_DEMO && <Route path="/voice" element={<DemoVoicePage />} />}
       {IS_DEMO && <Route path="/extension" element={<DemoExtensionPage />} />}
     </Routes>
   );
