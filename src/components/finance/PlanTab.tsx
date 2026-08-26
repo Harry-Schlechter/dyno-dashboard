@@ -15,7 +15,8 @@ import { isRealSpend, trailingMonthlyAvgSpend, spendByCategory } from '../../lib
 const TAKE_HOME = 8070;
 const ROTH_TARGET = 583;
 const WROS_TARGET = 2500;
-const CONTRIB_401K = 1958;
+const CONTRIB_401K = 770;
+const EMPLOYER_MATCH_401K = 385;
 const CONTRIB_HSA = 358;
 const SPEND_FLOOR = TAKE_HOME - ROTH_TARGET - WROS_TARGET; // 4987
 
@@ -229,7 +230,7 @@ const PlanTab: React.FC<PlanTabProps> = ({ transactions, accounts, monthlySpendi
 
             {/* Pre-tax note */}
             <Box sx={{ mx: 1.5, py: 0.75, borderLeft: '2px solid rgba(255,255,255,0.06)', pl: 1.5 }}>
-              <Typography variant="caption" color="text.secondary">Pre-tax (invisible): 401k {formatCurrency(CONTRIB_401K)} · HSA {formatCurrency(CONTRIB_HSA)}</Typography>
+              <Typography variant="caption" color="text.secondary">Pre-tax (invisible): 401k {formatCurrency(CONTRIB_401K)} employee +{formatCurrency(EMPLOYER_MATCH_401K)} employer match · HSA {formatCurrency(CONTRIB_HSA)}</Typography>
             </Box>
 
             {/* Post-take-home contributions */}
@@ -633,7 +634,8 @@ const PlanTab: React.FC<PlanTabProps> = ({ transactions, accounts, monthlySpendi
         {
           title: 'If Stopped Today',
           subtitle: 'All balances coast, no new contributions',
-          total: 267000,
+          total: 313000,
+          displayStr: '$313k',
           color: '#F44336',
           icon: <Savings sx={{ fontSize: 28, color: '#F44336' }} />,
           breakdown: [
@@ -645,27 +647,29 @@ const PlanTab: React.FC<PlanTabProps> = ({ transactions, accounts, monthlySpendi
         },
         {
           title: 'On Target',
-          subtitle: 'Full contributions every month for 33.5 years',
-          total: 9800000,
+          subtitle: '6% contribution + 3% employer match ($1,155/mo total) for 33.5 years',
+          total: 3420000,
+          displayStr: '$3.42M',
           color: '#4CAF50',
           icon: <ShowChart sx={{ fontSize: 28, color: '#4CAF50' }} />,
           breakdown: [
-            { label: '401(k)', value: 6600000, color: '#764ba2' },
-            { label: 'Roth IRA', value: 2100000, color: '#90CAF9' },
-            { label: 'HSA', value: 1100000, color: '#9575CD' },
+            { label: '401(k)', value: 1930000, color: '#764ba2' },
+            { label: 'Roth IRA', value: 934000, color: '#90CAF9' },
+            { label: 'HSA', value: 558000, color: '#9575CD' },
           ],
           note: null,
         },
         {
           title: 'At Your Pace',
           subtitle: 'Roth ~$300/mo avg · 401k & HSA full',
-          total: 8400000,
+          total: 3000000,
+          displayStr: '$3.0M',
           color: '#FF9800',
           icon: <AccountBalance sx={{ fontSize: 28, color: '#FF9800' }} />,
           breakdown: [
-            { label: '401(k)', value: 6600000, color: '#764ba2' },
-            { label: 'Roth IRA', value: 1000000, color: '#90CAF9' },
-            { label: 'HSA', value: 800000, color: '#9575CD' },
+            { label: '401(k)', value: 1930000, color: '#764ba2' },
+            { label: 'Roth IRA', value: 514000, color: '#90CAF9' },
+            { label: 'HSA', value: 558000, color: '#9575CD' },
           ],
           note: 'Roth shown as rolling avg (~$300/mo)',
         },
@@ -681,7 +685,7 @@ const PlanTab: React.FC<PlanTabProps> = ({ transactions, accounts, monthlySpendi
                 </Box>
               </Box>
               <Typography variant="h3" fontWeight={800} sx={{ color: card.color, mb: 2 }}>
-                {fmtM(card.total)}
+                {card.displayStr ?? fmtM(card.total)}
               </Typography>
               <Stack spacing={1}>
                 {card.breakdown.map(row => (
@@ -709,10 +713,7 @@ const PlanTab: React.FC<PlanTabProps> = ({ transactions, accounts, monthlySpendi
             + Sydney's Retirement
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            When Sydney maxes her 401(k) from 2031 onward (28.5 years to 59.5 at $1,958/mo): <strong style={{ color: '#4CAF50' }}>+~$3.5M</strong>
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            Combined household projection: <strong style={{ color: '#4CAF50' }}>$11M – $13M+</strong> in today's dollars at 7% real return
+            Sydney's residency: likely no match (academic programs rarely offer one). As an attending, expect 3–4% employer match. Maxing her accounts from 2031 adds significantly — projections will update when she's earning.
           </Typography>
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1.5, opacity: 0.7 }}>
             Assumptions: Harry 5%/yr salary growth · Sydney IM residency 3yr → attending 2031 · WROS 7%/yr return · All in today's dollars
