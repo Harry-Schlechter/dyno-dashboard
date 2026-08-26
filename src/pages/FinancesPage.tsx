@@ -24,6 +24,7 @@ import CategoryPieCard from '../components/finance/CategoryPieCard';
 import SubscriptionsCard from '../components/finance/SubscriptionsCard';
 import CategoryTrendsCard from '../components/finance/CategoryTrendsCard';
 import InvestmentsPanel from '../components/finance/InvestmentsPanel';
+import PlanTab from '../components/finance/PlanTab';
 import { computeNetWorthBreakdown } from '../lib/finance';
 
 const CATEGORIES = ['Food & Dining', 'Groceries', 'Shopping', 'Transportation', 'Entertainment', 'Bills & Utilities', 'Health & Medical', 'Travel', 'Subscriptions', 'Personal', 'Gifts', 'Education', 'Income', 'Transfer', 'Credit Card Payment', 'Investment', 'Other'];
@@ -247,6 +248,7 @@ const FinancesPage: React.FC = () => {
         <Tab label="Overview" />
         <Tab label="Investments" />
         <Tab label="Transactions" />
+        <Tab label="Plan" />
       </Tabs>
 
       {/* ═══════════════ OVERVIEW ═══════════════ */}
@@ -566,6 +568,15 @@ const FinancesPage: React.FC = () => {
             </Card>
           </Grid>
         </Grid>
+      )}
+
+      {/* ═══════════════ PLAN ═══════════════ */}
+      {tab === 3 && (
+        <PlanTab
+          transactions={transactions}
+          accounts={accounts}
+          monthlySpending={monthlySpending}
+        />
       )}
 
     </Box>

@@ -51,10 +51,12 @@ const isLifting    = (name: string | null) => !!name && /push|pull|legs?\b|gym\b
 
 const DAY_MIN = 24 * 60;
 
-/** Returns minutes-after-midnight (0-1439) for the LOCAL clock time of an ISO timestamp. */
+/** Returns minutes-after-midnight (0-1439) for the Eastern Time clock time of an ISO timestamp. */
 const toLocalClockMin = (iso: string): number => {
   const d = new Date(iso);
-  return d.getHours() * 60 + d.getMinutes();
+  const etStr = d.toLocaleString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', hour12: false });
+  const [h, m] = etStr.split(':').map(Number);
+  return h * 60 + m;
 };
 
 /** Bedtime: clock minutes after midnight. Late-night bedtimes (1-6am) stay as-is. */
