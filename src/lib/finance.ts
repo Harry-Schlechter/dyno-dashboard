@@ -196,14 +196,14 @@ export const computeNetWorthBreakdown = (
 // Projection math
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Current net semi-monthly paycheck (post-raise, 2026-04). User is paid twice monthly
-// (24 checks/year), not biweekly. Editable later via settings.
+// Current net semi-monthly paycheck (post-raise, updated 2026-09). User is paid
+// twice monthly (24 checks/year), not biweekly. Editable later via settings.
 //
 // The public demo must never expose the real figure — projections and "on pace"
 // math read this constant, so overriding it here (rather than only in the
 // fixture's transactions) is what keeps the real number out of the /sample
 // build entirely.
-const REAL_SEMI_MONTHLY_PAYCHECK = 4055.10;
+const REAL_SEMI_MONTHLY_PAYCHECK = 4342.51;  // post-raise 2026-09; net semi-monthly (24/yr) → ~$8,685/mo
 const DEMO_SEMI_MONTHLY_PAYCHECK = 5000;
 
 export const DEFAULT_SEMI_MONTHLY_PAYCHECK = IS_DEMO
