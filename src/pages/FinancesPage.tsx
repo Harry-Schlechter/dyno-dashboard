@@ -25,7 +25,7 @@ import SubscriptionsCard from '../components/finance/SubscriptionsCard';
 import CategoryTrendsCard from '../components/finance/CategoryTrendsCard';
 import InvestmentsPanel from '../components/finance/InvestmentsPanel';
 import PlanTab from '../components/finance/PlanTab';
-import { computeNetWorthBreakdown } from '../lib/finance';
+import { computeNetWorthBreakdown, computeNetWorthTotal } from '../lib/finance';
 
 const CATEGORIES = ['Food & Dining', 'Groceries', 'Shopping', 'Transportation', 'Entertainment', 'Bills & Utilities', 'Health & Medical', 'Travel', 'Subscriptions', 'Personal', 'Gifts', 'Education', 'Income', 'Transfer', 'Credit Card Payment', 'Investment', 'Other'];
 const CHART_COLORS = ['#5B8DEF', '#764ba2', '#4CAF50', '#FF9800', '#F44336', '#90CAF9', '#FFB74D', '#81C784', '#E57373', '#64B5F6', '#CE93D8', '#A5D6A7'];
@@ -75,11 +75,18 @@ const FinancesPage: React.FC = () => {
   }, [dateRange.start, dateRange.end]);
 
   const currentNetWorth = netWorth.length > 0 ? netWorth[0] : null;
-  const prevNetWorth = netWorth.length > 1 ? netWorth[1] : null;
-  const netWorthChange = currentNetWorth && prevNetWorth ? currentNetWorth.net_worth - prevNetWorth.net_worth : null;
-  const netWorthChangePct = currentNetWorth && prevNetWorth && prevNetWorth.net_worth !== 0
-    ? ((currentNetWorth.net_worth - prevNetWorth.net_worth) / Math.abs(prevNetWorth.net_worth)) * 100
-    : null;
+  // Live net worth from current account balances (SimpleFIN + manual, both in
+  // financial_accounts) — the source of truth. Avoids showing a stale snapshot.
+  const liveNetWorth = useMemo(() => computeNetWorthTotal(accounts as any), [accounts]);
+  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  // Change = live now vs the most recent snapshot from a PRIOR day (so today's
+  // just-written snapshot doesn't make the delta read ~0).
+  const priorSnapshot = useMemo(() => {
+    const p = netWorth.find((n) => n.date < todayStr);
+    return p ? p.net_worth : (netWorth.length > 1 ? netWorth[1].net_worth : null);
+  }, [netWorth, todayStr]);
+  const netWorthChange = priorSnapshot !== null ? liveNetWorth - priorSnapshot : null;
+  const netWorthChangePct = priorSnapshot ? (netWorthChange! / Math.abs(priorSnapshot)) * 100 : null;
 
   const accountMap = useMemo(() => {
     const map: Record<string, { name: string; institution: string; last_four: string; account_type: string }> = {};
@@ -217,7 +224,7 @@ const FinancesPage: React.FC = () => {
   // Compact page context for the "Ask Financial Advisor" chat (must be declared
   // before any early return — React hooks rules).
   const financeContext = useMemo(() => {
-    const nw = currentNetWorth ? formatCurrency(currentNetWorth.net_worth) : 'n/a';
+    const nw = accounts.length ? formatCurrency(liveNetWorth) : 'n/a';
     const nwChg = netWorthChange !== null ? `${netWorthChange >= 0 ? '+' : ''}${formatCurrency(netWorthChange)}` : '';
     const topCats = (monthlySpending || []).slice(0, 8)
       .map((c: any) => `${c.category || c.name}: ${formatCurrency(c.amount || c.total || 0)}`).join(', ');
@@ -260,7 +267,7 @@ const FinancesPage: React.FC = () => {
               <CardContent sx={{ textAlign: 'center', py: 3 }}>
                 <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.5 }}>Net Worth</Typography>
                 <Typography variant="h3" fontWeight={700} sx={{ color: '#5B8DEF', mt: 1, mb: 0.5 }}>
-                  {currentNetWorth ? formatCurrency(currentNetWorth.net_worth) : '--'}
+                  {accounts.length ? formatCurrency(liveNetWorth) : "--"}
                 </Typography>
                 {netWorthChange !== null && (
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>

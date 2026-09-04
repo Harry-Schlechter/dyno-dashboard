@@ -103,7 +103,25 @@ export interface AccountWithBalance extends AccountLike {
   current_balance: number;
   is_active: boolean;
   account_subtype: string;
+  is_asset?: boolean;
 }
+
+// Live net worth from all active accounts — the source of truth (SimpleFIN
+// balances + manually-updated accounts both live in financial_accounts). Matches
+// the sync's snapshot math: an account is a liability if is_asset===false OR its
+// balance is negative (credit cards); everything else is an asset.
+export const computeNetWorthTotal = (accounts: AccountWithBalance[]): number => {
+  let assets = 0;
+  let liabilities = 0;
+  for (const a of accounts) {
+    if (!a.is_active) continue;
+    const bal = a.current_balance || 0;
+    const isLiability = a.is_asset === false || bal < 0;
+    if (isLiability) liabilities += Math.abs(bal);
+    else assets += bal;
+  }
+  return assets - liabilities;
+};
 
 export interface HoldingLike {
   account_id: string;
