@@ -9,20 +9,25 @@ import {
 } from 'recharts';
 import { FinancialAccount, Transaction } from '../../hooks/useFinances';
 import { formatCurrency, formatPercent } from '../../lib/formatters';
-import { isRealSpend, trailingMonthlyAvgSpend, spendByCategory } from '../../lib/finance';
+import { isRealSpend, trailingMonthlyAvgSpend, spendByCategory, expectedMonthlyIncome } from '../../lib/finance';
+import { useContributions } from '../../hooks/useContributions';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
-const TAKE_HOME = 8070;
-const ROTH_TARGET = 583;
-const WROS_TARGET = 2500;
-const CONTRIB_401K = 770;
+// Take-home is the real net paycheck (after 401k + HSA pre-tax deductions),
+// pulled from the shared income constant so a raise updates it in one place.
+const TAKE_HOME = expectedMonthlyIncome(); // $8,685/mo post-raise 2026-09
+const ROTH_TARGET = 583;                   // Roth IRA ($7k/yr ÷ 12)
+const WROS_TARGET = 3000;                  // Joint brokerage / house fund (raised +$500 w/ the 2026-09 raise)
+const CONTRIB_401K = 770;                  // pre-tax, auto-deducted from gross (NOT from take-home)
 const EMPLOYER_MATCH_401K = 385;
-const CONTRIB_HSA = 358;
-const SPEND_FLOOR = TAKE_HOME - ROTH_TARGET - WROS_TARGET; // 4987
+const CONTRIB_HSA = 358;                   // pre-tax, auto-deducted from gross
+const SPEND_FLOOR = TAKE_HOME - ROTH_TARGET - WROS_TARGET; // = 8685 - 583 - 3000 = 5102
 
 const WROS_ACCT = 'c81b3a51-e41f-4dc5-80dd-4a66143df20b';
 const ROTH_ACCT = '7b001b47-3cf9-4cdb-93cf-e4623e18da3f';
 
+// Retirement/WROS starting balances — fallbacks only; the component prefers
+// LIVE account balances (see liveBalances below) so progress reflects reality.
 const RETIREMENT_BALANCES = { fourOhOneK: 22578, roth: 7133, hsa: 2738 };
 const WROS_START = 29868;
 
@@ -116,6 +121,7 @@ interface PlanTabProps {
 const PlanTab: React.FC<PlanTabProps> = ({ transactions, accounts, monthlySpending }) => {
   const today = useMemo(() => new Date(), []);
   const currentMonthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+  const { byMonth: contributions } = useContributions();
 
   // Section 1 — current month spend
   const actualSpendThisMonth = useMemo(() => {
@@ -141,12 +147,41 @@ const PlanTab: React.FC<PlanTabProps> = ({ transactions, accounts, monthlySpendi
   const ytdRoth = rothAcct ? Math.min(rothAcct.current_balance, ANNUAL_ROTH_LIMIT) : 2333;
   const ytdWros = wrosAcct ? Math.min(wrosAcct.current_balance, WROS_TARGET * 8) : 20000;
 
-  // Avg contributions from placeholder (months with data)
+  // LIVE retirement balances (fall back to the hardcoded snapshot if an account
+  // is missing). Roth = Roth IRA + Crypto Roth; HSA = the Schwab HSA brokerage.
+  const liveBalances = useMemo(() => {
+    const sum = (pred: (a: FinancialAccount) => boolean) =>
+      accounts.filter(a => a.is_active !== false && pred(a)).reduce((s, a) => s + (a.current_balance || 0), 0);
+    const k401 = sum(a => a.account_subtype === '401k');
+    const roth = sum(a => (a.account_subtype || '').startsWith('roth_ira'));
+    const hsa = sum(a => /hsa/i.test(a.account_name) && a.account_type === 'brokerage');
+    return {
+      fourOhOneK: k401 || RETIREMENT_BALANCES.fourOhOneK,
+      roth: roth || RETIREMENT_BALANCES.roth,
+      hsa: hsa || RETIREMENT_BALANCES.hsa,
+    };
+  }, [accounts]);
+
+  // Real contributions from the DB (agent-maintained `contributions` table).
+  // Falls back to the planned placeholder if the table is empty, so the tab
+  // never looks broken before the agent backfills.
+  const contribData = useMemo(() => {
+    if (!contributions || contributions.length === 0) return PLACEHOLDER_CONTRIBS;
+    return contributions.map(c => ({
+      month: new Date(c.month + '-01T00:00:00').toLocaleString('en-US', { month: 'short' }),
+      '401k': c['401k'],
+      hsa: c.hsa,
+      roth: c.roth,
+      wros: c.wros,
+    }));
+  }, [contributions]);
+
+  // Avg of the last 3 months of actual contributions.
   const months3Avg = {
-    '401k': CONTRIB_401K,
-    hsa: CONTRIB_HSA,
-    roth: PLACEHOLDER_CONTRIBS.slice(-3).reduce((s, m) => s + m.roth, 0) / 3,
-    wros: WROS_TARGET,
+    '401k': contribData.slice(-3).reduce((s, m) => s + m['401k'], 0) / Math.min(3, contribData.length || 1),
+    hsa: contribData.slice(-3).reduce((s, m) => s + m.hsa, 0) / Math.min(3, contribData.length || 1),
+    roth: contribData.slice(-3).reduce((s, m) => s + m.roth, 0) / Math.min(3, contribData.length || 1),
+    wros: contribData.slice(-3).reduce((s, m) => s + m.wros, 0) / Math.min(3, contribData.length || 1),
   };
 
   // Section 3 — Spending intelligence from monthlySpending view
@@ -379,7 +414,7 @@ const PlanTab: React.FC<PlanTabProps> = ({ transactions, accounts, monthlySpendi
           <CardContent>
             <Typography variant="h6" gutterBottom>2026 Contributions by Month</Typography>
             <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={PLACEHOLDER_CONTRIBS} barSize={8} barGap={2}>
+              <BarChart data={contribData} barSize={8} barGap={2}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
                 <XAxis dataKey="month" stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: '#8b96a5', fontSize: 11 }} />
                 <YAxis stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: '#8b96a5', fontSize: 11 }} tickFormatter={fmtK} />
@@ -413,7 +448,7 @@ const PlanTab: React.FC<PlanTabProps> = ({ transactions, accounts, monthlySpendi
                   </Box>
                 </Box>
                 <Box component="tbody">
-                  {PLACEHOLDER_CONTRIBS.map(row => {
+                  {contribData.map(row => {
                     const total = row['401k'] + row.hsa + row.roth + row.wros;
                     const target = CONTRIB_401K + CONTRIB_HSA + ROTH_TARGET + WROS_TARGET;
                     const delta = total - target;
@@ -631,20 +666,25 @@ const PlanTab: React.FC<PlanTabProps> = ({ transactions, accounts, monthlySpendi
       </Grid>
 
       {[
-        {
-          title: 'If Stopped Today',
-          subtitle: 'All balances coast, no new contributions',
-          total: 313000,
-          displayStr: '$313k',
-          color: '#F44336',
-          icon: <Savings sx={{ fontSize: 28, color: '#F44336' }} />,
-          breakdown: [
-            { label: '401(k)', value: Math.round(RETIREMENT_BALANCES.fourOhOneK * Math.pow(1.07, 33.5)), color: '#764ba2' },
-            { label: 'Roth IRA', value: Math.round(RETIREMENT_BALANCES.roth * Math.pow(1.07, 33.5)), color: '#90CAF9' },
-            { label: 'HSA', value: Math.round(RETIREMENT_BALANCES.hsa * Math.pow(1.07, 33.5)), color: '#9575CD' },
-          ],
-          note: null,
-        },
+        (() => {
+          const grow = (v: number) => Math.round(v * Math.pow(1.07, 33.5));
+          const bd = [
+            { label: '401(k)', value: grow(liveBalances.fourOhOneK), color: '#764ba2' },
+            { label: 'Roth IRA', value: grow(liveBalances.roth), color: '#90CAF9' },
+            { label: 'HSA', value: grow(liveBalances.hsa), color: '#9575CD' },
+          ];
+          const total = bd.reduce((s, b) => s + b.value, 0);
+          return {
+            title: 'If Stopped Today',
+            subtitle: 'Current balances coast at 7%, no new contributions',
+            total,
+            displayStr: fmtM(total),
+            color: '#F44336',
+            icon: <Savings sx={{ fontSize: 28, color: '#F44336' }} />,
+            breakdown: bd,
+            note: null,
+          };
+        })(),
         {
           title: 'On Target',
           subtitle: '6% contribution + 3% employer match ($1,155/mo total) for 33.5 years',
