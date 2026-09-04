@@ -12,6 +12,7 @@ export interface Prediction {
   band: string | null;
   confidence: number | null;
   rationale: string;
+  basis: Record<string, any> | null;
   actual: string | null;
   correct: boolean | null;
   error: number | null;
