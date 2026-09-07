@@ -64,17 +64,6 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   );
 };
 
-const StatusChip: React.FC<{ label: string; actual: number; target: number }> = ({ label, actual, target }) => {
-  const pct = target > 0 ? actual / target : 0;
-  const color = pct >= 0.95 ? '#4CAF50' : pct >= 0.75 ? '#FF9800' : '#F44336';
-  const text = pct >= 0.95 ? 'On Track' : pct >= 0.75 ? 'Slightly Behind' : 'Behind';
-  return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-      <Typography variant="caption" color="text.secondary">{label}</Typography>
-      <Chip label={text} size="small" sx={{ bgcolor: `${color}22`, color, border: `1px solid ${color}55`, fontWeight: 600 }} />
-    </Box>
-  );
-};
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 interface PlanTabProps {
@@ -110,8 +99,6 @@ const PlanTab: React.FC<PlanTabProps> = ({ transactions, accounts, monthlySpendi
   const rothAcct = useMemo(() => accounts.find(a => a.id === ROTH_ACCT), [accounts]);
   const wrosAcct = useMemo(() => accounts.find(a => a.id === WROS_ACCT), [accounts]);
 
-  const ytdRoth = rothAcct ? Math.min(rothAcct.current_balance, ANNUAL_ROTH_LIMIT) : 2333;
-  const ytdWros = wrosAcct ? Math.min(wrosAcct.current_balance, WROS_TARGET * 8) : 20000;
 
   // LIVE retirement balances (fall back to the hardcoded snapshot if an account
   // is missing). Roth = Roth IRA + Crypto Roth; HSA = the Schwab HSA brokerage.
@@ -142,67 +129,23 @@ const PlanTab: React.FC<PlanTabProps> = ({ transactions, accounts, monthlySpendi
     }));
   }, [contributions]);
 
-  // Avg of the last 3 months of actual contributions.
-  const months3Avg = {
-    '401k': contribData.slice(-3).reduce((s, m) => s + m['401k'], 0) / Math.min(3, contribData.length || 1),
-    hsa: contribData.slice(-3).reduce((s, m) => s + m.hsa, 0) / Math.min(3, contribData.length || 1),
-    roth: contribData.slice(-3).reduce((s, m) => s + m.roth, 0) / Math.min(3, contribData.length || 1),
-    wros: contribData.slice(-3).reduce((s, m) => s + m.wros, 0) / Math.min(3, contribData.length || 1),
-  };
+  // Past-year totals per account (sum of up to the last 12 months).
+  const yearTotals = useMemo(() => {
+    const last12 = contribData.slice(-12);
+    return {
+      '401k': last12.reduce((s, m) => s + m['401k'], 0),
+      hsa: last12.reduce((s, m) => s + m.hsa, 0),
+      roth: last12.reduce((s, m) => s + m.roth, 0),
+      wros: last12.reduce((s, m) => s + m.wros, 0),
+    };
+  }, [contribData]);
 
-  // Section 3 — Spending intelligence from monthlySpending view
-  const spendingByMonth = useMemo(() => {
-    const map: Record<string, number> = {};
-    monthlySpending.forEach(r => {
-      if (!map[r.month]) map[r.month] = 0;
-      map[r.month] += r.total;
-    });
-    return map;
-  }, [monthlySpending]);
 
-  const sortedMonths = useMemo(() =>
-    Object.keys(spendingByMonth).sort().reverse(),
-    [spendingByMonth]
-  );
 
-  const currentMonthSpend = spendingByMonth[currentMonthKey] || actualSpendThisMonth;
-  const avg3mo = useMemo(() => {
-    const past = sortedMonths.filter(m => m < currentMonthKey).slice(0, 3);
-    if (!past.length) return trailing3Avg;
-    return past.reduce((s, m) => s + spendingByMonth[m], 0) / past.length;
-  }, [sortedMonths, currentMonthKey, spendingByMonth, trailing3Avg]);
-  const avg6mo = useMemo(() => {
-    const past = sortedMonths.filter(m => m < currentMonthKey).slice(0, 6);
-    if (!past.length) return trailing3Avg;
-    return past.reduce((s, m) => s + spendingByMonth[m], 0) / past.length;
-  }, [sortedMonths, currentMonthKey, spendingByMonth, trailing3Avg]);
 
-  const spendVsAvgPct = avg3mo > 0 ? ((currentMonthSpend - avg3mo) / avg3mo) * 100 : null;
 
-  // Category movers
-  const currentCats = useMemo(() => {
-    const thisMonth = monthlySpending.filter(r => r.month === currentMonthKey);
-    const prev3 = monthlySpending.filter(r => r.month < currentMonthKey);
-    const avgByCat: Record<string, number> = {};
-    const byMonth = new Set(prev3.map(r => r.month));
-    const n = Math.min(byMonth.size, 3) || 1;
-    prev3.forEach(r => { avgByCat[r.category] = (avgByCat[r.category] || 0) + r.total / n; });
-    return thisMonth.map(r => ({
-      category: r.category,
-      current: r.total,
-      avg: avgByCat[r.category] || 0,
-      delta: r.total - (avgByCat[r.category] || 0),
-      pct: avgByCat[r.category] ? ((r.total - avgByCat[r.category]) / avgByCat[r.category]) * 100 : 0,
-    })).sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)).slice(0, 3);
-  }, [monthlySpending, currentMonthKey]);
 
-  // Spending alert banner
-  const spendingBanner = useMemo(() => {
-    if (spendVsAvgPct === null) return null;
-    if (spendVsAvgPct > 15) return { icon: '⚠️', color: '#FF9800', text: `Spending up ${spendVsAvgPct.toFixed(0)}% vs your average — consider slowing down` };
-    if (spendVsAvgPct < -15) return { icon: '✅', color: '#4CAF50', text: `${Math.abs(spendVsAvgPct).toFixed(0)}% under your average this month — bank it or spend freely` };
-    return { icon: '📊', color: '#5B8DEF', text: 'On pace with your average' };
-  }, [spendVsAvgPct]);
+
 
   // ─── Render ─────────────────────────────────────────────────────────────────
   return (
@@ -320,65 +263,39 @@ const PlanTab: React.FC<PlanTabProps> = ({ transactions, accounts, monthlySpendi
         </Card>
       </Grid>
 
-      {/* ── S2: Contributions Tracker ── */}
+      {/* ── S2: Contributions ── */}
       <Grid size={{ xs: 12 }}>
         <Box sx={{ mt: 1, mb: 1 }}>
-          <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.5 }}>Contributions Tracker</Typography>
+          <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.5 }}>Contributions</Typography>
         </Box>
       </Grid>
 
-      {/* Status chips */}
-      <Grid size={{ xs: 12, md: 6 }}>
-        <Card>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>Monthly Status</Typography>
-            <Stack direction="row" spacing={3} justifyContent="space-around" sx={{ mb: 2 }}>
-              <StatusChip label="401(k)" actual={months3Avg['401k']} target={CONTRIB_401K} />
-              <StatusChip label="HSA" actual={months3Avg.hsa} target={CONTRIB_HSA} />
-              <StatusChip label="Roth IRA" actual={months3Avg.roth} target={ROTH_TARGET} />
-              <StatusChip label="WROS" actual={months3Avg.wros} target={WROS_TARGET} />
-            </Stack>
-
-            <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: 'rgba(91,141,239,0.05)', border: '1px solid rgba(91,141,239,0.1)' }}>
-              <Typography variant="caption" color="text.secondary">
-                Contribution tracking activating — data populates end of each month
-              </Typography>
-            </Box>
-
-            <Stack spacing={1.5} sx={{ mt: 2 }}>
-              {[
-                { label: '401(k)', ytd: CONTRIB_401K * 8, target: CONTRIB_401K * 12, color: '#764ba2' },
-                { label: 'HSA', ytd: CONTRIB_HSA * 8, target: CONTRIB_HSA * 12, color: '#9575CD' },
-                { label: 'Roth IRA', ytd: ytdRoth, target: ANNUAL_ROTH_LIMIT, color: '#90CAF9' },
-                { label: 'WROS', ytd: ytdWros, target: WROS_TARGET * 12, color: '#FF9800' },
-              ].map(row => (
-                <Box key={row.label}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                    <Typography variant="body2">{row.label}</Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {formatCurrency(row.ytd)} of {formatCurrency(row.target)} ({((row.ytd / row.target) * 100).toFixed(0)}%)
-                    </Typography>
-                  </Box>
-                  <LinearProgress
-                    variant="determinate"
-                    value={Math.min((row.ytd / row.target) * 100, 100)}
-                    sx={{
-                      height: 8, borderRadius: 4, bgcolor: 'rgba(255,255,255,0.04)',
-                      '& .MuiLinearProgress-bar': { bgcolor: row.color, borderRadius: 4 },
-                    }}
-                  />
-                </Box>
-              ))}
-            </Stack>
-          </CardContent>
-        </Card>
+      {/* Past-year totals per account (static) */}
+      <Grid size={{ xs: 12 }}>
+        <Grid container spacing={1.5}>
+          {([
+            { label: '401(k)', total: yearTotals['401k'], color: '#764ba2' },
+            { label: 'HSA', total: yearTotals.hsa, color: '#9575CD' },
+            { label: 'Roth IRA', total: yearTotals.roth, color: '#90CAF9' },
+            { label: 'Joint WROS', total: yearTotals.wros, color: '#FF9800' },
+          ]).map(row => (
+            <Grid size={{ xs: 6, md: 3 }} key={row.label}>
+              <Card sx={{ borderLeft: `3px solid ${row.color}`, '&:hover': { transform: 'none' } }}>
+                <CardContent sx={{ '&:last-child': { pb: 1.5 } }}>
+                  <Typography variant="caption" color="text.secondary">{row.label} · past 12mo</Typography>
+                  <Typography variant="h5" fontWeight={800} sx={{ color: row.color, mt: 0.5 }}>{formatCurrency(row.total)}</Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
       </Grid>
 
-      {/* Contributions bar chart */}
-      <Grid size={{ xs: 12, md: 6 }}>
+      {/* Contributions over the past year */}
+      <Grid size={{ xs: 12 }}>
         <Card>
           <CardContent>
-            <Typography variant="h6" gutterBottom>2026 Contributions by Month</Typography>
+            <Typography variant="h6" gutterBottom>Contributions by month — past year</Typography>
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={contribData} barSize={8} barGap={2}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
@@ -390,137 +307,8 @@ const PlanTab: React.FC<PlanTabProps> = ({ transactions, accounts, monthlySpendi
                 <Bar dataKey="hsa" name="HSA" fill="#9575CD" radius={[2, 2, 0, 0]} />
                 <Bar dataKey="roth" name="Roth IRA" fill="#90CAF9" radius={[2, 2, 0, 0]} />
                 <Bar dataKey="wros" name="WROS" fill="#FF9800" radius={[2, 2, 0, 0]} />
-                <ReferenceLine y={WROS_TARGET + ROTH_TARGET + CONTRIB_HSA + CONTRIB_401K} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" label={{ value: 'Target', fill: '#8b96a5', fontSize: 10, position: 'right' }} />
               </BarChart>
             </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* Month table */}
-      <Grid size={{ xs: 12 }}>
-        <Card>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>Month-by-Month Contributions — 2026</Typography>
-            <Box sx={{ overflowX: 'auto' }}>
-              <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse' }}>
-                <Box component="thead">
-                  <Box component="tr">
-                    {['Month', '401(k)', 'HSA', 'Roth IRA', 'WROS', 'Total', 'vs Target'].map(h => (
-                      <Box component="th" key={h} sx={{ p: 1, textAlign: 'right', borderBottom: '1px solid rgba(255,255,255,0.08)', '&:first-of-type': { textAlign: 'left' } }}>
-                        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>{h}</Typography>
-                      </Box>
-                    ))}
-                  </Box>
-                </Box>
-                <Box component="tbody">
-                  {contribData.map(row => {
-                    const total = row['401k'] + row.hsa + row.roth + row.wros;
-                    const target = CONTRIB_401K + CONTRIB_HSA + ROTH_TARGET + WROS_TARGET;
-                    const delta = total - target;
-                    return (
-                      <Box component="tr" key={row.month} sx={{ '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' } }}>
-                        {[row.month, row['401k'], row.hsa, row.roth, row.wros].map((v, i) => (
-                          <Box component="td" key={i} sx={{ p: 1, borderBottom: '1px solid rgba(255,255,255,0.04)', textAlign: i === 0 ? 'left' : 'right' }}>
-                            <Typography variant="body2">{i === 0 ? v : formatCurrency(v as number)}</Typography>
-                          </Box>
-                        ))}
-                        <Box component="td" sx={{ p: 1, textAlign: 'right', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                          <Typography variant="body2" fontWeight={600}>{formatCurrency(total)}</Typography>
-                        </Box>
-                        <Box component="td" sx={{ p: 1, textAlign: 'right', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                          <Typography variant="body2" sx={{ color: delta >= 0 ? '#4CAF50' : '#F44336' }}>
-                            {delta >= 0 ? '+' : ''}{formatCurrency(delta)}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    );
-                  })}
-                </Box>
-              </Box>
-            </Box>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* ── S3: Spending Intelligence ── */}
-      <Grid size={{ xs: 12 }}>
-        <Box sx={{ mt: 1, mb: 1 }}>
-          <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.5 }}>Spending Intelligence</Typography>
-        </Box>
-      </Grid>
-
-      {spendingBanner && (
-        <Grid size={{ xs: 12 }}>
-          <Box sx={{ p: 2, borderRadius: 2, bgcolor: `${spendingBanner.color}11`, border: `1px solid ${spendingBanner.color}33` }}>
-            <Typography variant="body1" fontWeight={600} sx={{ color: spendingBanner.color }}>
-              {spendingBanner.icon} {spendingBanner.text}
-            </Typography>
-          </Box>
-        </Grid>
-      )}
-
-      <Grid size={{ xs: 12, md: 4 }}>
-        <Card>
-          <CardContent>
-            <Typography variant="overline" color="text.secondary">This Month vs Average</Typography>
-            <Stack spacing={2} sx={{ mt: 1.5 }}>
-              <Box>
-                <Typography variant="caption" color="text.secondary">This month</Typography>
-                <Typography variant="h5" fontWeight={700}>{formatCurrency(currentMonthSpend)}</Typography>
-              </Box>
-              <Box>
-                <Typography variant="caption" color="text.secondary">3-month avg</Typography>
-                <Typography variant="h6" fontWeight={600} color="text.secondary">{formatCurrency(avg3mo)}</Typography>
-              </Box>
-              <Box>
-                <Typography variant="caption" color="text.secondary">6-month avg</Typography>
-                <Typography variant="h6" fontWeight={600} color="text.secondary">{formatCurrency(avg6mo)}</Typography>
-              </Box>
-              {spendVsAvgPct !== null && (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  {spendVsAvgPct >= 0 ? <TrendingUp sx={{ fontSize: 18, color: '#F44336' }} /> : <TrendingDown sx={{ fontSize: 18, color: '#4CAF50' }} />}
-                  <Typography variant="body1" fontWeight={700} sx={{ color: spendVsAvgPct >= 0 ? '#F44336' : '#4CAF50' }}>
-                    {spendVsAvgPct >= 0 ? '+' : ''}{spendVsAvgPct.toFixed(1)}% vs avg
-                  </Typography>
-                </Box>
-              )}
-            </Stack>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      <Grid size={{ xs: 12, md: 8 }}>
-        <Card>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>Top Category Movers</Typography>
-            {currentCats.length === 0 ? (
-              <Typography variant="body2" color="text.secondary">No category data for current month yet.</Typography>
-            ) : (
-              <Stack spacing={1.5}>
-                {currentCats.map(cat => (
-                  <Box key={cat.category}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                      <Typography variant="body2" fontWeight={600} sx={{ textTransform: 'capitalize' }}>{cat.category}</Typography>
-                      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                        <Typography variant="caption" color="text.secondary">{formatCurrency(cat.current)}</Typography>
-                        <Typography variant="caption" sx={{ color: cat.delta >= 0 ? '#F44336' : '#4CAF50', fontWeight: 600 }}>
-                          {cat.delta >= 0 ? '↑' : '↓'} {Math.abs(cat.pct).toFixed(0)}%
-                        </Typography>
-                      </Box>
-                    </Box>
-                    <LinearProgress
-                      variant="determinate"
-                      value={Math.min((cat.current / (avg3mo || 1)) * 100 * 3, 100)}
-                      sx={{
-                        height: 6, borderRadius: 3, bgcolor: 'rgba(255,255,255,0.04)',
-                        '& .MuiLinearProgress-bar': { bgcolor: cat.delta >= 0 ? '#F44336' : '#4CAF50', borderRadius: 3 },
-                      }}
-                    />
-                  </Box>
-                ))}
-              </Stack>
-            )}
           </CardContent>
         </Card>
       </Grid>

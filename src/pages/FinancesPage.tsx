@@ -23,6 +23,7 @@ import CollapsibleSection from '../components/common/CollapsibleSection';
 import CategoryPieCard from '../components/finance/CategoryPieCard';
 import SubscriptionsCard from '../components/finance/SubscriptionsCard';
 import CategoryTrendsCard from '../components/finance/CategoryTrendsCard';
+import SpendingIntelligence from '../components/finance/SpendingIntelligence';
 import InvestmentsPanel from '../components/finance/InvestmentsPanel';
 import PlanTab from '../components/finance/PlanTab';
 import { computeNetWorthBreakdown, computeNetWorthTotal } from '../lib/finance';
@@ -371,6 +372,12 @@ const FinancesPage: React.FC = () => {
             <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
               <DateRangeFilter value={dateRange} onChange={setDateRange} />
             </Box>
+          </Grid>
+
+          {/* Spending intelligence: this month vs average + top category movers
+              (moved here from the Plan tab — it's spend-tracking, not planning). */}
+          <Grid size={{ xs: 12 }}>
+            <SpendingIntelligence transactions={transactions} monthlySpending={monthlySpending} />
           </Grid>
 
           {/* Category pie with drill-down */}
