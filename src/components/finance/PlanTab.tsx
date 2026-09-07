@@ -2,15 +2,16 @@ import React, { useMemo } from 'react';
 import {
   Box, Typography, Grid, Card, CardContent, Stack, Chip, LinearProgress,
 } from '@mui/material';
-import { TrendingUp, TrendingDown, Home, AccountBalance, Savings, ShowChart } from '@mui/icons-material';
+import { TrendingUp, TrendingDown } from '@mui/icons-material';
 import {
-  ComposedChart, Line, Area, XAxis, YAxis, Tooltip as RechartTooltip, ResponsiveContainer,
-  CartesianGrid, BarChart, Bar, Legend, ReferenceLine, Label,
+  XAxis, YAxis, Tooltip as RechartTooltip, ResponsiveContainer,
+  CartesianGrid, BarChart, Bar, Legend, ReferenceLine,
 } from 'recharts';
 import { FinancialAccount, Transaction } from '../../hooks/useFinances';
 import { formatCurrency, formatPercent } from '../../lib/formatters';
 import { isRealSpend, trailingMonthlyAvgSpend, spendByCategory, expectedMonthlyIncome } from '../../lib/finance';
 import { useContributions } from '../../hooks/useContributions';
+import ProjectionTool from './ProjectionTool';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 // Take-home is the real net paycheck (after 401k + HSA pre-tax deductions),
@@ -29,43 +30,9 @@ const ROTH_ACCT = '7b001b47-3cf9-4cdb-93cf-e4623e18da3f';
 // Retirement/WROS starting balances — fallbacks only; the component prefers
 // LIVE account balances (see liveBalances below) so progress reflects reality.
 const RETIREMENT_BALANCES = { fourOhOneK: 22578, roth: 7133, hsa: 2738 };
-const WROS_START = 29868;
 
-// House milestone table (pre-calculated per spec)
-const HOUSE_MILESTONES = [
-  { age: 32, date: 'May 2032', wros: 338000, down20: 1690000, down10: 3380000 },
-  { age: 33, date: 'May 2033', wros: 436000, down20: 2180000, down10: 4360000 },
-  { age: 34, date: 'May 2034', wros: 542000, down20: 2710000, down10: 5420000 },
-  { age: 35, date: 'May 2035', wros: 659000, down20: 3300000, down10: 6590000 },
-];
 
-// WROS chart data — yearly checkpoints
-const WROS_CHART = [
-  { label: '2026', wros: 30000, phase: 'Student' },
-  { label: '2027', wros: 63000, phase: 'Student' },
-  { label: '2028', wros: 99000, phase: 'Student' },
-  { label: '2029', wros: 146000, phase: 'Resident' },
-  { label: '2030', wros: 196000, phase: 'Resident' },
-  { label: '2031', wros: 261000, phase: 'Resident' },
-  { label: '2032', wros: 338000, phase: 'Attending' },
-  { label: '2033', wros: 436000, phase: 'Attending' },
-  { label: '2034', wros: 542000, phase: 'Attending' },
-  { label: '2035', wros: 659000, phase: 'Attending' },
-];
 
-// Income timeline chart
-const INCOME_CHART = [
-  { label: '2026', harry: 170000, sydney: 0, mortgage: 627000 },
-  { label: '2027', harry: 179000, sydney: 0, mortgage: 661000 },
-  { label: '2028', harry: 187000, sydney: 35000, mortgage: 893000 },
-  { label: '2029', harry: 197000, sydney: 70000, mortgage: 1127000 },
-  { label: '2030', harry: 207000, sydney: 70000, mortgage: 1171000 },
-  { label: '2031', harry: 217000, sydney: 175000, mortgage: 1706000 },
-  { label: '2032', harry: 228000, sydney: 280000, mortgage: 1875000 },
-  { label: '2033', harry: 239000, sydney: 280000, mortgage: 1917000 },
-  { label: '2034', harry: 251000, sydney: 280000, mortgage: 1962000 },
-  { label: '2035', harry: 264000, sydney: 280000, mortgage: 2008000 },
-];
 
 // Placeholder 12-month contribution data (Jan–Aug 2026)
 const MONTHS_2026 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'];
@@ -80,7 +47,6 @@ const PLACEHOLDER_CONTRIBS = MONTHS_2026.map((m, i) => ({
 const ANNUAL_ROTH_LIMIT = 7000;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-const fmtM = (v: number) => `$${(v / 1000000).toFixed(1)}M`;
 const fmtK = (v: number) => `$${(v / 1000).toFixed(0)}k`;
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -559,206 +525,9 @@ const PlanTab: React.FC<PlanTabProps> = ({ transactions, accounts, monthlySpendi
         </Card>
       </Grid>
 
-      {/* ── S4: House Timeline ── */}
+      {/* ── Financial-future projection (interactive) ── */}
       <Grid size={{ xs: 12 }}>
-        <Box sx={{ mt: 1, mb: 1 }}>
-          <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.5 }}>House Timeline — Joint WROS Projection</Typography>
-        </Box>
-      </Grid>
-
-      {/* Milestone cards */}
-      {HOUSE_MILESTONES.map(m => (
-        <Grid size={{ xs: 6, md: 3 }} key={m.age}>
-          <Card sx={{ textAlign: 'center' }}>
-            <CardContent sx={{ py: 2 }}>
-              <Home sx={{ fontSize: 28, color: '#5B8DEF', mb: 0.5 }} />
-              <Typography variant="overline" color="text.secondary">Age {m.age} · {m.date}</Typography>
-              <Typography variant="h5" fontWeight={800} sx={{ color: '#5B8DEF', my: 0.5 }}>{fmtK(m.wros)}</Typography>
-              <Typography variant="caption" color="text.secondary" display="block">WROS balance</Typography>
-              <Box sx={{ mt: 1.5, pt: 1.5, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                <Typography variant="caption" color="text.secondary">20% down → </Typography>
-                <Typography variant="caption" fontWeight={700} color="#4CAF50">{fmtM(m.down20)}</Typography>
-                <Typography variant="caption" color="text.secondary" display="block">10% down → </Typography>
-                <Typography variant="caption" fontWeight={700} color="#FF9800">{fmtM(m.down10)}</Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      ))}
-
-      {/* WROS projection chart */}
-      <Grid size={{ xs: 12, md: 6 }}>
-        <Card>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>WROS Growth Projection</Typography>
-            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
-              7% annual return | Phase transitions: Student → Resident (2028) → Attending (2031)
-            </Typography>
-            <ResponsiveContainer width="100%" height={280}>
-              <ComposedChart data={WROS_CHART}>
-                <defs>
-                  <linearGradient id="wrosGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#5B8DEF" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#5B8DEF" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                <XAxis dataKey="label" stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: '#8b96a5', fontSize: 11 }} />
-                <YAxis stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: '#8b96a5', fontSize: 11 }} tickFormatter={fmtK} />
-                <RechartTooltip content={<CustomTooltip />} />
-                <Area type="monotone" dataKey="wros" name="WROS Balance" stroke="#5B8DEF" fill="url(#wrosGrad)" strokeWidth={2.5} />
-                <ReferenceLine x="2028" stroke="rgba(255,152,0,0.4)" strokeDasharray="6 3">
-                  <Label value="Residency" fill="#FF9800" fontSize={10} position="insideTopRight" />
-                </ReferenceLine>
-                <ReferenceLine x="2031" stroke="rgba(76,175,80,0.4)" strokeDasharray="6 3">
-                  <Label value="Attending" fill="#4CAF50" fontSize={10} position="insideTopRight" />
-                </ReferenceLine>
-              </ComposedChart>
-            </ResponsiveContainer>
-            <Typography variant="caption" color="text.secondary">
-              Phases: $2,500/mo (now–2028) → $3,500/mo (residency) → $6,000/mo (attending)
-            </Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* Combined income chart */}
-      <Grid size={{ xs: 12, md: 6 }}>
-        <Card>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>Combined Income & Mortgage Affordability</Typography>
-            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
-              28% front-end DTI · 30yr fixed at 6.5% · Harry 5%/yr growth
-            </Typography>
-            <ResponsiveContainer width="100%" height={280}>
-              <ComposedChart data={INCOME_CHART}>
-                <defs>
-                  <linearGradient id="harryGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#5B8DEF" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#5B8DEF" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="sydneyGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#4CAF50" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#4CAF50" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                <XAxis dataKey="label" stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: '#8b96a5', fontSize: 11 }} />
-                <YAxis stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: '#8b96a5', fontSize: 11 }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
-                <RechartTooltip content={<CustomTooltip />} />
-                <Legend wrapperStyle={{ fontSize: 11, color: '#8b96a5' }} />
-                <Area type="monotone" dataKey="harry" name="Harry Income" stroke="#5B8DEF" fill="url(#harryGrad)" strokeWidth={2} stackId="income" />
-                <Area type="monotone" dataKey="sydney" name="Sydney Income" stroke="#4CAF50" fill="url(#sydneyGrad)" strokeWidth={2} stackId="income" />
-                <Line type="monotone" dataKey="mortgage" name="Max Mortgage (28% DTI)" stroke="#FF9800" strokeWidth={2} strokeDasharray="5 3" dot={{ r: 3, fill: '#FF9800' }} />
-                <ReferenceLine x="2028" stroke="rgba(255,152,0,0.3)" strokeDasharray="6 3" />
-                <ReferenceLine x="2031" stroke="rgba(76,175,80,0.3)" strokeDasharray="6 3" />
-              </ComposedChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* ── S5: Retirement Projections ── */}
-      <Grid size={{ xs: 12 }}>
-        <Box sx={{ mt: 1, mb: 1 }}>
-          <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.5 }}>Retirement Projections at 59.5 — 7% Real Return</Typography>
-        </Box>
-      </Grid>
-
-      {[
-        (() => {
-          const grow = (v: number) => Math.round(v * Math.pow(1.07, 33.5));
-          const bd = [
-            { label: '401(k)', value: grow(liveBalances.fourOhOneK), color: '#764ba2' },
-            { label: 'Roth IRA', value: grow(liveBalances.roth), color: '#90CAF9' },
-            { label: 'HSA', value: grow(liveBalances.hsa), color: '#9575CD' },
-          ];
-          const total = bd.reduce((s, b) => s + b.value, 0);
-          return {
-            title: 'If Stopped Today',
-            subtitle: 'Current balances coast at 7%, no new contributions',
-            total,
-            displayStr: fmtM(total),
-            color: '#F44336',
-            icon: <Savings sx={{ fontSize: 28, color: '#F44336' }} />,
-            breakdown: bd,
-            note: null,
-          };
-        })(),
-        {
-          title: 'On Target',
-          subtitle: '6% contribution + 3% employer match ($1,155/mo total) for 33.5 years',
-          total: 3420000,
-          displayStr: '$3.42M',
-          color: '#4CAF50',
-          icon: <ShowChart sx={{ fontSize: 28, color: '#4CAF50' }} />,
-          breakdown: [
-            { label: '401(k)', value: 1930000, color: '#764ba2' },
-            { label: 'Roth IRA', value: 934000, color: '#90CAF9' },
-            { label: 'HSA', value: 558000, color: '#9575CD' },
-          ],
-          note: null,
-        },
-        {
-          title: 'At Your Pace',
-          subtitle: 'Roth ~$300/mo avg · 401k & HSA full',
-          total: 3000000,
-          displayStr: '$3.0M',
-          color: '#FF9800',
-          icon: <AccountBalance sx={{ fontSize: 28, color: '#FF9800' }} />,
-          breakdown: [
-            { label: '401(k)', value: 1930000, color: '#764ba2' },
-            { label: 'Roth IRA', value: 514000, color: '#90CAF9' },
-            { label: 'HSA', value: 558000, color: '#9575CD' },
-          ],
-          note: 'Roth shown as rolling avg (~$300/mo)',
-        },
-      ].map(card => (
-        <Grid size={{ xs: 12, md: 4 }} key={card.title}>
-          <Card sx={{ height: '100%', border: `1px solid ${card.color}33` }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
-                {card.icon}
-                <Box>
-                  <Typography variant="h6" fontWeight={700}>{card.title}</Typography>
-                  <Typography variant="caption" color="text.secondary">{card.subtitle}</Typography>
-                </Box>
-              </Box>
-              <Typography variant="h3" fontWeight={800} sx={{ color: card.color, mb: 2 }}>
-                {card.displayStr ?? fmtM(card.total)}
-              </Typography>
-              <Stack spacing={1}>
-                {card.breakdown.map(row => (
-                  <Box key={row.label} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: row.color }} />
-                      <Typography variant="caption" color="text.secondary">{row.label}</Typography>
-                    </Box>
-                    <Typography variant="body2" fontWeight={600}>{fmtM(row.value)}</Typography>
-                  </Box>
-                ))}
-              </Stack>
-              {card.note && (
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1.5, fontStyle: 'italic' }}>{card.note}</Typography>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
-      ))}
-
-      {/* Sydney adds note */}
-      <Grid size={{ xs: 12 }}>
-        <Box sx={{ p: 2.5, borderRadius: 2, bgcolor: 'rgba(76,175,80,0.06)', border: '1px solid rgba(76,175,80,0.2)' }}>
-          <Typography variant="body1" fontWeight={600} color="success.main" gutterBottom>
-            + Sydney's Retirement
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Sydney's residency: likely no match (academic programs rarely offer one). As an attending, expect 3–4% employer match. Maxing her accounts from 2031 adds significantly — projections will update when she's earning.
-          </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1.5, opacity: 0.7 }}>
-            Assumptions: Harry 5%/yr salary growth · Sydney IM residency 3yr → attending 2031 · WROS 7%/yr return · All in today's dollars
-          </Typography>
-        </Box>
+        <ProjectionTool accounts={accounts} />
       </Grid>
 
     </Grid>
