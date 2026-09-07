@@ -38,15 +38,25 @@ export interface ProjectionInputs {
   returnPct: number;                 // annual investment growth (default 7)
   spendInflationPct: number;         // annual spend growth from 2028 (default 5)
   stages: Record<StageKey, StageLevers>;
+  // Optional anchor: start the projection FROM this month with the balances above,
+  // instead of the current calendar month. Used to re-anchor the forward line off
+  // the latest real snapshot. [year, month]; month is 1-12.
+  anchorYM?: [number, number];
 }
 
 export interface Milestone {
   year: number; label: string;
   k401: number; roth: number; hsa: number; wros: number; netWorth: number;
 }
+export interface MonthPoint {
+  ym: string;           // 'YYYY-MM'
+  year: number; month: number;
+  k401: number; roth: number; hsa: number; wros: number; net: number;
+}
 export interface ProjectionResult {
   milestones: Milestone[];
   series: Array<{ year: string; k401: number; roth: number; hsa: number; wros: number; net: number }>;
+  monthly: MonthPoint[];  // every month from the anchor through end of 2036
   // per-year audit so the UI can warn if a stage's allocations exceed income
   warnings: string[];
 }
@@ -115,13 +125,14 @@ function monthlyAlloc(a: Alloc, maxAnnual: number): number {
 
 export function runProjection(inp: ProjectionInputs): ProjectionResult {
   const now = new Date();
-  const startYear = now.getFullYear();
-  const startMonth = now.getMonth() + 1;
+  const startYear = inp.anchorYM ? inp.anchorYM[0] : now.getFullYear();
+  const startMonth = inp.anchorYM ? inp.anchorYM[1] : now.getMonth() + 1;
   const endYear = 2036;
 
   let k401 = inp.start401k, roth = inp.startRoth, hsa = inp.startHSA, wros = inp.startWROS;
   const mReturn = Math.pow(1 + inp.returnPct / 100, 1 / 12) - 1;
   const series: ProjectionResult['series'] = [];
+  const monthly: MonthPoint[] = [];
   const milestones: Milestone[] = [];
   const warnings: string[] = [];
   const mYears: Record<number, string> = { 2032: 'End of residency', 2034: 'End of fellowship', 2036: '2 yrs attending' };
@@ -164,13 +175,18 @@ export function runProjection(inp: ProjectionInputs): ProjectionResult {
       roth = roth * (1 + mReturn) + roth1M + roth2M;
       wros = wros * (1 + mReturn) + Math.max(0, wrosContrib);
 
+      monthly.push({
+        ym: `${y}-${String(m).padStart(2, '0')}`, year: y, month: m,
+        k401, roth, hsa, wros, net: k401 + roth + hsa + wros,
+      });
+
       if (m === 12) {
         series.push({ year: `${y}`, k401, roth, hsa, wros, net: k401 + roth + hsa + wros });
         if (mYears[y]) milestones.push({ year: y, label: mYears[y], k401, roth, hsa, wros, netWorth: k401 + roth + hsa + wros });
       }
     }
   }
-  return { milestones, series, warnings };
+  return { milestones, series, monthly, warnings };
 }
 
 // Sensible starting levers per stage.
