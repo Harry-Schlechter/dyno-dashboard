@@ -46,8 +46,9 @@ const NotesPage: React.FC = () => {
   if (isMobile) {
     if (selected) {
       return (
-        <Box sx={{ height: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column' }}>
-          <Stack direction="row" alignItems="center" sx={{ px: 1, py: 1, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <Box sx={{ height: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          {/* pr clears the fixed top-right voice/chat FABs */}
+          <Stack direction="row" alignItems="center" sx={{ px: 1, py: 1, pr: { xs: 12, sm: 14 }, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
             <IconButton onClick={() => setSelectedId(null)}><ArrowBack /></IconButton>
             <Box sx={{ flex: 1 }} />
             <NoteHeaderActions note={selected} onUpdate={update} onArchive={(id) => { archive(id); setSelectedId(null); }} />
@@ -58,7 +59,10 @@ const NotesPage: React.FC = () => {
     }
     return (
       <Box sx={{ p: 2 }}>
-        <NotesHeader query={query} setQuery={setQuery} onNew={handleNew} />
+        {/* pr clears the fixed top-right voice/chat FABs */}
+        <Box sx={{ pr: { xs: 12, sm: 14 } }}>
+          <NotesHeader query={query} setQuery={setQuery} onNew={handleNew} />
+        </Box>
         <NotesList notes={filtered} loading={loading} selectedId={null} onSelect={setSelectedId} />
       </Box>
     );
@@ -76,7 +80,8 @@ const NotesPage: React.FC = () => {
       <Card sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, p: 2 }}>
         {selected ? (
           <>
-            <Stack direction="row" alignItems="center" justifyContent="flex-end" sx={{ mb: 1 }}>
+            {/* pr clears the fixed top-right voice/chat FABs */}
+            <Stack direction="row" alignItems="center" justifyContent="flex-end" sx={{ mb: 1, pr: { xs: 12, sm: 14 } }}>
               <NoteHeaderActions note={selected} onUpdate={update} onArchive={(id) => { archive(id); setSelectedId(null); }} />
             </Stack>
             <NoteEditor note={selected} onUpdate={update} />
@@ -189,17 +194,20 @@ const NoteEditor: React.FC<{ note: Note; onUpdate: (id: string, patch: Partial<N
   }, [body, note.id, onUpdate]);
 
   return (
-    <TextField
-      multiline
-      fullWidth
-      autoFocus
-      value={body}
-      onChange={(e) => { dirtyRef.current = true; setBody(e.target.value); }}
-      placeholder="Write…"
-      variant="standard"
-      InputProps={{ disableUnderline: true, style: { fontSize: '0.95rem', lineHeight: 1.55 } }}
-      sx={{ flex: 1, '& textarea': { fontFamily: 'inherit' } }}
-    />
+    // Scroll container: long notes scroll inside the card instead of overflowing it.
+    <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+      <TextField
+        multiline
+        fullWidth
+        autoFocus
+        value={body}
+        onChange={(e) => { dirtyRef.current = true; setBody(e.target.value); }}
+        placeholder="Write…"
+        variant="standard"
+        InputProps={{ disableUnderline: true, style: { fontSize: '0.95rem', lineHeight: 1.55, alignItems: 'flex-start' } }}
+        sx={{ width: '100%', '& textarea': { fontFamily: 'inherit' } }}
+      />
+    </Box>
   );
 };
 
