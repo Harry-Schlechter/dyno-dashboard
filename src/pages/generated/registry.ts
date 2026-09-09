@@ -46,6 +46,16 @@ export const GENERATED_PAGES: GeneratedPageEntry[] = [
     component: React.lazy(() => import('./bangkok-sydney-oct-2026')),
   },
   {
+    slug: 'dec-2026-trip-options',
+    title: 'Dec 26 – Jan 2: 6 Trip Options',
+    emoji: '🌴',
+    kind: 'plan',
+    author: 'travel-agent',
+    createdAt: '2026-09-09',
+    summary: 'Harry + Sydney · Dec 26–Jan 2 · 6 options: Costa Rica, Dominica, Grenada, Galápagos, Celebrity Cruise, Icon of the Seas',
+    component: React.lazy(() => import('./dec-2026-trip-options')),
+  },
+  {
     slug: 'seattle-june-2026',
     title: 'Seattle — June 2026',
     emoji: '🏔️',
