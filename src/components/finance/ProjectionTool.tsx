@@ -78,8 +78,11 @@ const StagePanel: React.FC<{
   );
 };
 
-// One cell showing a projected/actual value, and (when both exist) the delta vs plan.
-const DeltaCell: React.FC<{ value: number; plan?: number; isActual?: boolean; bold?: boolean }> = ({ value, plan, isActual, bold }) => {
+const fmtContrib = (v: number) => v >= 1000 ? `$${(v / 1000).toFixed(1)}k` : `$${Math.round(v).toLocaleString()}`;
+
+// One cell showing a balance, the month's contribution into it (+$X in), and
+// (for actuals) the delta vs plan.
+const DeltaCell: React.FC<{ value: number; contrib?: number; plan?: number; isActual?: boolean; bold?: boolean }> = ({ value, contrib, plan, isActual, bold }) => {
   const delta = plan !== undefined ? value - plan : null;
   const color = delta === null ? 'inherit' : delta >= 0 ? '#4CAF50' : '#F44336';
   return (
@@ -87,9 +90,14 @@ const DeltaCell: React.FC<{ value: number; plan?: number; isActual?: boolean; bo
       <Typography variant="caption" fontWeight={bold ? 800 : 600} sx={{ display: 'block' }}>
         {fmtK(value)}
       </Typography>
+      {contrib !== undefined && contrib > 0 && (
+        <Typography variant="caption" sx={{ color: '#5B8DEF', fontSize: '0.6rem', display: 'block' }}>
+          +{fmtContrib(contrib)} in
+        </Typography>
+      )}
       {isActual && delta !== null && Math.abs(delta) >= 50 && (
-        <Typography variant="caption" sx={{ color, fontSize: '0.62rem' }}>
-          {delta >= 0 ? '+' : ''}{fmtK(delta)}
+        <Typography variant="caption" sx={{ color, fontSize: '0.62rem', display: 'block' }}>
+          {delta >= 0 ? '+' : ''}{fmtK(delta)} vs plan
         </Typography>
       )}
     </Box>
@@ -163,9 +171,11 @@ const ProjectionTool: React.FC<{ accounts: FinancialAccount[] }> = ({ accounts }
   const years = useMemo(() => Array.from({ length: 2036 - 2026 + 1 }, (_, i) => 2026 + i), []);
 
   // For a given YM, resolve the row's displayed values + whether it's actual.
+  // c* = contribution INTO each bucket that month (actual snapshot or projected).
   type Row = {
     ym: string; label: string; isActual: boolean;
     k401: number; roth: number; hsa: number; wros: number; net: number;
+    c401: number; cRoth: number; cHsa: number; cWros: number;
     planNet?: number; planWros?: number;
   };
   const resolveMonth = (year: number, month: number): Row | null => {
@@ -177,6 +187,7 @@ const ProjectionTool: React.FC<{ accounts: FinancialAccount[] }> = ({ accounts }
       return {
         ym, label: MONTH_NAMES[month - 1], isActual: true,
         k401: snap.k401, roth: snap.roth, hsa: snap.hsa, wros: snap.wros, net: snap.net_worth,
+        c401: snap.contrib_401k, cRoth: snap.contrib_roth, cHsa: snap.contrib_hsa, cWros: snap.contrib_wros,
         planNet: plan?.net, planWros: plan?.wros,
       };
     }
@@ -185,17 +196,24 @@ const ProjectionTool: React.FC<{ accounts: FinancialAccount[] }> = ({ accounts }
     return {
       ym, label: MONTH_NAMES[month - 1], isActual: false,
       k401: proj.k401, roth: proj.roth, hsa: proj.hsa, wros: proj.wros, net: proj.net,
+      c401: proj.in401k, cRoth: proj.inRoth, cHsa: proj.inHsa, cWros: proj.inWros,
       planNet: plan?.net, planWros: plan?.wros,
     };
   };
 
-  // Year summary = its December (or latest available) month.
+  // Year summary: balances = latest available month; contributions = SUM over
+  // the year (what actually/projected went in across all 12 months).
   const resolveYear = (year: number): Row | null => {
-    for (let m = 12; m >= 1; m--) {
+    let summary: Row | null = null;
+    const totals = { c401: 0, cRoth: 0, cHsa: 0, cWros: 0 };
+    for (let m = 1; m <= 12; m++) {
       const r = resolveMonth(year, m);
-      if (r) return { ...r, label: `${year}` };
+      if (!r) continue;
+      totals.c401 += r.c401; totals.cRoth += r.cRoth; totals.cHsa += r.cHsa; totals.cWros += r.cWros;
+      summary = r; // keep the latest month's balances
     }
-    return null;
+    if (!summary) return null;
+    return { ...summary, ...totals, label: `${year}` };
   };
 
   const anchorNote = snaps.latest
@@ -296,7 +314,7 @@ const ProjectionTool: React.FC<{ accounts: FinancialAccount[] }> = ({ accounts }
             <Typography variant="caption" color="text.secondary">{anchorNote}</Typography>
           </Box>
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
-            Click a year to see its months. Green/red = ahead/behind the plan (past months only). Future rows recompute as you change the levers above.
+            Each cell shows the <b>balance</b>, the <span style={{ color: '#5B8DEF' }}>contribution that period</span>, and (past months) <span style={{ color: '#4CAF50' }}>green</span>/<span style={{ color: '#F44336' }}>red</span> vs the plan. Year rows sum the year's contributions. Click a year for its months; future rows recompute as you change the levers.
           </Typography>
 
           {/* Header */}
@@ -333,10 +351,10 @@ const ProjectionTool: React.FC<{ accounts: FinancialAccount[] }> = ({ accounts }
                     <Typography variant="body2" fontWeight={700}>{year}</Typography>
                     {anyActual && <Chip size="small" label="actual" sx={{ height: 16, fontSize: '0.55rem', bgcolor: 'rgba(76,175,80,0.15)', color: '#4CAF50' }} />}
                   </Box>
-                  <DeltaCell value={yr.k401} bold />
-                  <DeltaCell value={yr.roth} bold />
-                  <DeltaCell value={yr.hsa} bold />
-                  <DeltaCell value={yr.wros} plan={yr.planWros} isActual={yr.isActual} bold />
+                  <DeltaCell value={yr.k401} contrib={yr.c401} bold />
+                  <DeltaCell value={yr.roth} contrib={yr.cRoth} bold />
+                  <DeltaCell value={yr.hsa} contrib={yr.cHsa} bold />
+                  <DeltaCell value={yr.wros} contrib={yr.cWros} plan={yr.planWros} isActual={yr.isActual} bold />
                   <DeltaCell value={yr.net} plan={yr.planNet} isActual={yr.isActual} bold />
                 </Box>
 
@@ -358,10 +376,10 @@ const ProjectionTool: React.FC<{ accounts: FinancialAccount[] }> = ({ accounts }
                               ? <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#4CAF50' }} />
                               : <Tooltip title="projected"><Box sx={{ width: 6, height: 6, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.25)' }} /></Tooltip>}
                           </Box>
-                          <DeltaCell value={r.k401} />
-                          <DeltaCell value={r.roth} />
-                          <DeltaCell value={r.hsa} />
-                          <DeltaCell value={r.wros} plan={r.planWros} isActual={r.isActual} />
+                          <DeltaCell value={r.k401} contrib={r.c401} />
+                          <DeltaCell value={r.roth} contrib={r.cRoth} />
+                          <DeltaCell value={r.hsa} contrib={r.cHsa} />
+                          <DeltaCell value={r.wros} contrib={r.cWros} plan={r.planWros} isActual={r.isActual} />
                           <DeltaCell value={r.net} plan={r.planNet} isActual={r.isActual} />
                         </Box>
                       );

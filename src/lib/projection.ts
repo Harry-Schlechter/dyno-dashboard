@@ -52,6 +52,9 @@ export interface MonthPoint {
   ym: string;           // 'YYYY-MM'
   year: number; month: number;
   k401: number; roth: number; hsa: number; wros: number; net: number;
+  // What went INTO each bucket this month (contribution, not balance).
+  // 401k includes employee + Sydney + employer match.
+  in401k: number; inRoth: number; inHsa: number; inWros: number;
 }
 export interface ProjectionResult {
   milestones: Milestone[];
@@ -178,6 +181,7 @@ export function runProjection(inp: ProjectionInputs): ProjectionResult {
       monthly.push({
         ym: `${y}-${String(m).padStart(2, '0')}`, year: y, month: m,
         k401, roth, hsa, wros, net: k401 + roth + hsa + wros,
+        in401k: h401 + s401 + match, inRoth: roth1M + roth2M, inHsa: hsaM, inWros: Math.max(0, wrosContrib),
       });
 
       if (m === 12) {
