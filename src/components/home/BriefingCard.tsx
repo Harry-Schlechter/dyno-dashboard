@@ -106,9 +106,20 @@ const BriefingCard: React.FC = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   // Today's briefings, newest-first; preserve order so we can offer a switcher.
+  // De-duped by kind (keep the most recent of each) — a backend bug briefly
+  // wrote duplicate same-kind rows; this guards the display even though the
+  // DB now has a unique(user_id, for_date, kind) constraint preventing new ones.
   const todays = useMemo(() => {
     const today = format(new Date(), 'yyyy-MM-dd');
-    return briefings.filter(b => b.for_date === today);
+    const seen = new Set<string>();
+    const out: Briefing[] = [];
+    for (const b of briefings) {
+      if (b.for_date !== today) continue;
+      if (seen.has(b.kind)) continue;
+      seen.add(b.kind);
+      out.push(b);
+    }
+    return out;
   }, [briefings]);
 
   // Default selection: pick most relevant kind based on time of day, fall back to most recent.

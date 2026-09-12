@@ -1,7 +1,8 @@
 import React from 'react';
-import { Box, Stack, Typography } from '@mui/material';
+import { Box, Stack, Typography, Chip } from '@mui/material';
 import { ChevronRight } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { formatDistanceToNow, isToday } from 'date-fns';
 import { useRecommendations } from '../../hooks/useRecommendations';
 import RecommendationsList from '../patterns/RecommendationsList';
 
@@ -18,10 +19,26 @@ const TopRecommendations: React.FC = () => {
   const recs = latestByHorizon.daily;
   if (recs.length === 0) return null;
 
+  const generatedAt = recs[0]?.created_at ? new Date(recs[0].created_at) : null;
+  const stale = generatedAt ? !isToday(generatedAt) : false;
+
   return (
     <Box onClick={() => navigate('/patterns')} sx={{ cursor: 'pointer' }}>
       <RecommendationsList recs={recs} title="Top 3 for today" />
-      <Stack direction="row" justifyContent="flex-end" sx={{ mt: -1.5 }}>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: -1.5, px: 0.5 }}>
+        {generatedAt && (
+          <Stack direction="row" spacing={0.75} alignItems="center">
+            <Typography variant="caption" color="text.secondary">
+              generated {formatDistanceToNow(generatedAt, { addSuffix: true })}
+            </Typography>
+            {stale && (
+              <Chip
+                size="small" label="from an earlier day"
+                sx={{ height: 16, fontSize: '0.6rem', bgcolor: 'rgba(255,152,0,0.15)', color: '#FF9800' }}
+              />
+            )}
+          </Stack>
+        )}
         <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center' }}>
           See forecasts & more <ChevronRight sx={{ fontSize: 16 }} />
         </Typography>
