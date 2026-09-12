@@ -14,6 +14,7 @@ import JournalNudge from '../components/home/JournalNudge';
 import TomorrowForecast from '../components/home/TomorrowForecast';
 import TodayPanel from '../components/home/TodayPanel';
 import BriefingCard from '../components/home/BriefingCard';
+import TopRecommendations from '../components/home/TopRecommendations';
 
 const getGreeting = (): string => {
   const hour = new Date().getHours();
@@ -40,6 +41,11 @@ const HomePage: React.FC = () => {
         {/* Briefing card (replaces TodayNarrative) — agent-written, structured */}
         <Grid size={{ xs: 12 }}>
           <BriefingCard />
+        </Grid>
+
+        {/* Top 3 recommendations for today — from the daily forecasting pipeline */}
+        <Grid size={{ xs: 12 }}>
+          <TopRecommendations />
         </Grid>
 
         {/* Left column: today + vitals + at-a-glance widgets */}

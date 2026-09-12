@@ -1,17 +1,21 @@
 import React, { useMemo, useState } from 'react';
 import {
   Box, Typography, Card, CardContent, Chip, Stack, ToggleButton, ToggleButtonGroup,
-  IconButton, Tooltip, Collapse, Divider, Skeleton, Alert,
+  IconButton, Tooltip, Collapse, Divider, Skeleton, Alert, Tabs, Tab,
 } from '@mui/material';
 import {
   AutoAwesomeRounded, ExpandMore, ExpandLess, ThumbUpOutlined, ThumbDownOutlined,
   CloseOutlined, StarBorderOutlined, StarRounded, InfoOutlined,
-  PushPinOutlined, CheckCircleOutline,
+  PushPinOutlined, CheckCircleOutline, Today, CalendarViewWeek, Map as MapIcon,
 } from '@mui/icons-material';
 import { formatDistanceToNow } from 'date-fns';
 import { useObservations, Observation, ObservationKind, ObservationSeverity, FeedbackReaction } from '../hooks/useObservations';
 import { useForecast } from '../hooks/useForecast';
+import { useRecommendations } from '../hooks/useRecommendations';
 import ForecastPanel from '../components/patterns/ForecastPanel';
+import RecommendationsList from '../components/patterns/RecommendationsList';
+import WeeklyPanel from '../components/patterns/WeeklyPanel';
+import MonthlyPanel from '../components/patterns/MonthlyPanel';
 
 const KIND_META: Record<ObservationKind, { label: string; color: string; emoji: string }> = {
   insight:        { label: 'Insight',        color: '#5B8DEF', emoji: '✨' },
@@ -221,7 +225,10 @@ const PatternCard: React.FC<CardProps> = ({ obs, onReact, onDismiss, onAcknowled
   );
 };
 
+type HorizonTab = 'daily' | 'weekly' | 'monthly';
+
 const PatternsPage: React.FC = () => {
+  const [tab, setTab] = useState<HorizonTab>('daily');
   const [source, setSource] = useState<SourceFilter>('all');
   const [scope, setScope] = useState<ScopeFilter>('all');
   const [agentFilter, setAgentFilter] = useState<string | null>(null);
@@ -229,6 +236,7 @@ const PatternsPage: React.FC = () => {
 
   const { data, loading, react, dismiss, acknowledge, setPinned, error } = useObservations({ limit: 200 });
   const forecast = useForecast();
+  const { latestByHorizon } = useRecommendations();
 
   const filtered = useMemo(() => {
     return data.filter(o => {
@@ -277,15 +285,45 @@ const PatternsPage: React.FC = () => {
             <Typography variant="h4" fontWeight={700}>Patterns</Typography>
           </Box>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            Next-day forecasts (self-scored) + cross-domain patterns. Acknowledge one to
-            stop it resurfacing; pin to keep watching it.
+            Recommendations + forecasts (self-scored) across three horizons — today,
+            this week, and the months ahead. Acknowledge a pattern to stop it
+            resurfacing; pin to keep watching it.
           </Typography>
         </Box>
       </Box>
 
+      <Tabs
+        value={tab}
+        onChange={(_, v) => setTab(v)}
+        sx={{ mb: 2.5, minHeight: 40, '& .MuiTab-root': { minHeight: 40, textTransform: 'none' } }}
+      >
+        <Tab value="daily" icon={<Today sx={{ fontSize: 18 }} />} iconPosition="start" label="Daily" />
+        <Tab value="weekly" icon={<CalendarViewWeek sx={{ fontSize: 18 }} />} iconPosition="start" label="Weekly" />
+        <Tab value="monthly" icon={<MapIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="1-6 Months" />
+      </Tabs>
+
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
       )}
+
+      {tab === 'weekly' && (
+        <>
+          <RecommendationsList recs={latestByHorizon.weekly} title="Top 3 for this week" accent="#5B8DEF" />
+          <WeeklyPanel />
+        </>
+      )}
+
+      {tab === 'monthly' && (
+        <>
+          <RecommendationsList recs={latestByHorizon.monthly} title="Top 3 for the months ahead" accent="#9C7BFF" />
+          <MonthlyPanel />
+        </>
+      )}
+
+      {tab === 'daily' && (
+      <>
+      {/* Top 3 for today */}
+      <RecommendationsList recs={latestByHorizon.daily} title="Top 3 for today" accent="#FFB74D" />
 
       {/* Tomorrow's forecast + track record */}
       <ForecastPanel />
@@ -385,6 +423,8 @@ const PatternsPage: React.FC = () => {
               onAcknowledge={acknowledge} onPin={setPinned} />
           ))}
         </Stack>
+      )}
+      </>
       )}
     </Box>
   );
