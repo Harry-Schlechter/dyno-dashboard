@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
 import { Card, CardContent, Typography, Box, Stack, Tooltip } from '@mui/material';
 import { TrendingUp, TrendingDown, InfoOutlined } from '@mui/icons-material';
-import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { format, startOfMonth, endOfMonth, subMonths, startOfWeek } from 'date-fns';
 import { useFinances } from '../../hooks/useFinances';
 import { useFinanceProjection } from '../../hooks/useFinanceProjection';
-import { savedLastMonth, expectedMonthlyIncome } from '../../lib/finance';
+import { savedLastMonth, expectedMonthlyIncome, isRealSpend, filterTransactionsByRange } from '../../lib/finance';
 import { formatCurrency } from '../../lib/formatters';
 
 const fmt = (d: Date) => format(d, 'yyyy-MM-dd');
@@ -30,6 +30,15 @@ const NetWorthWidget: React.FC = () => {
     if (lastMonthSaved === null || monthlyIncome <= 0) return null;
     return (lastMonthSaved / monthlyIncome) * 100;
   }, [lastMonthSaved, monthlyIncome]);
+
+  // This week's spend (absorbed from the old standalone WeekSpendWidget).
+  const weekSpend = useMemo(() => {
+    if (transactions.length === 0) return null;
+    const weekStart = fmt(startOfWeek(today, { weekStartsOn: 1 }));
+    const todayStr = fmt(today);
+    const inWeek = filterTransactionsByRange(transactions, weekStart, todayStr).filter(isRealSpend);
+    return { total: inWeek.reduce((s, t) => s + Math.abs(t.amount), 0), count: inWeek.length };
+  }, [transactions, today]);
 
   return (
     <Card sx={{ '&:hover': { transform: 'none' }, height: '100%' }}>
@@ -73,6 +82,12 @@ const NetWorthWidget: React.FC = () => {
                   hint="Expected income − projected spend at current burn rate"
                   isProjection
                 />
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="caption" color="text.secondary">Spent this week</Typography>
+                  <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                    {weekSpend ? `${formatCurrency(weekSpend.total)} · ${weekSpend.count}tx` : '—'}
+                  </Typography>
+                </Box>
               </Stack>
             </Box>
           </>

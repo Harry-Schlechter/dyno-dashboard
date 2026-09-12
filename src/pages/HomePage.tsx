@@ -2,19 +2,15 @@ import React from 'react';
 import { Box, Typography, Grid } from '@mui/material';
 import { format } from 'date-fns';
 import NetWorthWidget from '../components/home/NetWorthWidget';
-import SleepWidget from '../components/home/SleepWidget';
-import MealsCaloriesWidget from '../components/home/MealsCaloriesWidget';
-import WeekSpendWidget from '../components/home/WeekSpendWidget';
-import DailySummaryStrip from '../components/home/DailySummaryStrip';
+import YesterdayAndAveragesWidget from '../components/home/YesterdayAndAveragesWidget';
 import InsightsFeed from '../components/home/InsightsFeed';
 import PersonaActivityStrip from '../components/home/PersonaActivityStrip';
-import VitalsStrip from '../components/home/VitalsStrip';
 import RecoveryRing from '../components/home/RecoveryRing';
 import JournalNudge from '../components/home/JournalNudge';
-import TomorrowForecast from '../components/home/TomorrowForecast';
 import TodayPanel from '../components/home/TodayPanel';
 import BriefingCard from '../components/home/BriefingCard';
 import TopRecommendations from '../components/home/TopRecommendations';
+import StreakBadges from '../components/home/StreakBadges';
 
 const getGreeting = (): string => {
   const hour = new Date().getHours();
@@ -27,20 +23,22 @@ const getGreeting = (): string => {
 const HomePage: React.FC = () => {
   return (
     <Box>
-      {/* Greeting */}
-      <Box sx={{ mb: { xs: 2, sm: 3 } }}>
-        <Typography variant="h4" fontWeight={700} sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>
-          {getGreeting()}, Harry
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          {format(new Date(), 'EEEE, MMMM d, yyyy')}
-        </Typography>
+      {/* Greeting + streak badges (top-right) */}
+      <Box sx={{ mb: { xs: 2, sm: 3 }, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 1 }}>
+        <Box>
+          <Typography variant="h4" fontWeight={700} sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>
+            {getGreeting()}, Harry
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            {format(new Date(), 'EEEE, MMMM d, yyyy')}
+          </Typography>
+        </Box>
+        <StreakBadges />
       </Box>
 
       {/* ── TODAY-FOCUSED TOP SECTION ─────────────────────────────────────── */}
-      {/* 1. Morning briefing  2. Top 3 for today  3. Recovery + Net worth +
-          Yesterday at a glance + Last night's sleep  4. This week's spend
-          5. Vitals, last 7 days */}
+      {/* 1. Morning briefing  2. Top 3 for today  3. Recovery | Net worth (+
+          this week's spend) | Yesterday-at-a-glance + 7-day averages, stacked */}
       <Box sx={{ mb: { xs: 3, sm: 4 } }}>
         <Box sx={{ mb: 2.5 }}>
           <BriefingCard />
@@ -50,31 +48,17 @@ const HomePage: React.FC = () => {
           <TopRecommendations />
         </Box>
 
-        <Grid container spacing={{ xs: 1.5, sm: 2 }} sx={{ mb: 2.5 }}>
-          <Grid size={{ xs: 6, sm: 6, md: 3 }}>
+        <Grid container spacing={{ xs: 1.5, sm: 2 }}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <RecoveryRing />
           </Grid>
-          <Grid size={{ xs: 6, sm: 6, md: 3 }}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <NetWorthWidget />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ minWidth: 0 }}>
-            <DailySummaryStrip />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ minWidth: 0 }}>
-            <SleepWidget />
+          <Grid size={{ xs: 12, sm: 4 }} sx={{ minWidth: 0 }}>
+            <YesterdayAndAveragesWidget />
           </Grid>
         </Grid>
-
-        <Box sx={{ mb: 2.5 }}>
-          <WeekSpendWidget />
-        </Box>
-
-        <Box>
-          <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.5, display: 'block', mb: 1 }}>
-            Vitals — last 7 days
-          </Typography>
-          <VitalsStrip />
-        </Box>
       </Box>
 
       {/* ── EVERYTHING ELSE ───────────────────────────────────────────────── */}
@@ -85,18 +69,8 @@ const HomePage: React.FC = () => {
           </Box>
 
           <Box sx={{ mb: 3 }}>
-            <TomorrowForecast />
-          </Box>
-
-          <Box sx={{ mb: 3 }}>
             <JournalNudge />
           </Box>
-
-          <Grid container spacing={{ xs: 1.5, sm: 2 }}>
-            <Grid size={{ xs: 6, sm: 6, md: 4 }} sx={{ minWidth: 0 }}>
-              <MealsCaloriesWidget />
-            </Grid>
-          </Grid>
         </Grid>
 
         <Grid size={{ xs: 12, lg: 4 }}>
