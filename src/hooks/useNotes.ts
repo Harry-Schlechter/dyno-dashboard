@@ -99,8 +99,28 @@ export function useNotes(opts: UseNotesOpts = {}) {
       .eq('id', id)
       .eq('user_id', USER_ID);
     if (err) console.warn('notes.archive', err.message);
-    setData((prev) => prev.filter((n) => n.id !== id));
-  }, []);
+    // Optimistic: drop from the active list, or refetch if archived notes are
+    // already included (so it moves visually into the archived view).
+    if (includeArchived) {
+      setData((prev) => prev.map((n) => n.id === id ? { ...n, archived_at: new Date().toISOString() } : n));
+    } else {
+      setData((prev) => prev.filter((n) => n.id !== id));
+    }
+  }, [includeArchived]);
 
-  return { data, loading, error, refetch, create, update, archive };
+  const unarchive = useCallback(async (id: string) => {
+    const { error: err } = await supabase
+      .from('notes')
+      .update({ archived_at: null })
+      .eq('id', id)
+      .eq('user_id', USER_ID);
+    if (err) console.warn('notes.unarchive', err.message);
+    if (includeArchived) {
+      setData((prev) => prev.map((n) => n.id === id ? { ...n, archived_at: null } : n));
+    } else {
+      setData((prev) => prev.filter((n) => n.id !== id));
+    }
+  }, [includeArchived]);
+
+  return { data, loading, error, refetch, create, update, archive, unarchive };
 }

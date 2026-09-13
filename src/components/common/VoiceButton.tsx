@@ -6,7 +6,7 @@ import { useAuth } from '../../lib/auth';
 import { useChat } from '../chat/ChatContext';
 import { isDemo } from '../../lib/demoMode';
 
-// Global top-right controls on every dashboard page (owner-only):
+// Global bottom-right controls on every dashboard page (owner-only):
 //   • mic  → the full /voice interface
 //   • chat → a text chat panel with the general Dyno agent
 // Hidden while already on /voice.
@@ -31,7 +31,7 @@ const VoiceButton: React.FC = () => {
       spacing={1}
       sx={{
         position: 'fixed',
-        top: { xs: 12, sm: 16 },
+        bottom: { xs: 12, sm: 16 },
         right: { xs: 12, sm: 16 },
         zIndex: (theme) => theme.zIndex.drawer + 2,
       }}

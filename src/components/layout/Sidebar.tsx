@@ -77,7 +77,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, onOpen }) => {
   };
 
   const drawerContent = (
-    <Box sx={{ overflow: 'auto', px: 1.5, pt: 2.5 }}>
+    <Box sx={{ overflowY: 'auto', overflowX: 'hidden', px: 1.5, pt: 2.5 }}>
       {/* Branding */}
       <Box sx={{ mb: 3, px: 0.5 }}>
         <Typography

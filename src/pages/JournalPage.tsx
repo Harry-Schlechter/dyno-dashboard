@@ -20,6 +20,7 @@ import { useJournal } from '../hooks/useJournal';
 import OnThisDayCard from '../components/journal/OnThisDayCard';
 import JournalStreakCard from '../components/journal/JournalStreakCard';
 import RecurrenceCard from '../components/journal/RecurrenceCard';
+import RecentEntriesCard from '../components/journal/RecentEntriesCard';
 
 const moodColors: Record<number, string> = { 1: '#F44336', 2: '#FF9800', 3: '#FFB74D', 4: '#5B8DEF', 5: '#4CAF50' };
 
@@ -124,6 +125,13 @@ const JournalPage: React.FC = () => {
             lastDate={journal.streak.lastDate}
             totalEntries={journal.entries.length}
           />
+        </Grid>
+      </Grid>
+
+      {/* Recent entries — the agent-summarized one-liner + highlights per entry */}
+      <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }} sx={{ mb: 2.5 }}>
+        <Grid size={{ xs: 12 }}>
+          <RecentEntriesCard entries={journal.entries} />
         </Grid>
       </Grid>
 

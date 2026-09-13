@@ -1,32 +1,44 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Box, Stack, Typography, IconButton, InputBase, TextField, Card,
-  Chip, useMediaQuery, useTheme, Tooltip,
+  Chip, useMediaQuery, useTheme, Tooltip, ToggleButtonGroup, ToggleButton,
 } from '@mui/material';
 import {
   Add as AddIcon, Search as SearchIcon, PushPin, PushPinOutlined,
-  DeleteOutline, ArrowBack,
+  ArchiveOutlined, UnarchiveOutlined, ArrowBack,
 } from '@mui/icons-material';
 import { useNotes, Note, noteTitle, noteSnippet } from '../hooks/useNotes';
 import { formatDistanceToNow } from 'date-fns';
 
+type ViewMode = 'active' | 'archived';
+
 const NotesPage: React.FC = () => {
-  const { data: notes, loading, create, update, archive } = useNotes();
+  const [view, setView] = useState<ViewMode>('active');
+  const { data: notes, loading, create, update, archive, unarchive } = useNotes({ includeArchived: view === 'archived' });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
+  // In archived view, `notes` includes both — filter to just archived ones.
+  const viewNotes = useMemo(
+    () => view === 'archived' ? notes.filter((n) => n.archived_at) : notes,
+    [notes, view],
+  );
+
+  // Clear selection when switching views so we don't show a note from the other view.
+  useEffect(() => { setSelectedId(null); }, [view]);
+
   // Filtered + sorted (pinned first already from hook).
   const filtered = useMemo(() => {
-    if (!query.trim()) return notes;
+    if (!query.trim()) return viewNotes;
     const q = query.toLowerCase();
-    return notes.filter((n) =>
+    return viewNotes.filter((n) =>
       noteTitle(n).toLowerCase().includes(q) ||
       n.body.toLowerCase().includes(q) ||
       n.tags.some((t) => t.toLowerCase().includes(q))
     );
-  }, [notes, query]);
+  }, [viewNotes, query]);
 
   // Auto-select first note when list loads (desktop only).
   useEffect(() => {
@@ -35,7 +47,7 @@ const NotesPage: React.FC = () => {
     }
   }, [filtered, selectedId, isMobile]);
 
-  const selected = notes.find((n) => n.id === selectedId) ?? null;
+  const selected = viewNotes.find((n) => n.id === selectedId) ?? null;
 
   const handleNew = async () => {
     const n = await create({ body: '' });
@@ -47,11 +59,12 @@ const NotesPage: React.FC = () => {
     if (selected) {
       return (
         <Box sx={{ height: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          {/* pr clears the fixed top-right voice/chat FABs */}
-          <Stack direction="row" alignItems="center" sx={{ px: 1, py: 1, pr: { xs: 12, sm: 14 }, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <Stack direction="row" alignItems="center" sx={{ px: 1, py: 1, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
             <IconButton onClick={() => setSelectedId(null)}><ArrowBack /></IconButton>
             <Box sx={{ flex: 1 }} />
-            <NoteHeaderActions note={selected} onUpdate={update} onArchive={(id) => { archive(id); setSelectedId(null); }} />
+            <NoteHeaderActions note={selected} onUpdate={update}
+              onArchive={(id) => { archive(id); setSelectedId(null); }}
+              onUnarchive={(id) => { unarchive(id); setSelectedId(null); }} />
           </Stack>
           <NoteEditor note={selected} onUpdate={update} />
         </Box>
@@ -59,10 +72,7 @@ const NotesPage: React.FC = () => {
     }
     return (
       <Box sx={{ p: 2 }}>
-        {/* pr clears the fixed top-right voice/chat FABs */}
-        <Box sx={{ pr: { xs: 12, sm: 14 } }}>
-          <NotesHeader query={query} setQuery={setQuery} onNew={handleNew} />
-        </Box>
+        <NotesHeader query={query} setQuery={setQuery} onNew={handleNew} view={view} setView={setView} />
         <NotesList notes={filtered} loading={loading} selectedId={null} onSelect={setSelectedId} />
       </Box>
     );
@@ -72,7 +82,7 @@ const NotesPage: React.FC = () => {
   return (
     <Box sx={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: 2, height: 'calc(100vh - 96px)' }}>
       <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-        <NotesHeader query={query} setQuery={setQuery} onNew={handleNew} />
+        <NotesHeader query={query} setQuery={setQuery} onNew={handleNew} view={view} setView={setView} />
         <Box sx={{ flex: 1, overflowY: 'auto', mt: 1 }}>
           <NotesList notes={filtered} loading={loading} selectedId={selectedId} onSelect={setSelectedId} />
         </Box>
@@ -80,16 +90,17 @@ const NotesPage: React.FC = () => {
       <Card sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, p: 2 }}>
         {selected ? (
           <>
-            {/* pr clears the fixed top-right voice/chat FABs */}
-            <Stack direction="row" alignItems="center" justifyContent="flex-end" sx={{ mb: 1, pr: { xs: 12, sm: 14 } }}>
-              <NoteHeaderActions note={selected} onUpdate={update} onArchive={(id) => { archive(id); setSelectedId(null); }} />
+            <Stack direction="row" alignItems="center" justifyContent="flex-end" sx={{ mb: 1 }}>
+              <NoteHeaderActions note={selected} onUpdate={update}
+                onArchive={(id) => { archive(id); setSelectedId(null); }}
+                onUnarchive={(id) => { unarchive(id); setSelectedId(null); }} />
             </Stack>
             <NoteEditor note={selected} onUpdate={update} />
           </>
         ) : (
           <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              No note selected. Click + to start.
+              {view === 'archived' ? 'No archived note selected.' : 'No note selected. Click + to start.'}
             </Typography>
           </Box>
         )}
@@ -100,28 +111,43 @@ const NotesPage: React.FC = () => {
 
 // ─── Header / search ─────────────────────────────────────────────────────────
 
-const NotesHeader: React.FC<{ query: string; setQuery: (v: string) => void; onNew: () => void }> = ({ query, setQuery, onNew }) => (
-  <Stack direction="row" alignItems="center" spacing={1}>
-    <Typography variant="h5" sx={{ fontWeight: 700, flex: 1 }}>Notes</Typography>
-    <Box sx={{
-      display: 'flex', alignItems: 'center',
-      bgcolor: 'rgba(0,0,0,0.2)', borderRadius: 2, px: 1, flex: 1,
-      maxWidth: 240,
-    }}>
-      <SearchIcon sx={{ fontSize: 16, color: 'text.secondary', mr: 0.5 }} />
-      <InputBase
-        size="small"
-        placeholder="Search"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        sx={{ flex: 1, fontSize: '0.85rem' }}
-      />
-    </Box>
-    <Tooltip title="New note">
-      <IconButton onClick={onNew} sx={{ color: 'primary.main' }}>
-        <AddIcon />
-      </IconButton>
-    </Tooltip>
+const NotesHeader: React.FC<{
+  query: string; setQuery: (v: string) => void; onNew: () => void;
+  view: ViewMode; setView: (v: ViewMode) => void;
+}> = ({ query, setQuery, onNew, view, setView }) => (
+  <Stack spacing={1}>
+    <Stack direction="row" alignItems="center" spacing={1}>
+      <Typography variant="h5" sx={{ fontWeight: 700, flex: 1 }}>Notes</Typography>
+      <Box sx={{
+        display: 'flex', alignItems: 'center',
+        bgcolor: 'rgba(0,0,0,0.2)', borderRadius: 2, px: 1, flex: 1,
+        maxWidth: 240,
+      }}>
+        <SearchIcon sx={{ fontSize: 16, color: 'text.secondary', mr: 0.5 }} />
+        <InputBase
+          size="small"
+          placeholder="Search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          sx={{ flex: 1, fontSize: '0.85rem' }}
+        />
+      </Box>
+      {view === 'active' && (
+        <Tooltip title="New note">
+          <IconButton onClick={onNew} sx={{ color: 'primary.main' }}>
+            <AddIcon />
+          </IconButton>
+        </Tooltip>
+      )}
+    </Stack>
+    <ToggleButtonGroup
+      size="small" exclusive value={view}
+      onChange={(_, v) => v && setView(v)}
+      sx={{ alignSelf: 'flex-start' }}
+    >
+      <ToggleButton value="active" sx={{ textTransform: 'none', px: 1.5, py: 0.25, fontSize: '0.8rem' }}>Active</ToggleButton>
+      <ToggleButton value="archived" sx={{ textTransform: 'none', px: 1.5, py: 0.25, fontSize: '0.8rem' }}>Archived</ToggleButton>
+    </ToggleButtonGroup>
   </Stack>
 );
 
@@ -211,18 +237,29 @@ const NoteEditor: React.FC<{ note: Note; onUpdate: (id: string, patch: Partial<N
   );
 };
 
-const NoteHeaderActions: React.FC<{ note: Note; onUpdate: (id: string, patch: Partial<Note>) => void; onArchive: (id: string) => void }> = ({ note, onUpdate, onArchive }) => (
+const NoteHeaderActions: React.FC<{
+  note: Note; onUpdate: (id: string, patch: Partial<Note>) => void;
+  onArchive: (id: string) => void; onUnarchive: (id: string) => void;
+}> = ({ note, onUpdate, onArchive, onUnarchive }) => (
   <Stack direction="row" spacing={0.5}>
     <Tooltip title={note.pinned ? 'Unpin' : 'Pin'}>
       <IconButton size="small" onClick={() => onUpdate(note.id, { pinned: !note.pinned })}>
         {note.pinned ? <PushPin sx={{ fontSize: 18, color: 'warning.main' }} /> : <PushPinOutlined sx={{ fontSize: 18 }} />}
       </IconButton>
     </Tooltip>
-    <Tooltip title="Archive">
-      <IconButton size="small" onClick={() => { if (window.confirm('Archive this note?')) onArchive(note.id); }}>
-        <DeleteOutline sx={{ fontSize: 18 }} />
-      </IconButton>
-    </Tooltip>
+    {note.archived_at ? (
+      <Tooltip title="Restore to active">
+        <IconButton size="small" onClick={() => onUnarchive(note.id)}>
+          <UnarchiveOutlined sx={{ fontSize: 18, color: '#4CAF50' }} />
+        </IconButton>
+      </Tooltip>
+    ) : (
+      <Tooltip title="Archive">
+        <IconButton size="small" onClick={() => onArchive(note.id)}>
+          <ArchiveOutlined sx={{ fontSize: 18 }} />
+        </IconButton>
+      </Tooltip>
+    )}
   </Stack>
 );
 

@@ -6,7 +6,6 @@ import YesterdayAndAveragesWidget from '../components/home/YesterdayAndAveragesW
 import InsightsFeed from '../components/home/InsightsFeed';
 import PersonaActivityStrip from '../components/home/PersonaActivityStrip';
 import RecoveryRing from '../components/home/RecoveryRing';
-import JournalNudge from '../components/home/JournalNudge';
 import TodayPanel from '../components/home/TodayPanel';
 import BriefingCard from '../components/home/BriefingCard';
 import TopRecommendations from '../components/home/TopRecommendations';
@@ -66,10 +65,6 @@ const HomePage: React.FC = () => {
         <Grid size={{ xs: 12, lg: 8 }}>
           <Box sx={{ mb: 3 }}>
             <TodayPanel />
-          </Box>
-
-          <Box sx={{ mb: 3 }}>
-            <JournalNudge />
           </Box>
         </Grid>
 

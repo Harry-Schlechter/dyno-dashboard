@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import {
   ChevronLeft, ChevronRight, Close, FitnessCenter, Restaurant, Bedtime, AttachMoney,
-  Event as EventIcon, LocationOn, Schedule, CalendarMonth,
+  Event as EventIcon, LocationOn, Schedule, CalendarMonth, Book,
 } from '@mui/icons-material';
 import {
   format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths, isToday,
@@ -94,6 +94,11 @@ const CalendarPage: React.FC = () => {
     table: 'meals', order: { column: 'date', ascending: false }, limit: 1000,
   });
   const { transactions, loading: finLoading } = useFinances();
+  const { data: journalEntries, loading: journalLoading } = useSupabase<{
+    date: string; raw_text: string; one_liner: string | null; highlights: string[]; mood: number | null; sentiment: string | null;
+  }>({
+    table: 'journal_entries', order: { column: 'date', ascending: false }, limit: 1000,
+  });
 
   // Group events by date (start_time local date)
   const eventsByDay = useMemo(() => {
@@ -170,7 +175,7 @@ const CalendarPage: React.FC = () => {
     return map;
   }, [days, sleep, workouts, meals, transactions]);
 
-  const loading = eventsLoading || sleepLoading || workoutsLoading || mealsLoading || finLoading;
+  const loading = eventsLoading || sleepLoading || workoutsLoading || mealsLoading || finLoading || journalLoading;
   if (loading) return <LoadingSkeleton variant="card" count={2} />;
 
   // Pad start of grid with blanks so day-1 lands on the correct weekday
@@ -269,7 +274,7 @@ const CalendarPage: React.FC = () => {
                     minHeight: 96,
                     p: 0.875,
                     pt: 0.625,
-                    borderRadius: 2,
+                    borderRadius: 0,
                     cursor: 'pointer',
                     bgcolor: fill,
                     border: today
@@ -404,6 +409,7 @@ const CalendarPage: React.FC = () => {
         workouts={workouts}
         meals={meals}
         transactions={transactions}
+        journalEntries={journalEntries}
         onEventClick={setSelectedEvent}
       />
 
@@ -495,6 +501,10 @@ const EventDetailDialog: React.FC<{ event: CalendarEvent | null; onClose: () => 
   );
 };
 
+interface JournalRow {
+  date: string; raw_text: string; one_liner: string | null; highlights: string[]; mood: number | null; sentiment: string | null;
+}
+
 interface DayDrawerProps {
   date: Date | null;
   onClose: () => void;
@@ -503,10 +513,13 @@ interface DayDrawerProps {
   workouts: Array<{ date: string; name: string | null; duration_min: number | null }>;
   meals: Array<{ date: string; meal_type: string | null; description: string | null; calories: number | null; protein_g: number | null }>;
   transactions: any[];
+  journalEntries: JournalRow[];
   onEventClick: (event: CalendarEvent) => void;
 }
 
-const DayDrawer: React.FC<DayDrawerProps> = ({ date, onClose, events, sleep, workouts, meals, transactions, onEventClick }) => {
+const moodEmoji: Record<number, string> = { 1: '😞', 2: '😕', 3: '😐', 4: '🙂', 5: '😄' };
+
+const DayDrawer: React.FC<DayDrawerProps> = ({ date, onClose, events, sleep, workouts, meals, transactions, journalEntries, onEventClick }) => {
   if (!date) return null;
   const key = format(date, 'yyyy-MM-dd');
 
@@ -517,6 +530,7 @@ const DayDrawer: React.FC<DayDrawerProps> = ({ date, onClose, events, sleep, wor
   const dayProtein = dayMeals.reduce((s, m) => s + (m.protein_g ?? 0), 0);
   const dayTxs = transactions.filter((t: any) => t.date === key && isRealSpend(t));
   const daySpend = dayTxs.reduce((s: number, t: any) => s + Math.abs(t.amount), 0);
+  const journalEntry = journalEntries.find(j => j.date === key);
 
   return (
     <Drawer
@@ -566,6 +580,30 @@ const DayDrawer: React.FC<DayDrawerProps> = ({ date, onClose, events, sleep, wor
                 </Box>
               ))}
             </Stack>
+          )}
+        </Section>
+
+        <Section icon={<Book sx={{ color: '#EC407A' }} />} label="Journal">
+          {!journalEntry ? <Empty>No journal entry</Empty> : (
+            <Box>
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.75 }}>
+                {journalEntry.mood != null && (
+                  <Typography sx={{ fontSize: '1.1rem', lineHeight: 1.3 }}>{moodEmoji[journalEntry.mood] ?? ''}</Typography>
+                )}
+                <Typography variant="body2" sx={{ flex: 1 }}>
+                  {journalEntry.one_liner || journalEntry.raw_text.slice(0, 140)}
+                </Typography>
+              </Box>
+              {journalEntry.highlights?.length > 0 && (
+                <Stack spacing={0.3} sx={{ mt: 1 }}>
+                  {journalEntry.highlights.map((h, i) => (
+                    <Typography key={i} variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                      · {h}
+                    </Typography>
+                  ))}
+                </Stack>
+              )}
+            </Box>
           )}
         </Section>
 
