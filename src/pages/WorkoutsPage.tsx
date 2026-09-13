@@ -12,7 +12,7 @@ import { format, subDays, startOfWeek } from 'date-fns';
 import { useSupabase } from '../hooks/useSupabase';
 import AskSpecialistButton from '../components/chat/AskSpecialistButton';
 import {
-  detectPRs, sessionsForExercise, topExercisesByVolume, SetWithDate, ExerciseSet,
+  detectPRs, sessionsForExercise, topExercisesByVolume, normalizeExerciseName, SetWithDate, ExerciseSet,
 } from '../lib/lifting';
 import { formatDateShort } from '../lib/formatters';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
@@ -155,6 +155,7 @@ const WorkoutsPage: React.FC = () => {
 
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
   const [tab, setTab] = useState<'overview' | 'lifting' | 'golf'>('overview');
+  const [liftView, setLiftView] = useState<'1rm' | 'raw'>('1rm');
 
   // Workout intensity heatmap — duration (or count) per day
   const workoutHeatmap: HeatmapEntry[] = useMemo(() => {
@@ -172,12 +173,16 @@ const WorkoutsPage: React.FC = () => {
     }));
   }, [workouts]);
 
-  // Join exercises to workout dates for analytics
+  // Join exercises to workout dates for analytics. Exercise names are
+  // normalized here (once, at the source of the analytics pipeline) so
+  // naming drift ("DB Lateral Raise" vs "DB lateral raises") doesn't
+  // fragment one real lift's history into several sparser-looking ones —
+  // every downstream chart/PR-detector benefits automatically.
   const setsWithDate = useMemo<SetWithDate[]>(() => {
     const dateMap = new Map<string, string>();
     for (const w of workouts) dateMap.set(w.id, w.date);
     return exercises
-      .map(s => ({ ...s, date: dateMap.get(s.workout_id) || '' }))
+      .map(s => ({ ...s, exercise_name: normalizeExerciseName(s.exercise_name), date: dateMap.get(s.workout_id) || '' }))
       .filter(s => s.date) as SetWithDate[];
   }, [workouts, exercises]);
 
@@ -204,6 +209,19 @@ const WorkoutsPage: React.FC = () => {
       };
     });
     return out;
+  }, [workouts]);
+
+  // Lifting session count by day of week — which days you actually train.
+  const liftingByDayOfWeek = useMemo(() => {
+    const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const counts = new Array(7).fill(0);
+    for (const w of workouts) {
+      if (!isLifting(w.name)) continue;
+      counts[new Date(w.date + 'T00:00:00').getDay()]++;
+    }
+    // Reorder Mon-first for a more natural training-week read.
+    const order = [1, 2, 3, 4, 5, 6, 0];
+    return order.map(i => ({ day: DOW[i], sessions: counts[i] }));
   }, [workouts]);
 
   const topLifts = useMemo(() => topExercisesByVolume(setsWithDate, 8).filter(e => e.sessions >= 3), [setsWithDate]);
@@ -318,7 +336,7 @@ const WorkoutsPage: React.FC = () => {
       {tab === 'lifting' && (
       <Grid container spacing={2.5}>
         {/* Sessions trend */}
-        <Grid size={{ xs: 12, md: 8 }}>
+        <Grid size={{ xs: 12 }}>
           <Card sx={{ '&:hover': { transform: 'none' } }}>
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', mb: 1 }}>
@@ -353,8 +371,29 @@ const WorkoutsPage: React.FC = () => {
           </Card>
         </Grid>
 
+        {/* Sessions by day of week */}
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Card sx={{ '&:hover': { transform: 'none' }, height: '100%' }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ mb: 1 }}>Sessions by day of week</Typography>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={liftingByDayOfWeek}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+                  <XAxis dataKey="day" stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: "#8b96a5", fontSize: 11 }} />
+                  <YAxis stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: "#8b96a5", fontSize: 10 }} allowDecimals={false} />
+                  <Tooltip
+                    formatter={(v: number) => [`${v} session${v === 1 ? '' : 's'}`, 'Total']}
+                    contentStyle={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8 }} itemStyle={{ color: "#e6edf3" }} labelStyle={{ color: "#8b96a5", fontWeight: 600 }}
+                  />
+                  <Bar dataKey="sessions" fill="#E57373" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </Grid>
+
         {/* Recent PRs feed */}
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card sx={{ '&:hover': { transform: 'none' }, height: '100%' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
@@ -394,27 +433,33 @@ const WorkoutsPage: React.FC = () => {
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 1, mb: 1.5 }}>
                 <Typography variant="h6">Lift progression</Typography>
-                <Stack direction="row" spacing={0.75} sx={{ flexWrap: 'wrap', gap: 0.75 }}>
-                  {topLifts.map(l => (
-                    <Chip
-                      key={l.exercise}
-                      label={`${l.exercise} (${l.sessions})`}
-                      size="small"
-                      onClick={() => setSelectedExercise(l.exercise)}
-                      sx={{
-                        cursor: 'pointer',
-                        bgcolor: activeExercise === l.exercise ? 'rgba(91,141,239,0.18)' : 'rgba(255,255,255,0.04)',
-                        color: activeExercise === l.exercise ? '#5B8DEF' : 'text.primary',
-                        border: activeExercise === l.exercise ? '1px solid rgba(91,141,239,0.5)' : '1px solid rgba(255,255,255,0.08)',
-                      }}
-                    />
-                  ))}
+                <Stack direction="row" spacing={1.5} alignItems="center" sx={{ flexWrap: 'wrap', gap: 1 }}>
+                  <ToggleButtonGroup size="small" exclusive value={liftView} onChange={(_, v) => v && setLiftView(v)}>
+                    <ToggleButton value="1rm" sx={{ textTransform: 'none', px: 1.25, py: 0.25, fontSize: '0.75rem' }}>Est. 1RM</ToggleButton>
+                    <ToggleButton value="raw" sx={{ textTransform: 'none', px: 1.25, py: 0.25, fontSize: '0.75rem' }}>Weight × Reps</ToggleButton>
+                  </ToggleButtonGroup>
+                  <Stack direction="row" spacing={0.75} sx={{ flexWrap: 'wrap', gap: 0.75 }}>
+                    {topLifts.map(l => (
+                      <Chip
+                        key={l.exercise}
+                        label={`${l.exercise} (${l.sessions})`}
+                        size="small"
+                        onClick={() => setSelectedExercise(l.exercise)}
+                        sx={{
+                          cursor: 'pointer',
+                          bgcolor: activeExercise === l.exercise ? 'rgba(91,141,239,0.18)' : 'rgba(255,255,255,0.04)',
+                          color: activeExercise === l.exercise ? '#5B8DEF' : 'text.primary',
+                          border: activeExercise === l.exercise ? '1px solid rgba(91,141,239,0.5)' : '1px solid rgba(255,255,255,0.08)',
+                        }}
+                      />
+                    ))}
+                  </Stack>
                 </Stack>
               </Box>
 
               {exerciseSessions.length === 0 ? (
                 <Typography variant="body2" color="text.secondary">No sessions logged for this lift yet.</Typography>
-              ) : (
+              ) : liftView === '1rm' ? (
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={exerciseSessions}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
@@ -430,6 +475,27 @@ const WorkoutsPage: React.FC = () => {
                     <Line yAxisId="right" type="monotone" dataKey="volume" name="Volume" stroke="#764ba2" strokeWidth={1.5} dot={false} strokeDasharray="4 4" />
                   </LineChart>
                 </ResponsiveContainer>
+              ) : (
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={exerciseSessions}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                    <XAxis dataKey="date" tickFormatter={v => format(new Date(v + 'T00:00:00'), 'MMM d')} stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: "#8b96a5", fontSize: 10 }} />
+                    <YAxis yAxisId="left"  stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: "#8b96a5", fontSize: 10 }} label={{ value: 'Top weight (lb)', angle: -90, position: 'insideLeft', fill: '#7d8590', fontSize: 11 }} />
+                    <YAxis yAxisId="right" stroke="rgba(255,255,255,0.12)" tickLine={false} tick={{ fill: "#8b96a5", fontSize: 10 }} orientation="right" allowDecimals={false} label={{ value: 'Reps at that weight', angle: 90, position: 'insideRight', fill: '#7d8590', fontSize: 11 }} />
+                    <Tooltip
+                      labelFormatter={v => format(new Date(v + 'T00:00:00'), 'MMM d, yyyy')}
+                      formatter={(v: number, name: string) => [Math.round(v), name]}
+                      contentStyle={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8 }} itemStyle={{ color: "#e6edf3" }} labelStyle={{ color: "#8b96a5", fontWeight: 600 }}
+                    />
+                    <Line yAxisId="left"  type="monotone" dataKey="topWeight" name="Top weight (lb)" stroke="#5B8DEF" strokeWidth={2.5} dot={{ r: 3 }} />
+                    <Line yAxisId="right" type="monotone" dataKey="topWeightReps" name="Reps" stroke="#FF9800" strokeWidth={1.5} dot={{ r: 3 }} strokeDasharray="4 4" />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
+              {liftView === 'raw' && exerciseSessions.length > 0 && (
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                  Top weight = heaviest set that session; reps = reps done at that weight (not total reps).
+                </Typography>
               )}
             </CardContent>
           </Card>

@@ -10,6 +10,44 @@ export interface ExerciseSet {
   is_pr: boolean | null;
 }
 
+/**
+ * Normalize an exercise name so naming drift (capitalization, hyphens,
+ * singular/plural, "DB X" vs "X DB") doesn't fragment one real lift into
+ * several with too few sessions each to chart. This was silently hiding real
+ * progression: e.g. "Hanging knee raises" (14 sets) and "Hanging Knee Raises"
+ * (13 sets) were tracked as two separate exercises, each looking sparser than
+ * the real, combined history.
+ *
+ * Applied at read-time (not a DB migration) so it's non-destructive and
+ * self-heals as new naming variants show up. Returns a canonical DISPLAY
+ * name (title case, singular, DB-prefix-first) — the first-seen casing isn't
+ * preserved, but that's fine since this is purely for charting groupings.
+ */
+export const normalizeExerciseName = (raw: string): string => {
+  let s = raw.trim();
+  // "DB" prefix always first, regardless of where it appeared ("Incline DB
+  // Press" -> "DB Incline Press").
+  const hadDB = /\bDB\b/i.test(s);
+  s = s.replace(/\bDB\b/gi, '').replace(/\s+/g, ' ').trim();
+  // Singularize simple plurals (raises -> raise, curls -> curl, crunches ->
+  // crunch) but leave words that don't actually end in a plural "s" alone
+  // (press already ends "ss" and isn't a plural at all — must not become
+  // "pres"). Checking the FULL matched word, not the captured group with its
+  // trailing s stripped, is what makes the "ss" guard actually work.
+  s = s.replace(/\b(\w+)ches\b/gi, '$1ch')       // crunches -> crunch
+       .replace(/\b(\w+)s\b/gi, (full, word) => (/ss$/i.test(full) ? full : word));
+  // Collapse hyphens to spaces so "Chest-supported" == "Chest supported".
+  s = s.replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
+  // Title-case each word for a consistent canonical display form, keeping
+  // common lifting acronyms fully uppercase (OHP, RDL) instead of "Ohp"/"Rdl".
+  const ACRONYMS = new Set(['OHP', 'RDL', 'RFESS']);
+  s = s.split(' ').map(w => {
+    if (ACRONYMS.has(w.toUpperCase())) return w.toUpperCase();
+    return w.length > 0 ? w[0].toUpperCase() + w.slice(1).toLowerCase() : w;
+  }).join(' ');
+  return hadDB ? `DB ${s}` : s;
+};
+
 export interface SetWithDate extends ExerciseSet {
   date: string; // joined from workouts.date
 }
