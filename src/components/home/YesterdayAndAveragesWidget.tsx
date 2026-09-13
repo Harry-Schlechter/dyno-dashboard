@@ -53,7 +53,7 @@ const YesterdayAndAveragesWidget: React.FC = () => {
     { icon: <SentimentSatisfied sx={{ fontSize: 16, color: '#90CAF9' }} />, label: 'Mood', value: dailyLog?.mood != null ? `${dailyLog.mood}/5` : '—', faded: dailyLog?.mood == null },
   ];
 
-  // Compact 7-day averages (a lighter-weight sibling of VitalsStrip's fuller tiles).
+  // 7-day averages, one per same metric as "Yesterday" — same tile styling below.
   const avgDailySum = (rows: { date: string }[], get: (r: any) => number | null, includeDate?: (d: string) => boolean) => {
     const byDate = new Map<string, number>();
     for (const r of rows as any[]) {
@@ -77,7 +77,37 @@ const YesterdayAndAveragesWidget: React.FC = () => {
 
   const avgSleep = avgSimple(sleep, r => r.hours);
   const avgCalories = avgDailySum(meals, r => r.calories, isCompleteDay);
-  const movementDays = new Set(workouts.filter(w => w.date >= cur7.start && w.date <= cur7.end).map(w => w.date)).size;
+  const avgProtein = avgDailySum(meals, r => r.protein_g, isCompleteDay);
+  const avgMood = avgSimple(dailyLogs, r => r.mood);
+  const workoutsIn7d = workouts.filter(w => w.date >= cur7.start && w.date <= cur7.end).length;
+  const spendIn7d = transactions
+    .filter(t => t.date >= cur7.start && t.date <= cur7.end && isRealSpend(t))
+    .reduce((s, t) => s + Math.abs(t.amount), 0);
+
+  const avgItems = [
+    { icon: <Bedtime sx={{ fontSize: 16, color: '#764ba2' }} />, label: 'Sleep', value: avgSleep != null ? `${avgSleep.toFixed(1)}h` : '—', faded: avgSleep == null },
+    { icon: <FitnessCenter sx={{ fontSize: 16, color: '#FF9800' }} />, label: 'Workouts', value: workoutsIn7d === 0 ? '0' : `${workoutsIn7d}`, faded: workoutsIn7d === 0 },
+    { icon: <EggAlt sx={{ fontSize: 16, color: '#5B8DEF' }} />, label: 'Protein', value: avgProtein != null ? `${Math.round(avgProtein)}g` : '—', faded: avgProtein == null },
+    { icon: <LocalFireDepartment sx={{ fontSize: 16, color: '#F44336' }} />, label: 'Calories', value: avgCalories != null ? Math.round(avgCalories).toLocaleString() : '—', faded: avgCalories == null },
+    { icon: <AttachMoney sx={{ fontSize: 16, color: '#4CAF50' }} />, label: 'Spent', value: spendIn7d === 0 ? '$0' : formatCurrency(spendIn7d), faded: spendIn7d === 0 },
+    { icon: <SentimentSatisfied sx={{ fontSize: 16, color: '#90CAF9' }} />, label: 'Mood', value: avgMood != null ? `${avgMood.toFixed(1)}/5` : '—', faded: avgMood == null },
+  ];
+
+  const ItemGrid: React.FC<{ items: typeof yesterdayItems }> = ({ items }) => (
+    <Grid container spacing={1}>
+      {items.map((item, i) => (
+        <Grid size={4} key={i} sx={{ opacity: item.faded ? 0.45 : 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}>
+            {item.icon}
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.62rem', letterSpacing: 0.3, textTransform: 'uppercase' }}>
+              {item.label}
+            </Typography>
+          </Box>
+          <Typography variant="body2" fontWeight={600} sx={{ mt: 0.15 }}>{item.value}</Typography>
+        </Grid>
+      ))}
+    </Grid>
+  );
 
   return (
     <Card sx={{ '&:hover': { transform: 'none' }, height: '100%' }}>
@@ -85,39 +115,14 @@ const YesterdayAndAveragesWidget: React.FC = () => {
         <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.5, display: 'block', mb: 1 }}>
           Yesterday
         </Typography>
-        <Grid container spacing={1}>
-          {yesterdayItems.map((item, i) => (
-            <Grid size={4} key={i} sx={{ opacity: item.faded ? 0.45 : 1 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}>
-                {item.icon}
-                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.62rem', letterSpacing: 0.3, textTransform: 'uppercase' }}>
-                  {item.label}
-                </Typography>
-              </Box>
-              <Typography variant="body2" fontWeight={600} sx={{ mt: 0.15 }}>{item.value}</Typography>
-            </Grid>
-          ))}
-        </Grid>
+        <ItemGrid items={yesterdayItems} />
 
         <Divider sx={{ my: 1.5, borderColor: 'rgba(255,255,255,0.06)' }} />
 
-        <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.5, display: 'block', mb: 0.75 }}>
+        <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.5, display: 'block', mb: 1 }}>
           7-day average
         </Typography>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Box>
-            <Typography variant="caption" color="text.secondary">Sleep</Typography>
-            <Typography variant="body2" fontWeight={600}>{avgSleep != null ? `${avgSleep.toFixed(1)}h` : '—'}</Typography>
-          </Box>
-          <Box>
-            <Typography variant="caption" color="text.secondary">Calories</Typography>
-            <Typography variant="body2" fontWeight={600}>{avgCalories != null ? Math.round(avgCalories).toLocaleString() : '—'}</Typography>
-          </Box>
-          <Box>
-            <Typography variant="caption" color="text.secondary">Movement</Typography>
-            <Typography variant="body2" fontWeight={600}>{movementDays}/7d</Typography>
-          </Box>
-        </Box>
+        <ItemGrid items={avgItems} />
       </CardContent>
     </Card>
   );
