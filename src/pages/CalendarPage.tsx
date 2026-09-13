@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import {
   Box, Typography, Card, CardContent, IconButton, Stack, Drawer, Chip, Divider,
-  Tooltip, Dialog, DialogContent,
+  Dialog, DialogContent,
 } from '@mui/material';
 import {
   ChevronLeft, ChevronRight, Close, FitnessCenter, Restaurant, Bedtime, AttachMoney,
@@ -78,7 +78,7 @@ const CalendarPage: React.FC = () => {
   const { data: events, loading: eventsLoading, error: eventsError } = useSupabase<CalendarEvent>({
     table: 'calendar_events',
     order: { column: 'start_time', ascending: true },
-    filters: { start_time: { gte: monthStartStr } },
+    filters: { start_time: { gte: monthStartStr, lte: monthEndStr } },
     limit: 500,
   });
   const calendarTableMissing = !!eventsError && (eventsError.toLowerCase().includes('not find') || eventsError.toLowerCase().includes('schema cache'));

@@ -4,13 +4,12 @@ import {
   IconButton, Tooltip, Collapse, Divider, Skeleton, Alert, Tabs, Tab,
 } from '@mui/material';
 import {
-  AutoAwesomeRounded, ExpandMore, ExpandLess, ThumbUpOutlined, ThumbDownOutlined,
+  AutoAwesomeRounded, ThumbUpOutlined, ThumbDownOutlined,
   CloseOutlined, StarBorderOutlined, StarRounded, InfoOutlined,
   PushPinOutlined, CheckCircleOutline, Today, CalendarViewWeek, Map as MapIcon,
 } from '@mui/icons-material';
 import { formatDistanceToNow } from 'date-fns';
 import { useObservations, Observation, ObservationKind, ObservationSeverity, FeedbackReaction } from '../hooks/useObservations';
-import { useForecast } from '../hooks/useForecast';
 import { useRecommendations } from '../hooks/useRecommendations';
 import ForecastPanel from '../components/patterns/ForecastPanel';
 import RecommendationsList from '../components/patterns/RecommendationsList';
@@ -235,7 +234,6 @@ const PatternsPage: React.FC = () => {
   const [kindFilter, setKindFilter] = useState<ObservationKind | null>(null);
 
   const { data, loading, react, dismiss, acknowledge, setPinned, error } = useObservations({ limit: 200 });
-  const forecast = useForecast();
   const { latestByHorizon } = useRecommendations();
 
   const filtered = useMemo(() => {

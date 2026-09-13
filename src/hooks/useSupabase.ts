@@ -50,10 +50,9 @@ export function useSupabase<T = any>({
       // Apply additional filters
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') {
-          if (typeof value === 'object' && 'gte' in value) {
-            query = query.gte(key, value.gte);
-          } else if (typeof value === 'object' && 'lte' in value) {
-            query = query.lte(key, value.lte);
+          if (typeof value === 'object' && ('gte' in value || 'lte' in value)) {
+            if ('gte' in value) query = query.gte(key, value.gte);
+            if ('lte' in value) query = query.lte(key, value.lte);
           } else {
             query = query.eq(key, value);
           }
