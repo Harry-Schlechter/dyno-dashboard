@@ -77,8 +77,16 @@ How it works (`incremental.js`, shared by all three scripts):
 - Big catalog: ~750 pending offers on first run (includes lots of small local/regional merchants, especially Dining — Harry's call: activate everything anyway since it's free, no per-offer cost to having an unused small local deal active).
 - One card only (Custom Cash) — no account switcher.
 
-### Capital One — not yet built
-Investigate the same way: `open-browser.js` first, see if Chase's approach (Playwright bundled Chromium) works or if it needs the real-Chrome-secondary-profile workaround like Amex/Citi. Find the real "all offers" view before assuming a homepage widget shows everything (Chase's carousel undercounted badly). Check whether `page.evaluate()` works or is blocked before writing selectors. Check whether the offers list actually virtualizes on scroll or just lazy-loads once (see Citi notes) before writing scroll-handling logic — get this wrong and a later capture pass can silently miss most of the list.
+### Capital One — done (2026-09), CAPTURE ONLY, no activation
+- Browser: real Chrome secondary profile (same as Amex/Citi), no login block. `page.evaluate()` works.
+- The real offers UI lives on a SEPARATE domain, `capitaloneoffers.com` (reached via "View all offers" from the main `myaccounts.capitalone.com` dashboard) — not on the bank's own domain like the other 3.
+- **Fundamentally different offer model from every other bank:** the vast majority (~4,600 of ~4,700+) are "Online" offers that need NO activation at all — they're auto-tracked whenever Harry shops with the card, there's nothing to click. Only a small subset (~35) are "In-Store" (or "In-Store & Online"/"In-Store & In-App" hybrid) and DO need a real activation click.
+- **In-store activation is capped at 3 CONCURRENT slots, 7-day expiry each** (confirmed live: activating a 3rd blocked further activation with "3 of 3 activated" until one expired) — with ~35 in-store offers available and only 3 usable at a time, scripted "activate everything" doesn't make sense the way it did for the other 3 banks. Harry's call: **capture-only, no activation attempted** — `capone-capture.js` just records everything (flagging in-store ones as "needs manual activation, max 3 at a time") and leaves actual activation to Harry.
+- Merchant names are NOT in `document.body.innerText` at all — they're rendered as `<img alt="Merchant">` logos, not text. Every merchant extraction reads `img[alt]` inside each `.standard-tile`, never `.textContent` for the name itself.
+- Catalog does NOT infinite-scroll on its own — it's paginated behind a "View More Offers" button that must be clicked repeatedly (confirmed: 47 clicks to exhaust it, 149 → 4,719 tiles). Scroll alone never loads past the first page — a real gotcha, easy to assume it's scroll-based like Citi and undercount badly.
+- The SAME catalog shows regardless of which card is selected in the "Apply my offer to" dropdown (Venture X vs. the former Discover it, now Capital One-branded) — confirmed identical merchant order on both. Only capture once, not once per card.
+- No expiration date shown anywhere (grid or detail modal) for Online offers — only In-Store ones show a real date. With ~4,700 offers this size, per-offer expiry isn't practical to capture anyway; incremental re-runs use a flat 30-day trust window from capture date instead of per-offer dates like the other 3 banks.
+- Watch for `Bonus`/`In-App` badge text leaking into parsed reward strings if a tile has a "BONUS" ribbon or is type "In-Store & In-App" (a third type variant beyond "Online"/"In-Store"/"In-Store & Online") — caught and fixed during the first real run.
 
 ## Files
 
@@ -88,4 +96,5 @@ Investigate the same way: `open-browser.js` first, see if Chase's approach (Play
 - `chase-activate-and-capture.js` — activates + captures full detail for both Chase cards in one run (Playwright's bundled browser).
 - `amex-activate-and-capture.js` — activates + captures for Amex Gold in one run (real Chrome required, see notes above).
 - `citi-activate-and-capture.js` — activates + captures for Citi Custom Cash in one run (real Chrome, same profile as Amex).
+- `capone-capture.js` — captures (no activation) for Capital One (Venture X + the former Discover it card, same catalog for both). Real Chrome, same profile as Amex/Citi.
 - `offers/` — output data, committed to the repo (also deployed to the VPS).
