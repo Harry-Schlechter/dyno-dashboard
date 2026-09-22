@@ -12,18 +12,29 @@ Automates "click every card-linked offer" across Harry's credit cards, so financ
 
 2. **Run the bank's script**, e.g.:
    ```
-   node chase-activate-all.js       # activates every pending offer, both Chase cards
-   node chase-capture-offers.js     # captures ALL offers (merchant/reward/spend-min/expiry) into offers/
-   node amex-activate-and-capture.js  # does both steps in one for Amex
-   node citi-activate-and-capture.js  # does both steps in one for Citi
+   node chase-activate-and-capture.js  # both Chase cards
+   node amex-activate-and-capture.js   # Amex Gold
+   node citi-activate-and-capture.js   # Citi Custom Cash
    ```
-   Each script prints progress and writes results to `offers/current.md` (or `offers/<bank>-current.md`) + a dated file under `offers/archive/`, then auto-deploys those same files to the VPS via `scp` so financial-advisor can read them.
+   Each script prints progress and writes results to `offers/current.md` (Chase) or `offers/<bank>-current.md` (Amex/Citi) + a dated file under `offers/archive/`, then auto-deploys those same files to the VPS via `scp` so financial-advisor can read them.
 
 3. **Commit the `offers/` folder** so the repo has a browsable history too (duplicated with the VPS copy on purpose — VPS copy is what the agent actually reads day-to-day, repo copy is for browsing/version history).
 
-Total time once logged in: Chase ~7 min (100-200+ offers, one page load per offer), Amex ~2 min (in-place activation, no navigation), Citi ~15-20 min first run if there's a large pending backlog (700+ offers seen on first run; a monthly incremental run should be much faster since most stay activated). Budget ~20-30 min per bank including login on a first run.
+**First run per bank is slow (7-30 min depending on catalog size); every run after that is fast (seconds to ~1 min) if not much changed.** See "Incremental capture" below.
 
 **Design principle for any new bank script (learned the hard way on Citi): always ACTIVATE and CAPTURE in the SAME pass, offer by offer — never activate everything first and come back to scrape it in a second pass.** A separate later capture pass reads a different DOM/page state than existed during activation and can silently miss offers (Citi went from capturing 278/330 with two passes to a clean single flat read once combined). Read + record each offer's data at the exact moment you're already looking at it to activate it.
+
+## Incremental capture (added 2026-09, all three banks)
+
+Re-running a script every month used to mean fully re-scanning and re-processing EVERY offer, even ones with weeks left that obviously hadn't changed (confirmed: a full Citi run took ~20-30 min even when almost nothing was actually new). Harry's call: **trust the prior capture completely for anything not yet expired — don't even re-check it on the live page, just carry the row forward unchanged.** Only spend time on genuinely new offers.
+
+How it works (`incremental.js`, shared by all three scripts):
+- Every captured record carries either an absolute `expires` date (Amex) or a `capturedOn` date + relative `daysLeft` (Chase, Citi) — enough to compute "is this still valid" without looking at the site again.
+- At the start of a run, the script loads the most recent `offers/archive/<bank->YYYY-MM.json`, splits records into still-valid (carried forward untouched) vs. expired/unknown (needs a fresh look).
+- The live-page pass only activates/captures merchants NOT already in the valid set.
+- Final `current.md`/archive = carried-forward records + this run's newly-captured ones, merged.
+
+**Real bug hit building this, worth remembering:** Chase's activation loop only ever scans the "Not added" filtered view (to find things to activate) — once everything valid gets skipped there (correctly), a run can find 0 things to do and, if the script ONLY wrote what that pass found, would report almost nothing, silently wiping out hundreds of already-known-good offers from `current.md`. Real data loss happened this way on the first incremental run (217 offers → 1) before being caught and fixed. **The fix: every bank's script needs a second pass over the "Added to card" / already-active view too, not just "what's new" — otherwise "nothing new happened" gets mistaken for "there's nothing here."** Chase's second pass still visits each offer's detail page for full spend-min/cap data (Harry's call: keep full detail, don't trade it for speed) but skips anything already in the valid set, so it's still fast once the baseline is established.
 
 ## Where the data ends up
 
@@ -36,9 +47,9 @@ Total time once logged in: Chase ~7 min (100-200+ offers, one page load per offe
 ### Chase — done (2026-09)
 - Browser: Playwright's bundled Chromium is fine (`open-browser.js`, default).
 - Gotcha: the featured carousel on the offers HOME page is NOT the full offer list — it showed 0 pending when 104 were actually pending. Use "See all offers" → filter "Not added" to get the real list.
-- Activation = click the tile → navigates to a detail page → shows "Added to card" → `page.goBack()` returns to the same filtered grid.
-- Two accounts (Sapphire Preferred, Freedom Unlimited) — switch via `[data-testid="user-account-option-N"]` in the account dropdown.
-- Spend minimum / cash-back cap only exist on the detail page, not the grid — `chase-capture-offers.js` visits every offer's detail page a second time to get these (slower, ~7 min for ~200 offers).
+- Activation = click the tile → navigates to a detail page → shows "Added to card" → `page.goBack()` returns to the same filtered grid. Spend minimum / cash-back cap only exist on this detail page, not the grid tile.
+- Two accounts (Sapphire Preferred, Freedom Unlimited) — switch via `[data-testid="user-account-option-N"]` in the account dropdown. Each account is processed fully (both passes) before switching to the next.
+- `chase-activate-and-capture.js` runs TWO passes per account: Pass 1 filters "Not added" and activates anything genuinely new (full detail captured from the same detail-page visit the click requires); Pass 2 filters "Added to card" and visits each NOT-already-known offer's detail page too, to fully capture things that were already active before this run (this pass is what a two-pass-vs-one-pass bug was found and fixed in -- see "Incremental capture" above). Both passes skip anything already valid from a prior capture.
 
 ### American Express Gold — done (2026-09)
 - Browser: **Playwright's bundled Chromium is BLOCKED at login** (403 + CORS failure before credentials are even checked — bot fingerprinting on the browser binary itself, not behavior). Also, modern Chrome (136+) blocks CDP attachment to your real DEFAULT profile as a security measure, so you can't use your everyday Chrome either.
@@ -73,8 +84,8 @@ Investigate the same way: `open-browser.js` first, see if Chase's approach (Play
 
 - `open-browser.js` — launches a persistent-profile Chromium window (Playwright's bundled browser). Works for Chase; blocked by Amex/likely other banks with bot detection.
 - `inspect.js` — dumps clickable elements or a selector's HTML from whatever page is open, for exploring a new bank's DOM structure.
-- `chase-activate-all.js` — activates every pending offer across both Chase cards.
-- `chase-capture-offers.js` — captures full offer detail (spend min, cap, expiry) for both Chase cards, builds `offers/current.md`, deploys to VPS.
-- `amex-activate-and-capture.js` — does both activation and capture for Amex in one run (real Chrome required, see notes above).
-- `citi-activate-and-capture.js` — does both activation and capture for Citi in one run (real Chrome, same profile as Amex).
+- `incremental.js` — shared helpers (`loadPriorState`, `findMostRecentArchive`, `isStillValid`) used by all three bank scripts for the skip-already-known logic. Read this before touching any bank script's incremental behavior.
+- `chase-activate-and-capture.js` — activates + captures full detail for both Chase cards in one run (Playwright's bundled browser).
+- `amex-activate-and-capture.js` — activates + captures for Amex Gold in one run (real Chrome required, see notes above).
+- `citi-activate-and-capture.js` — activates + captures for Citi Custom Cash in one run (real Chrome, same profile as Amex).
 - `offers/` — output data, committed to the repo (also deployed to the VPS).

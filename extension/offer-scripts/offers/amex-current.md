@@ -66,7 +66,6 @@
 | Little Caesars | Earn 15% back on a single purchase, up to a total of $5 | 9/30/26 |
 | Fubo | Spend $65 or more, earn $30 back, up to 3 times (total of $90). | 11/7/26 |
 | Dropbox | Earn 40% back on purchases, up to a total of $30 | 11/25/26 |
-| AllTrails.com - Trail Guides & Maps | Earn 50% back on purchases, up to a total of $40 | 9/22/26 |
 | Ancestry - Family History | Earn 20% back on purchases, up to a total of $100 | 12/29/26 |
 | Alle.com - Aesthetics Treatment Gift Cards & Loyalty Program | Spend $300 or more, earn $50 back | 12/31/26 |
 | Paper Source - Stationery & Gifts | Spend $35 or more, earn $5 back | 9/30/26 |
@@ -102,3 +101,96 @@
 | Replit - Build Apps, Sites, Slides, Videos with AI | Spend $75 or more, earn $25 back, up to 3 times (total of $75). | 1/22/27 |
 | Made In - Cookware & Kitchenware | Spend $300 or more, earn $60 back | 10/13/26 |
 | Wyndham Hotels & Resorts - Select Luxury Destinations | Spend $500 or more, earn $100 back | 10/27/26 |
+| Aldo | Earn 10% back on a single purchase, up to a total of $14 | 10/30/26 |
+| Salt & Stone | Earn 15% back on a single purchase, up to a total of $15 | 10/6/26 |
+| Hallmark | Earn 15% back on a single purchase, up to a total of $12 | 10/6/26 |
+| Home Chef | Spend $55 or more, earn $15 back, up to 2 times (total of $30). | 9/28/26 |
+| Nuts.com | Spend $50 or more, earn $10 back, up to 2 times (total of $20). | 10/15/26 |
+| STARZ | Spend $3 or more, earn $3 back | 10/23/26 |
+| Five Napkin Burger | Spend $50 or more, earn $10 back | 12/16/26 |
+| Simply Blooms | Spend $50 or more, earn $25 back | 12/19/26 |
+| David's Bridal | Earn 10% back on a single purchase, up to a total of $30 | 9/30/26 |
+| ContactsDirect.com | Spend $100 or more, earn $20 back | 9/30/26 |
+| TodayTix.com - Tickets to Broadway, Off-Broadway, and more | Spend $150 or more, earn $25 back | 11/1/26 |
+| HEYDUDE.com - Shoes, slip-ons, and casual footwear | Spend $75 or more, earn $15 back | 12/20/26 |
+| Rent the Runway - Designer Clothing Subscription | Spend $99 or more, earn $25 back | 9/25/26 |
+| Criquet Shirts - Men's Fashion | Spend $135 or more, earn $35 back | 11/18/26 |
+| elfcosmetics.com | Earn 7% back on purchases, up to a total of $250 | 11/2/26 |
+| CMX Cinemas - Includes CinéBistro & Luxury Cinemas | Spend $25 or more, earn $5 back | 11/13/26 |
+| VistaPrint - Online Printing Service | Spend $100 or more, earn $25 back | 9/30/26 |
+| L'Express | Spend $75 or more, earn $15 back | 12/16/26 |
+| DISH Network | Spend $94.99 or more, earn $80 back | 12/11/26 |
+| LegalZoom - Legal Services | Earn 20% back on a single purchase, up to a total of $100 | 11/30/26 |
+| HISTORY Vault - HISTORY Channel Series & Documentaries | Spend $5.99 or more, earn $5.99 back, up to 3 times (total of $17.97). | 10/15/26 |
+| Bouqs Flower Subscription | Spend $40 or more, earn $20 back | 10/15/26 |
+| Carhartt | Earn 4% back on purchases, up to a total of $250 | 11/2/26 |
+| LensDirect | Spend $200 or more, earn $40 back | 12/18/26 |
+| rugsusa.com | Earn 4% back on purchases, up to a total of $250 | 11/2/26 |
+| Wild Alaskan Company - Wild-Caught Seafood | Spend $125 or more, earn $30 back, up to 2 times (total of $60). | 10/18/26 |
+| Sempre Oggi | Spend $250 or more, earn $50 back | 12/16/26 |
+| The Economist - Annual Subscription | Spend $120 or more, earn $50 back | 9/28/26 |
+| Function Health - Access to 160+ lab tests & MRI | Spend $365 or more, earn $100 back | 11/16/26 |
+| Ugg | Earn 4% back on purchases, up to a total of $250 | 11/2/26 |
+| Seed Health - Daily Synbiotic, Multi-Vitamin, and More | Spend $35 or more, earn $10 back | 12/2/26 |
+| Acadia | Spend $150 or more, earn $30 back | 12/16/26 |
+| MANSCAPED - Men's Grooming | Spend $75 or more, earn $15 back | 11/16/26 |
+| prettylitter.com | Earn 4% back on purchases, up to a total of $250 | 11/2/26 |
+| Inday - Indian American Cuisine | Spend $25 or more, earn $5 back, up to 3 times (total of $15). | 1/31/27 |
+| eltamd.com | Earn 9% back on purchases, up to a total of $250 | 11/2/26 |
+| FWRD.com - Luxury Apparel | Spend $400 or more, earn $80 back | 11/14/26 |
+| Misfits Market | Spend $5 or more, earn $5 back | 9/29/26 |
+| Lids.com - Hats, Snapbacks, Fitted Hats, Caps, and more | Spend $75 or more, earn $15 back, up to 2 times (total of $30). | 1/1/27 |
+| stevemadden.com | Earn 4% back on purchases, up to a total of $250 | 10/1/26 |
+| Negativeunderwear.com - Intimates and Loungewear | Spend $100 or more, earn $35 back | 10/21/26 |
+| MegaSeats.com - Live Music, Sports & Events | Spend $250 or more, earn $50 back, up to 2 times (total of $100). | 11/19/26 |
+| Hollywood Feed | Spend $60 or more, earn $20 back | 12/31/26 |
+| Xero.com - Accounting, Payroll, & Payments for Small Business | Earn 75% back on purchases, up to a total of $200 | 11/10/26 |
+| kuhl.com | Earn 4% back on purchases, up to a total of $250 | 11/2/26 |
+| Cafe D'Alsace | Spend $100 or more, earn $20 back | 12/16/26 |
+| Burberry | Spend $600 or more, earn $120 back | 10/16/26 |
+| AG1 - Daily Foundational Nutrition supplement | Spend $75 or more, earn $25 back | 9/30/26 |
+| Raymour & Flanigan | Spend $1,000 or more, earn $150 back | 9/30/26 |
+| Hanna Andersson - Children's Pajamas & Clothing | Spend $150 or more, earn $20 back | 10/12/26 |
+| Simplehuman | Spend $250 or more, earn $50 back | 10/25/26 |
+| The Bowery Presents Music Clubs – Select Venues | Earn 10% back on qualifying food and beverage purchases, up to a total of $20 | 1/4/27 |
+| Wildgrain - Artisanal Baked Goods Delivery | Spend $65 or more, earn $20 back, up to 2 times (total of $40). | 11/30/26 |
+| kiwico.com | Earn 4% back on purchases, up to a total of $250 | 11/2/26 |
+| Forkful | Earn 30% back on a single purchase, up to a total of $50 | 10/7/26 |
+| Pimsleur – L | earn Language OnlineSpend $20 or more, earn $20 back, up to 2 times (total of $40). | 9/28/26 |
+| MoMA Design Store - Gifts, Home Decor, Tech and Toys | Spend $150 or more, earn $15 back | 11/9/26 |
+| Aura.com - Online Safety | Spend $100 or more, earn $80 back | 2/19/27 |
+| Faherty | Earn 4% back on purchases, up to a total of $250 | 11/2/26 |
+| Ashley HomeStore | Earn 4% back on purchases, up to a total of $250 | 10/1/26 |
+| Briggs-Riley.com – Travelware | Spend $300 or more, earn $60 back | 2/28/27 |
+| La Prairie Switzerland - Luxury Skincare | Spend $300 or more, earn 7,500 Membership Rewards® points | 10/31/26 |
+| Arlo - Smart Home Security Cameras and Doorbells | Spend $50 or more, earn $10 back | 11/27/26 |
+| SimpliSafe - Home Security | Spend $250 or more, earn $75 back | 12/4/26 |
+| Squarespace.com | Spend $50 or more, earn $10 back | 12/31/26 |
+| The Palm | Spend $150 or more, earn $50 back, up to 2 times (total of $100). | 11/5/26 |
+| BARK | Spend $20 or more, earn $10 back | 10/15/26 |
+| Udemy - Online Courses for Skills, Careers & AI | Spend $35 or more, earn $15 back, up to 2 times (total of $30). | 10/25/26 |
+| Dutch Pet Telehealth | Spend $90 or more, earn $10 back | 10/10/26 |
+| Rugs.com | Earn 10% back on a single purchase, up to a total of $54 | 10/3/26 |
+| ZWILLING.com - Knives, Cookware, and Kitchen Essentials | Spend $200 or more, earn $40 back, up to 2 times (total of $80). | 9/30/26 |
+| NHL Shop - NHL Apparel, Hockey Gear, Gifts, and more | Spend $100 or more, earn $20 back, up to 2 times (total of $40). | 3/12/27 |
+| J. Alexander's - Bookable on Resy (MD & NJ locations) | Spend $100 or more, earn $20 back, up to 2 times (total of $40). | 9/30/26 |
+| LampsPlus.com - Home Lighting | Spend $350 or more, earn $50 back | 11/2/26 |
+| Minor Hotels Group – Select Global Brands & Destinations | Spend $300 or more, earn $100 back | 12/27/26 |
+| murad.com | Earn 4% back on purchases, up to a total of $250 | 11/2/26 |
+| StumptownCoffee.com | Spend $30 or more, earn $6 back, up to 2 times (total of $12). | 1/15/27 |
+| dollartree.com | Earn 4% back on purchases, up to a total of $250 | 11/2/26 |
+| RA Sushi - Bar & Restaurant | Spend $75 or more, earn $15 back, up to 4 times (total of $60). | 10/11/26 |
+| Glowbar - 30-minute Custom Facials | Spend $95 or more, earn $19 back | 12/1/26 |
+| cecred.com | Earn 4% back on purchases, up to a total of $250 | 11/2/26 |
+| eddiebauer.com | Earn 4% back on purchases, up to a total of $250 | 11/2/26 |
+| pandora.net | Earn 4% back on purchases, up to a total of $250 | 10/1/26 |
+| Mizzen+Main | Spend $150 or more, earn $50 back, up to 2 times (total of $100). | 9/30/26 |
+| Alastin Skincare | Spend $150 or more, earn $30 back | 10/31/26 |
+| Bark | Spend $20 or more, earn $10 back, up to 2 times (total of $20). | 10/2/26 |
+| Hungryroot | Spend $99 or more, earn $10 back | 10/8/26 |
+| oribe.com | Earn 4% back on purchases, up to a total of $250 | 11/2/26 |
+| Dutch - 24/7 Virtual Vet Care | Spend $90 or more, earn $25 back | 12/18/26 |
+| Blueprint by Bryan Johnson - Nutrition & Supplements | Spend $100 or more, earn $30 back | 11/9/26 |
+| olaplex.com | Earn 4% back on purchases, up to a total of $250 | 11/2/26 |
+| PAKA Apparel | Earn 15% back on a single purchase, up to a total of $45 | 9/30/26 |
+| zadig-et-voltaire.com | Earn 7% back on purchases, up to a total of $250 | 11/2/26 |

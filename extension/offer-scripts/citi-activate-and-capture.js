@@ -46,11 +46,21 @@
 //    local restaurants which i dont give a shit about" -- decided to
 //    activate everything anyway since activation is free).
 //
+// INCREMENTAL RUNS (added after the first full run): any merchant already
+// in last month's archive with days-left still positive is trusted
+// completely and carried forward WITHOUT re-checking the live page at all
+// (Harry's explicit call -- an offer showing "39d left" this month is
+// obviously still there next month; re-verifying everything every run is
+// what made the first Citi run take ~20-30 min). Only genuinely new
+// pending offers get clicked. See incremental.js for the shared logic
+// used by every bank's script.
+//
 // Usage: node citi-activate-and-capture.js [maxToActivate]
 
 const { chromium } = require('playwright');
 const fs = require('fs');
 const { execFileSync } = require('child_process');
+const { todayIso, loadPriorState, findMostRecentArchive } = require('./incremental');
 
 const VPS_HOST = 'dyno';
 const VPS_OFFERS_DIR = '/root/openclaw/personas/financial-advisor/offers';
@@ -140,33 +150,42 @@ async function forceFullLoad(page) {
   await page.waitForTimeout(500);
 }
 
-async function runCombinedPass(page) {
+async function runCombinedPass(page, skipMerchants) {
   const byMerchant = new Map(); // final captured data, de-duped
+  const today = todayIso();
   let activatedCount = 0;
+  let skippedCount = 0;
   let failedCount = 0;
   let consecutiveFailures = 0;
 
   await forceFullLoad(page);
 
   const { pending, activated } = await readVisibleOffers(page);
-  log(`Found ${activated.length} already-activated, ${pending.length} pending (raw counts, pre-de-dupe).`);
+  log(`Found ${activated.length} already-activated, ${pending.length} pending on the page (raw counts, pre-de-dupe). ${skipMerchants.size} known-valid from last capture, skipping those entirely.`);
 
-  // Record already-activated offers as-is.
+  // Record already-activated offers seen on the page, but SKIP re-recording
+  // ones we already trust from last run (skipMerchants) -- those get
+  // carried forward untouched by the caller, using the ORIGINAL capturedOn
+  // date, not today's, so their real remaining days-left stays accurate.
   for (const entry of activated) {
+    if (skipMerchants.has(entry.merchant)) { skippedCount++; continue; }
     const existing = byMerchant.get(entry.merchant);
-    if (!existing || (!existing.reward && entry.reward)) byMerchant.set(entry.merchant, { ...entry, status: 'activated' });
+    if (!existing || (!existing.reward && entry.reward)) {
+      byMerchant.set(entry.merchant, { ...entry, status: 'activated', capturedOn: today });
+    }
   }
 
-  // Activate + record every pending offer. scrollIntoViewIfNeeded per-click
-  // handles bringing each one into view -- the whole list is already in
-  // the DOM (see forceFullLoad), this is purely positional, not a
-  // data-loading concern.
+  // Activate + record every pending offer NOT already known-valid.
+  // scrollIntoViewIfNeeded per-click handles bringing each one into view --
+  // the whole list is already in the DOM (see forceFullLoad), this is
+  // purely positional, not a data-loading concern.
   const seenPending = new Set();
   for (const offer of pending) {
     if (activatedCount + failedCount >= MAX) break;
     if (seenPending.has(offer.ariaLabel)) continue; // same offer duplicated (Featured strip + main list)
     seenPending.add(offer.ariaLabel);
-    if (byMerchant.has(offer.merchant) && byMerchant.get(offer.merchant).status === 'activated') continue; // already done
+    if (skipMerchants.has(offer.merchant)) { skippedCount++; continue; } // trusted from last run, don't touch
+    if (byMerchant.has(offer.merchant) && byMerchant.get(offer.merchant).status === 'activated') continue; // already done this run
     try {
       const btn = page.locator(`[aria-label="${offer.ariaLabel}"]`).first();
       await btn.scrollIntoViewIfNeeded({ timeout: 5000 });
@@ -178,7 +197,7 @@ async function runCombinedPass(page) {
         await closeBtn.waitFor({ state: 'hidden', timeout: 4000 }).catch(async () => { await page.keyboard.press('Escape').catch(() => {}); });
       }
       await page.waitForTimeout(250);
-      byMerchant.set(offer.merchant, { merchant: offer.merchant, reward: offer.reward, daysLeft: offer.daysLeft, category: offer.category, status: 'activated' });
+      byMerchant.set(offer.merchant, { merchant: offer.merchant, reward: offer.reward, daysLeft: offer.daysLeft, category: offer.category, status: 'activated', capturedOn: today });
       activatedCount++;
       consecutiveFailures = 0;
       if (activatedCount % 10 === 0) log(`  ...${activatedCount} activated so far`);
@@ -189,7 +208,7 @@ async function runCombinedPass(page) {
       await page.keyboard.press('Escape').catch(() => {});
       await page.locator('[aria-label="Close"]').first().click({ timeout: 3000 }).catch(() => {});
       if (!byMerchant.has(offer.merchant)) {
-        byMerchant.set(offer.merchant, { merchant: offer.merchant, reward: offer.reward, daysLeft: offer.daysLeft, category: offer.category, status: 'activation_failed' });
+        byMerchant.set(offer.merchant, { merchant: offer.merchant, reward: offer.reward, daysLeft: offer.daysLeft, category: offer.category, status: 'activation_failed', capturedOn: today });
       }
       if (consecutiveFailures >= 5) {
         log('  5 consecutive failures -- stopping activation, will still finish capturing.');
@@ -198,7 +217,7 @@ async function runCombinedPass(page) {
     }
   }
 
-  log(`Activated ${activatedCount} offers this run (${failedCount} activation failures). Captured ${byMerchant.size} unique merchants total.`);
+  log(`Activated ${activatedCount} NEW offers this run (${failedCount} failures, ${skippedCount} skipped as already-known-valid). ${byMerchant.size} newly-captured merchants.`);
   return Array.from(byMerchant.values());
 }
 
@@ -243,14 +262,21 @@ function buildMarkdown(offers, capturedDate) {
   const context = browser.contexts()[0];
   const page = context.pages()[context.pages().length - 1];
 
+  const OFFERS_DIR = __dirname + '/offers';
+  const priorArchive = findMostRecentArchive(OFFERS_DIR, 'citi');
+  const { valid: carriedForward } = loadPriorState(priorArchive);
+  const skipMerchants = new Set(carriedForward.map(r => r.merchant));
   log('=== Citi Custom Cash ===');
-  const offers = await runCombinedPass(page);
+  if (priorArchive) log(`Loaded prior state from ${priorArchive}: ${carriedForward.length} still-valid merchants carried forward untouched.`);
+  else log('No prior archive found -- full first run.');
+
+  const newOffers = await runCombinedPass(page, skipMerchants);
+  const offers = [...carriedForward, ...newOffers];
 
   const capturedDate = new Date().toISOString().slice(0, 10);
   const yearMonth = capturedDate.slice(0, 7);
   const md = buildMarkdown(offers, capturedDate);
 
-  const OFFERS_DIR = __dirname + '/offers';
   fs.mkdirSync(OFFERS_DIR + '/archive', { recursive: true });
   fs.writeFileSync(OFFERS_DIR + '/citi-current.md', md);
   fs.writeFileSync(`${OFFERS_DIR}/archive/citi-${yearMonth}.md`, md);

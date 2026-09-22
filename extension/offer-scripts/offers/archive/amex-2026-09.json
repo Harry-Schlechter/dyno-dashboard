@@ -290,11 +290,6 @@
     "expires": "11/25/26"
   },
   {
-    "merchant": "AllTrails.com - Trail Guides & Maps",
-    "reward": "Earn 50% back on purchases, up to a total of $40",
-    "expires": "9/22/26"
-  },
-  {
     "merchant": "Ancestry - Family History",
     "reward": "Earn 20% back on purchases, up to a total of $100",
     "expires": "12/29/26"
@@ -468,5 +463,470 @@
     "merchant": "Wyndham Hotels & Resorts - Select Luxury Destinations",
     "reward": "Spend $500 or more, earn $100 back",
     "expires": "10/27/26"
+  },
+  {
+    "merchant": "Aldo",
+    "reward": "Earn 10% back on a single purchase, up to a total of $14",
+    "expires": "10/30/26"
+  },
+  {
+    "merchant": "Salt & Stone",
+    "reward": "Earn 15% back on a single purchase, up to a total of $15",
+    "expires": "10/6/26"
+  },
+  {
+    "merchant": "Hallmark",
+    "reward": "Earn 15% back on a single purchase, up to a total of $12",
+    "expires": "10/6/26"
+  },
+  {
+    "merchant": "Home Chef",
+    "reward": "Spend $55 or more, earn $15 back, up to 2 times (total of $30).",
+    "expires": "9/28/26"
+  },
+  {
+    "merchant": "Nuts.com",
+    "reward": "Spend $50 or more, earn $10 back, up to 2 times (total of $20).",
+    "expires": "10/15/26"
+  },
+  {
+    "merchant": "STARZ",
+    "reward": "Spend $3 or more, earn $3 back",
+    "expires": "10/23/26"
+  },
+  {
+    "merchant": "Five Napkin Burger",
+    "reward": "Spend $50 or more, earn $10 back",
+    "expires": "12/16/26"
+  },
+  {
+    "merchant": "Simply Blooms",
+    "reward": "Spend $50 or more, earn $25 back",
+    "expires": "12/19/26"
+  },
+  {
+    "merchant": "David's Bridal",
+    "reward": "Earn 10% back on a single purchase, up to a total of $30",
+    "expires": "9/30/26"
+  },
+  {
+    "merchant": "ContactsDirect.com",
+    "reward": "Spend $100 or more, earn $20 back",
+    "expires": "9/30/26"
+  },
+  {
+    "merchant": "TodayTix.com - Tickets to Broadway, Off-Broadway, and more",
+    "reward": "Spend $150 or more, earn $25 back",
+    "expires": "11/1/26"
+  },
+  {
+    "merchant": "HEYDUDE.com - Shoes, slip-ons, and casual footwear",
+    "reward": "Spend $75 or more, earn $15 back",
+    "expires": "12/20/26"
+  },
+  {
+    "merchant": "Rent the Runway - Designer Clothing Subscription",
+    "reward": "Spend $99 or more, earn $25 back",
+    "expires": "9/25/26"
+  },
+  {
+    "merchant": "Criquet Shirts - Men's Fashion",
+    "reward": "Spend $135 or more, earn $35 back",
+    "expires": "11/18/26"
+  },
+  {
+    "merchant": "elfcosmetics.com",
+    "reward": "Earn 7% back on purchases, up to a total of $250",
+    "expires": "11/2/26"
+  },
+  {
+    "merchant": "CMX Cinemas - Includes CinéBistro & Luxury Cinemas",
+    "reward": "Spend $25 or more, earn $5 back",
+    "expires": "11/13/26"
+  },
+  {
+    "merchant": "VistaPrint - Online Printing Service",
+    "reward": "Spend $100 or more, earn $25 back",
+    "expires": "9/30/26"
+  },
+  {
+    "merchant": "L'Express",
+    "reward": "Spend $75 or more, earn $15 back",
+    "expires": "12/16/26"
+  },
+  {
+    "merchant": "DISH Network",
+    "reward": "Spend $94.99 or more, earn $80 back",
+    "expires": "12/11/26"
+  },
+  {
+    "merchant": "LegalZoom - Legal Services",
+    "reward": "Earn 20% back on a single purchase, up to a total of $100",
+    "expires": "11/30/26"
+  },
+  {
+    "merchant": "HISTORY Vault - HISTORY Channel Series & Documentaries",
+    "reward": "Spend $5.99 or more, earn $5.99 back, up to 3 times (total of $17.97).",
+    "expires": "10/15/26"
+  },
+  {
+    "merchant": "Bouqs Flower Subscription",
+    "reward": "Spend $40 or more, earn $20 back",
+    "expires": "10/15/26"
+  },
+  {
+    "merchant": "Carhartt",
+    "reward": "Earn 4% back on purchases, up to a total of $250",
+    "expires": "11/2/26"
+  },
+  {
+    "merchant": "LensDirect",
+    "reward": "Spend $200 or more, earn $40 back",
+    "expires": "12/18/26"
+  },
+  {
+    "merchant": "rugsusa.com",
+    "reward": "Earn 4% back on purchases, up to a total of $250",
+    "expires": "11/2/26"
+  },
+  {
+    "merchant": "Wild Alaskan Company - Wild-Caught Seafood",
+    "reward": "Spend $125 or more, earn $30 back, up to 2 times (total of $60).",
+    "expires": "10/18/26"
+  },
+  {
+    "merchant": "Sempre Oggi",
+    "reward": "Spend $250 or more, earn $50 back",
+    "expires": "12/16/26"
+  },
+  {
+    "merchant": "The Economist - Annual Subscription",
+    "reward": "Spend $120 or more, earn $50 back",
+    "expires": "9/28/26"
+  },
+  {
+    "merchant": "Function Health - Access to 160+ lab tests & MRI",
+    "reward": "Spend $365 or more, earn $100 back",
+    "expires": "11/16/26"
+  },
+  {
+    "merchant": "Ugg",
+    "reward": "Earn 4% back on purchases, up to a total of $250",
+    "expires": "11/2/26"
+  },
+  {
+    "merchant": "Seed Health - Daily Synbiotic, Multi-Vitamin, and More",
+    "reward": "Spend $35 or more, earn $10 back",
+    "expires": "12/2/26"
+  },
+  {
+    "merchant": "Acadia",
+    "reward": "Spend $150 or more, earn $30 back",
+    "expires": "12/16/26"
+  },
+  {
+    "merchant": "MANSCAPED - Men's Grooming",
+    "reward": "Spend $75 or more, earn $15 back",
+    "expires": "11/16/26"
+  },
+  {
+    "merchant": "prettylitter.com",
+    "reward": "Earn 4% back on purchases, up to a total of $250",
+    "expires": "11/2/26"
+  },
+  {
+    "merchant": "Inday - Indian American Cuisine",
+    "reward": "Spend $25 or more, earn $5 back, up to 3 times (total of $15).",
+    "expires": "1/31/27"
+  },
+  {
+    "merchant": "eltamd.com",
+    "reward": "Earn 9% back on purchases, up to a total of $250",
+    "expires": "11/2/26"
+  },
+  {
+    "merchant": "FWRD.com - Luxury Apparel",
+    "reward": "Spend $400 or more, earn $80 back",
+    "expires": "11/14/26"
+  },
+  {
+    "merchant": "Misfits Market",
+    "reward": "Spend $5 or more, earn $5 back",
+    "expires": "9/29/26"
+  },
+  {
+    "merchant": "Lids.com - Hats, Snapbacks, Fitted Hats, Caps, and more",
+    "reward": "Spend $75 or more, earn $15 back, up to 2 times (total of $30).",
+    "expires": "1/1/27"
+  },
+  {
+    "merchant": "stevemadden.com",
+    "reward": "Earn 4% back on purchases, up to a total of $250",
+    "expires": "10/1/26"
+  },
+  {
+    "merchant": "Negativeunderwear.com - Intimates and Loungewear",
+    "reward": "Spend $100 or more, earn $35 back",
+    "expires": "10/21/26"
+  },
+  {
+    "merchant": "MegaSeats.com - Live Music, Sports & Events",
+    "reward": "Spend $250 or more, earn $50 back, up to 2 times (total of $100).",
+    "expires": "11/19/26"
+  },
+  {
+    "merchant": "Hollywood Feed",
+    "reward": "Spend $60 or more, earn $20 back",
+    "expires": "12/31/26"
+  },
+  {
+    "merchant": "Xero.com - Accounting, Payroll, & Payments for Small Business",
+    "reward": "Earn 75% back on purchases, up to a total of $200",
+    "expires": "11/10/26"
+  },
+  {
+    "merchant": "kuhl.com",
+    "reward": "Earn 4% back on purchases, up to a total of $250",
+    "expires": "11/2/26"
+  },
+  {
+    "merchant": "Cafe D'Alsace",
+    "reward": "Spend $100 or more, earn $20 back",
+    "expires": "12/16/26"
+  },
+  {
+    "merchant": "Burberry",
+    "reward": "Spend $600 or more, earn $120 back",
+    "expires": "10/16/26"
+  },
+  {
+    "merchant": "AG1 - Daily Foundational Nutrition supplement",
+    "reward": "Spend $75 or more, earn $25 back",
+    "expires": "9/30/26"
+  },
+  {
+    "merchant": "Raymour & Flanigan",
+    "reward": "Spend $1,000 or more, earn $150 back",
+    "expires": "9/30/26"
+  },
+  {
+    "merchant": "Hanna Andersson - Children's Pajamas & Clothing",
+    "reward": "Spend $150 or more, earn $20 back",
+    "expires": "10/12/26"
+  },
+  {
+    "merchant": "Simplehuman",
+    "reward": "Spend $250 or more, earn $50 back",
+    "expires": "10/25/26"
+  },
+  {
+    "merchant": "The Bowery Presents Music Clubs – Select Venues",
+    "reward": "Earn 10% back on qualifying food and beverage purchases, up to a total of $20",
+    "expires": "1/4/27"
+  },
+  {
+    "merchant": "Wildgrain - Artisanal Baked Goods Delivery",
+    "reward": "Spend $65 or more, earn $20 back, up to 2 times (total of $40).",
+    "expires": "11/30/26"
+  },
+  {
+    "merchant": "kiwico.com",
+    "reward": "Earn 4% back on purchases, up to a total of $250",
+    "expires": "11/2/26"
+  },
+  {
+    "merchant": "Forkful",
+    "reward": "Earn 30% back on a single purchase, up to a total of $50",
+    "expires": "10/7/26"
+  },
+  {
+    "merchant": "Pimsleur – L",
+    "reward": "earn Language OnlineSpend $20 or more, earn $20 back, up to 2 times (total of $40).",
+    "expires": "9/28/26"
+  },
+  {
+    "merchant": "MoMA Design Store - Gifts, Home Decor, Tech and Toys",
+    "reward": "Spend $150 or more, earn $15 back",
+    "expires": "11/9/26"
+  },
+  {
+    "merchant": "Aura.com - Online Safety",
+    "reward": "Spend $100 or more, earn $80 back",
+    "expires": "2/19/27"
+  },
+  {
+    "merchant": "Faherty",
+    "reward": "Earn 4% back on purchases, up to a total of $250",
+    "expires": "11/2/26"
+  },
+  {
+    "merchant": "Ashley HomeStore",
+    "reward": "Earn 4% back on purchases, up to a total of $250",
+    "expires": "10/1/26"
+  },
+  {
+    "merchant": "Briggs-Riley.com – Travelware",
+    "reward": "Spend $300 or more, earn $60 back",
+    "expires": "2/28/27"
+  },
+  {
+    "merchant": "La Prairie Switzerland - Luxury Skincare",
+    "reward": "Spend $300 or more, earn 7,500 Membership Rewards® points",
+    "expires": "10/31/26"
+  },
+  {
+    "merchant": "Arlo - Smart Home Security Cameras and Doorbells",
+    "reward": "Spend $50 or more, earn $10 back",
+    "expires": "11/27/26"
+  },
+  {
+    "merchant": "SimpliSafe - Home Security",
+    "reward": "Spend $250 or more, earn $75 back",
+    "expires": "12/4/26"
+  },
+  {
+    "merchant": "Squarespace.com",
+    "reward": "Spend $50 or more, earn $10 back",
+    "expires": "12/31/26"
+  },
+  {
+    "merchant": "The Palm",
+    "reward": "Spend $150 or more, earn $50 back, up to 2 times (total of $100).",
+    "expires": "11/5/26"
+  },
+  {
+    "merchant": "BARK",
+    "reward": "Spend $20 or more, earn $10 back",
+    "expires": "10/15/26"
+  },
+  {
+    "merchant": "Udemy - Online Courses for Skills, Careers & AI",
+    "reward": "Spend $35 or more, earn $15 back, up to 2 times (total of $30).",
+    "expires": "10/25/26"
+  },
+  {
+    "merchant": "Dutch Pet Telehealth",
+    "reward": "Spend $90 or more, earn $10 back",
+    "expires": "10/10/26"
+  },
+  {
+    "merchant": "Rugs.com",
+    "reward": "Earn 10% back on a single purchase, up to a total of $54",
+    "expires": "10/3/26"
+  },
+  {
+    "merchant": "ZWILLING.com - Knives, Cookware, and Kitchen Essentials",
+    "reward": "Spend $200 or more, earn $40 back, up to 2 times (total of $80).",
+    "expires": "9/30/26"
+  },
+  {
+    "merchant": "NHL Shop - NHL Apparel, Hockey Gear, Gifts, and more",
+    "reward": "Spend $100 or more, earn $20 back, up to 2 times (total of $40).",
+    "expires": "3/12/27"
+  },
+  {
+    "merchant": "J. Alexander's - Bookable on Resy (MD & NJ locations)",
+    "reward": "Spend $100 or more, earn $20 back, up to 2 times (total of $40).",
+    "expires": "9/30/26"
+  },
+  {
+    "merchant": "LampsPlus.com - Home Lighting",
+    "reward": "Spend $350 or more, earn $50 back",
+    "expires": "11/2/26"
+  },
+  {
+    "merchant": "Minor Hotels Group – Select Global Brands & Destinations",
+    "reward": "Spend $300 or more, earn $100 back",
+    "expires": "12/27/26"
+  },
+  {
+    "merchant": "murad.com",
+    "reward": "Earn 4% back on purchases, up to a total of $250",
+    "expires": "11/2/26"
+  },
+  {
+    "merchant": "StumptownCoffee.com",
+    "reward": "Spend $30 or more, earn $6 back, up to 2 times (total of $12).",
+    "expires": "1/15/27"
+  },
+  {
+    "merchant": "dollartree.com",
+    "reward": "Earn 4% back on purchases, up to a total of $250",
+    "expires": "11/2/26"
+  },
+  {
+    "merchant": "RA Sushi - Bar & Restaurant",
+    "reward": "Spend $75 or more, earn $15 back, up to 4 times (total of $60).",
+    "expires": "10/11/26"
+  },
+  {
+    "merchant": "Glowbar - 30-minute Custom Facials",
+    "reward": "Spend $95 or more, earn $19 back",
+    "expires": "12/1/26"
+  },
+  {
+    "merchant": "cecred.com",
+    "reward": "Earn 4% back on purchases, up to a total of $250",
+    "expires": "11/2/26"
+  },
+  {
+    "merchant": "eddiebauer.com",
+    "reward": "Earn 4% back on purchases, up to a total of $250",
+    "expires": "11/2/26"
+  },
+  {
+    "merchant": "pandora.net",
+    "reward": "Earn 4% back on purchases, up to a total of $250",
+    "expires": "10/1/26"
+  },
+  {
+    "merchant": "Mizzen+Main",
+    "reward": "Spend $150 or more, earn $50 back, up to 2 times (total of $100).",
+    "expires": "9/30/26"
+  },
+  {
+    "merchant": "Alastin Skincare",
+    "reward": "Spend $150 or more, earn $30 back",
+    "expires": "10/31/26"
+  },
+  {
+    "merchant": "Bark",
+    "reward": "Spend $20 or more, earn $10 back, up to 2 times (total of $20).",
+    "expires": "10/2/26"
+  },
+  {
+    "merchant": "Hungryroot",
+    "reward": "Spend $99 or more, earn $10 back",
+    "expires": "10/8/26"
+  },
+  {
+    "merchant": "oribe.com",
+    "reward": "Earn 4% back on purchases, up to a total of $250",
+    "expires": "11/2/26"
+  },
+  {
+    "merchant": "Dutch - 24/7 Virtual Vet Care",
+    "reward": "Spend $90 or more, earn $25 back",
+    "expires": "12/18/26"
+  },
+  {
+    "merchant": "Blueprint by Bryan Johnson - Nutrition & Supplements",
+    "reward": "Spend $100 or more, earn $30 back",
+    "expires": "11/9/26"
+  },
+  {
+    "merchant": "olaplex.com",
+    "reward": "Earn 4% back on purchases, up to a total of $250",
+    "expires": "11/2/26"
+  },
+  {
+    "merchant": "PAKA Apparel",
+    "reward": "Earn 15% back on a single purchase, up to a total of $45",
+    "expires": "9/30/26"
+  },
+  {
+    "merchant": "zadig-et-voltaire.com",
+    "reward": "Earn 7% back on purchases, up to a total of $250",
+    "expires": "11/2/26"
   }
 ]

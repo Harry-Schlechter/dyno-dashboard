@@ -4,1938 +4,2215 @@
     "reward": "$30 Back",
     "daysLeft": 39,
     "category": "Travel",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "BP",
     "reward": "$5 Back",
     "daysLeft": 8,
     "category": "Travel",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Uber",
     "reward": "$10 Back",
     "daysLeft": 39,
     "category": "Travel",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Lyft",
     "reward": "10% Back",
     "daysLeft": 8,
     "category": "Travel",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Marriott Bonvoy",
     "reward": "$30 Back",
     "daysLeft": 8,
     "category": "Travel",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "JetBlue",
     "reward": "$50 Back",
     "daysLeft": 8,
     "category": "Travel",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Turo",
     "reward": "$25 Back",
     "daysLeft": 8,
     "category": "Travel",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Luggage Forward",
     "reward": "$48 Back",
     "daysLeft": 8,
     "category": "Travel",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "LugLess",
     "reward": "$19 Back",
     "daysLeft": 8,
     "category": "Travel",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Uber Eats",
     "reward": "$10 Back",
     "daysLeft": 39,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Burger King",
     "reward": "$5 Back",
     "daysLeft": 39,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Blue Apron",
     "reward": "$24 Back",
     "daysLeft": 8,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "JJ Coopers",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Dallas BBQ- Rego Park",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Matsuya Quality Japanese Eats",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Grotta Di Fuoco",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "57s All American Grill",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Gyro Grill",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Tandoor",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Legendary Bar & Grill",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "BGF Bobby Q's",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Golden Terrace Restaurant & Banquet Hall",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Corona Pizza",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Across Broadway Cafe",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Trattoria 35",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Antonio's Pizzeria",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Mala Madre Taqueria",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Tropical Restaurant",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Lime and Salt Lounge",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Rivers Cafe USA",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Jassi's Fine Indian Cuisine",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "The Irish Pub",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Taco Azul",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Queens Bagels & Delicatessen",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Previti Pizza & Papazzio Dining",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "SOYSAUCE Kosher Chinese Takeout",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Pantano's Gourmet",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Tropical Smoothie Cafe",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Pot To Plate",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Sweet Charlie Ice Cream Store",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Castle Chicken",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Whiskey's",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Paraiso Colombiano",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Kennedy Chicken",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Viva Tulum",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "LEAF Bar & Lounge",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Taco Express Mexican Grill",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Blue Tijuana & Barzola",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Brews Brothers Grille",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Curry Days",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Jalapeno Grill Inc",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "El Vicentino Restaurant 2",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Rego Park Cafe",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Hook & Reel Cajun Seafood & Bar",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Sammy's Fish Box",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Prime Met Steakhouse",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "El Viejo Yayo",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Vincent's Restaurant & Pizzeria",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Dallas BBQ-Erksine",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Meet Bar & Izakaya",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Sammy's Smokehouse BBQ",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Cast Iron Pot",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Arepalicious Express",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Michaleen Flynn's Public House",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Glazed & Grill",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Tap Room - Garden City",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Sobol",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Greek Kitchen - College Point",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Brendos",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Antonio's Pizeria II",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Mama Rosa - Great Neck",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Alba's Pizzeria",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Brooklyn Dumpling Shop",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Haejang",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Le Botaniste",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Golden K Burgers",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Hook & Reel",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Flavor fusion",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Papazzio Restaurant & Caterering",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Dakota's on the Cove",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Kathis & Kababs",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Livorno Ristorante",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "London Lennie's",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "True Food Kitchen",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Gregorys Coffee",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "East Coast Street Taco",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Travel 43 Restaurant",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Dan Romano Pizza",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "LaRosa's Restaurant & Pizzeria",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Dilbar Indian Cuisine",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "DaVinci's Restaurant & Lounge",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Viaggio Italian Chop House",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Rego Slice Pizzeria",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Ondas by Fuego",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "D'Cocco's",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Villaggio Bistro",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Cafe Sport",
     "reward": "5% Back",
     "daysLeft": 45,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Patrizia's of Maspeth",
     "reward": "5% Back",
     "daysLeft": 66,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Pappa Gallo",
     "reward": "5% Back",
     "daysLeft": 66,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Spices Negril Restaurant and Lounge",
     "reward": "5% Back",
     "daysLeft": 15,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "London Lennies",
     "reward": "5% Back",
     "daysLeft": 15,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Off The Brook",
     "reward": "5% Back",
     "daysLeft": 8,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Salvaje Social Club NYC",
     "reward": "5% Back",
     "daysLeft": 2,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Fulton Fish Market",
     "reward": "$20 Back",
     "daysLeft": 39,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Splendid Spoon",
     "reward": "10% Back",
     "daysLeft": 39,
     "category": "Dining",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Macy's",
     "reward": "$5 Back",
     "daysLeft": 8,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "The Home Depot",
     "reward": "$5 Back",
     "daysLeft": 8,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Dollar General",
     "reward": "10% Back",
     "daysLeft": 8,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Walmart",
     "reward": "$5 Back",
     "daysLeft": 8,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Etsy",
     "reward": "$5 Back",
     "daysLeft": 39,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Microsoft Store",
     "reward": "20% Back",
     "daysLeft": 8,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Lids",
     "reward": "4% Back",
     "daysLeft": 8,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Fanatics",
     "reward": "5% Back",
     "daysLeft": 39,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Zenni Optical",
     "reward": "7% Back",
     "daysLeft": 8,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Big 5 Sporting Goods",
     "reward": "15% Back",
     "daysLeft": 39,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Calvin Klein",
     "reward": "$15 Back",
     "daysLeft": 8,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "HP",
     "reward": "$20 Back",
     "daysLeft": 8,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Stitch Fix",
     "reward": "$20 Back",
     "daysLeft": 8,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Dropbox",
     "reward": "$30 Back",
     "daysLeft": 39,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Nuts.com",
     "reward": "$10 Back",
     "daysLeft": 39,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Ariat",
     "reward": "5% Back",
     "daysLeft": 39,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Wine Insiders",
     "reward": "$20 Back",
     "daysLeft": 39,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Scout & Cellar",
     "reward": "$20 Back",
     "daysLeft": 39,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Splash",
     "reward": "$20 Back",
     "daysLeft": 39,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Winc",
     "reward": "$20 Back",
     "daysLeft": 39,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Wine Access",
     "reward": "$20 Back",
     "daysLeft": 39,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Meta",
     "reward": "$30 Back",
     "daysLeft": 69,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Tire Agent",
     "reward": "15% Back",
     "daysLeft": 8,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Baskits",
     "reward": "5% Back",
     "daysLeft": 69,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Worldwide Golf Shops",
     "reward": "$25 Back",
     "daysLeft": 39,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Lensdirect",
     "reward": "$25 Back",
     "daysLeft": 8,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Simply Blooms",
     "reward": "18% Back",
     "daysLeft": 39,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Sam's Club Membership",
     "reward": "30% Back",
     "daysLeft": 8,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Serta",
     "reward": "8% Back",
     "daysLeft": 8,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Tuft & Needle",
     "reward": "8% Back",
     "daysLeft": 8,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "BloomsyBox",
     "reward": "$15 Back",
     "daysLeft": 8,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "All-Clad",
     "reward": "10% Back",
     "daysLeft": 8,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Sony Electronics",
     "reward": "15% Back",
     "daysLeft": 8,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "benbridge.com",
     "reward": "2% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "kuhl.com",
     "reward": "3% Back",
     "daysLeft": 41,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "fragrancenet.com",
     "reward": "3% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "fitzandfloyd.com",
     "reward": "5% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "vincecamuto.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Theory Outlet",
     "reward": "3% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "obagi.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "t3micro.com",
     "reward": "6% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "oribe.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Champion.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "lifeextension.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "stevemadden.com",
     "reward": "4% Back",
     "daysLeft": 10,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "philosophy.com",
     "reward": "7% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "maccosmetics.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "macduggal.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "mikasa.com",
     "reward": "5% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "milly.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "origins.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "pfaltzgraff.com",
     "reward": "5% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "robertgraham.us",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "roddandgunn.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "stanley1913.com",
     "reward": "3% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "theouai.com",
     "reward": "4% Back",
     "daysLeft": 41,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "thisisneeded.com",
     "reward": "5% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "vince.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "whiteandwarren.com",
     "reward": "4% Back",
     "daysLeft": 41,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "naturepedic.com",
     "reward": "5% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "kyliecosmetics.com",
     "reward": "5% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Lindt Chocolate",
     "reward": "5% Back",
     "daysLeft": 10,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Roller Rabbit",
     "reward": "5% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "The Paper Store",
     "reward": "5% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "luxuryescapes.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "easyplumbing.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "grownalchemist.com",
     "reward": "6% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "e-file.com",
     "reward": "18% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "dvf.com",
     "reward": "5% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "fleurdumal.com",
     "reward": "5% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "clinique.com",
     "reward": "5% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Jo Malone",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Barbeques Galore",
     "reward": "5% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "bumbleandbumble.com",
     "reward": "5% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "hukgear.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "upway.co",
     "reward": "7% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "boscovs.com",
     "reward": "3% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "campchef.com",
     "reward": "3% Back",
     "daysLeft": 10,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "cosori.com",
     "reward": "9% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "davines.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "frame-store.com",
     "reward": "3% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "GhostBed.com",
     "reward": "3% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "asics.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "bakedbymelissa.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Carhartt",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "dkhardware.com",
     "reward": "4% Back",
     "daysLeft": 10,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "everythingbutwater.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "eventticketscenter.com",
     "reward": "6% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "airdoctorpro.com",
     "reward": "5% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "aquatruwater.com",
     "reward": "5% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "murad.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "ubeauty.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "ancestry.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "reviveskincare.com",
     "reward": "6% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "elfcosmetics.com",
     "reward": "6% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "kobo.com",
     "reward": "6% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "pura.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "vionicshoes.com",
     "reward": "3% Back",
     "daysLeft": 77,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "sling.com",
     "reward": "18% Back",
     "daysLeft": 10,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "alphaindustries.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "dridriss.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "silkandsnow.com",
     "reward": "5% Back",
     "daysLeft": 10,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Young Chefs Academy",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "labseries.com",
     "reward": "5% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "francesvalentine.com",
     "reward": "4% Back",
     "daysLeft": 10,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "printfresh.com",
     "reward": "4% Back",
     "daysLeft": 42,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "lovetodream.com",
     "reward": "4% Back",
     "daysLeft": 41,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "totalwireless.com",
     "reward": "9% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "linensandhutch.com",
     "reward": "9% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "tonybianco.com",
     "reward": "4% Back",
     "daysLeft": 41,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "xeroshoes.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "miraclebrand.co",
     "reward": "4% Back",
     "daysLeft": 25,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Mattress Warehouse",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "sweat.com",
     "reward": "18% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "nativepath.com",
     "reward": "4% Back",
     "daysLeft": 42,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "mansurgavriel.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "zadig-et-voltaire.com",
     "reward": "5% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "olaplex.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "kiwico.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "borghese.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "silverjeans.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "penhaligons.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "greatvaluevacations.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "bedheadpjs.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "eileenwest.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "bryte.com",
     "reward": "6% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "forwellness.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "drunkelephant.com",
     "reward": "6% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "narscosmetics.com",
     "reward": "6% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "coyuchi.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "sunnylife.com",
     "reward": "6% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "cuddlduds.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "truenaturemeats.com",
     "reward": "18% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "forkfulmeals.com",
     "reward": "12% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "lemystere.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "wearewild.com",
     "reward": "4% Back",
     "daysLeft": 41,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "skinmedica.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "cumuluscoffee.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "senville.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "drschollsshoes.com",
     "reward": "5% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Gorjana",
     "reward": "4% Back",
     "daysLeft": 10,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "netgear.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "plunge.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "keepersecurity.com",
     "reward": "6% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "jbl.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "drsturm.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "accessories.ford.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "frankandeileen.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "korres.com",
     "reward": "6% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "drbrandtskincare.com",
     "reward": "6% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "bobbibrowncosmetics.com",
     "reward": "5% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "superfeet.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "colleenrothschild.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "allenedmonds.com",
     "reward": "5% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "naturalizer.com",
     "reward": "5% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "livemomentous.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Johnson Fitness & Wellness",
     "reward": "3% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Uncharted",
     "reward": "5% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "openfarmpet.com",
     "reward": "4% Back",
     "daysLeft": 47,
     "category": "Shopping",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "ESPN",
     "reward": "15% Back",
     "daysLeft": 8,
     "category": "Entertainment",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Busch Gardens",
     "reward": "5% Back",
     "daysLeft": 8,
     "category": "Entertainment",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "SeaWorld",
     "reward": "5% Back",
     "daysLeft": 8,
     "category": "Entertainment",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Discovery Cove",
     "reward": "5% Back",
     "daysLeft": 8,
     "category": "Entertainment",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Empire State Building",
     "reward": "$10 Back",
     "daysLeft": 39,
     "category": "Entertainment",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Aquatica",
     "reward": "5% Back",
     "daysLeft": 8,
     "category": "Entertainment",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Sesame Place",
     "reward": "5% Back",
     "daysLeft": 8,
     "category": "Entertainment",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Outside+",
     "reward": "10% Back",
     "daysLeft": 39,
     "category": "Entertainment",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Yahoo Mail",
     "reward": "50% Back",
     "daysLeft": 8,
     "category": "Entertainment",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Mosaic Foods",
     "reward": "10% Back",
     "daysLeft": 8,
     "category": "Health & Wellness",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "NOBS",
     "reward": "20% Back",
     "daysLeft": 39,
     "category": "Health & Wellness",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Kate's Real Food",
     "reward": "25% Back",
     "daysLeft": 39,
     "category": "Health & Wellness",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   },
   {
     "merchant": "Trust & Will",
     "reward": "$40 Back",
     "daysLeft": 8,
     "category": "Other",
-    "status": "activated"
+    "status": "activated",
+    "capturedOn": "2026-09-22"
   }
 ]
