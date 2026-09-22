@@ -35,7 +35,11 @@ const YesterdayAndAveragesWidget: React.FC = () => {
   });
   const { transactions } = useFinances();
 
-  const sleepRow = sleep.find(s => s.date === yesterday);
+  // Sleep rows are dated by WAKE-UP morning, not the night they cover, so
+  // "yesterday" (calendar date) is actually the night before last -- use the
+  // single most recent row instead (sleep is already ordered date desc) so
+  // this genuinely shows last night, not a day behind.
+  const sleepRow = sleep[0];
   const workoutsYesterday = workouts.filter(w => w.date === yesterday);
   const mealsYesterday = meals.filter(m => m.date === yesterday);
   const calories = mealsYesterday.reduce((s, m) => s + (m.calories ?? 0), 0);
@@ -45,7 +49,7 @@ const YesterdayAndAveragesWidget: React.FC = () => {
   const txnCount = transactions.filter(t => t.date === yesterday && isRealSpend(t)).length;
 
   const yesterdayItems = [
-    { icon: <Bedtime sx={{ fontSize: 16, color: '#764ba2' }} />, label: 'Sleep', value: sleepRow?.hours != null ? `${sleepRow.hours.toFixed(1)}h` : '—', faded: sleepRow?.hours == null },
+    { icon: <Bedtime sx={{ fontSize: 16, color: '#764ba2' }} />, label: 'Last night', value: sleepRow?.hours != null ? `${sleepRow.hours.toFixed(1)}h` : '—', faded: sleepRow?.hours == null },
     { icon: <FitnessCenter sx={{ fontSize: 16, color: '#FF9800' }} />, label: 'Workouts', value: workoutsYesterday.length === 0 ? '0' : `${workoutsYesterday.length}`, faded: workoutsYesterday.length === 0 },
     { icon: <EggAlt sx={{ fontSize: 16, color: '#5B8DEF' }} />, label: 'Protein', value: mealsYesterday.length === 0 ? '—' : `${Math.round(protein)}g`, faded: mealsYesterday.length === 0 },
     { icon: <LocalFireDepartment sx={{ fontSize: 16, color: '#F44336' }} />, label: 'Calories', value: mealsYesterday.length === 0 ? '—' : `${Math.round(calories)}`, faded: mealsYesterday.length === 0 },

@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent, Typography, Box, Chip, Tooltip, LinearProgress } from '@mui/material';
 import { TrendingUp, TrendingDown } from '@mui/icons-material';
 import { LineChart, Line, ResponsiveContainer, YAxis } from 'recharts';
+import { isToday, differenceInCalendarDays } from 'date-fns';
 import { useRecovery } from '../../hooks/useRecovery';
 
 // Whoop-style recovery ring: a single 0-100 score with band color, the top
@@ -51,17 +52,29 @@ const RecoveryRing: React.FC = () => {
 
   const drivers = (latest.drivers ?? []).slice(0, 3);
   const bandLabel = latest.band === 'green' ? 'Recovered' : latest.band === 'yellow' ? 'Moderate' : 'Strained';
+  const daysOld = differenceInCalendarDays(new Date(), new Date(latest.date));
+  const stale = !isToday(new Date(latest.date));
 
   return (
     <Card sx={{ height: '100%' }}>
       <CardContent>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
           <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.5 }}>Recovery</Typography>
-          {latest.confidence !== 'high' && (
-            <Tooltip title="Score confidence is limited by missing overnight data. Wear the watch nightly to sharpen it.">
-              <Chip size="small" label={`${latest.confidence} confidence`} sx={{ height: 18, fontSize: '0.6rem' }} />
-            </Tooltip>
-          )}
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
+            {stale && (
+              <Tooltip title="No new score has computed since this date — today's overnight data may not have synced in time for the recovery job.">
+                <Chip
+                  size="small" label={daysOld === 1 ? 'from yesterday' : `${daysOld}d old`}
+                  sx={{ height: 18, fontSize: '0.6rem', bgcolor: 'rgba(255,152,0,0.15)', color: '#FF9800' }}
+                />
+              </Tooltip>
+            )}
+            {latest.confidence !== 'high' && (
+              <Tooltip title="Score confidence is limited by missing overnight data. Wear the watch nightly to sharpen it.">
+                <Chip size="small" label={`${latest.confidence} confidence`} sx={{ height: 18, fontSize: '0.6rem' }} />
+              </Tooltip>
+            )}
+          </Box>
         </Box>
 
         <Box sx={{ display: 'flex', gap: 2.5, alignItems: 'center', flexWrap: 'wrap' }}>
