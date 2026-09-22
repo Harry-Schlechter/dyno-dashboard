@@ -4,9 +4,14 @@
 
 **This file is fully REPLACED each capture run** — it always reflects only what's active right now.
 
-**IMPORTANT — no activation was performed on this bank.** Online offers (the vast majority) need NO activation at all — they're auto-tracked whenever Harry shops with the card, nothing to do. In-Store offers DO need activation, but Capital One caps activation at only 3 CONCURRENT slots (7-day expiry each) — with ~36 in-store offers available and only 3 usable at once, this can't be scripted the way the other banks' full-activation was. When Harry mentions a purchase matching an In-Store offer below, tell him it's available but needs manual activation on capitaloneoffers.com first (check how many of his 3 slots are free).
+**IMPORTANT — no activation was performed on this bank.** These two offer types work completely differently and need different instructions — get this wrong and Harry loses the cash back with no way to fix it after the fact:
 
-**How to use this:** when Harry mentions a purchase or asks what to buy, check this table for the merchant first. For Online offers, tell him the cash-back rate — no action needed, it's automatic. For In-Store offers, tell him he'd need to activate it manually first (limited to 3 at a time).
+- **Online offers (the vast majority, ~4,600+):** NOT automatic just because he pays with the card. Capital One tracks these via its own shopping portal — **he must click "Shop Online" / go through capitaloneoffers.com (or the Capital One Shopping browser extension, if installed) to start that merchant's visit, THEN complete the purchase.** Buying directly on the merchant's own site/app without going through the portal link will NOT earn the cash back, even on the exact same card. When Harry says he's about to buy something from a merchant on this list, tell him: "Go through the Capital One Offers portal first, don't just buy direct."
+- **In-Store offers (~36):** need the offer **pre-activated on capitaloneoffers.com BEFORE he walks in and pays** — there's no portal step at checkout, it's activate-ahead-of-time instead. Capital One caps this at only 3 concurrent activations (7-day expiry each), so before telling him to activate one, a live check of capitaloneoffers.com is needed to confirm a slot is actually free — this file doesn't track his currently-used slots.
+
+**How to use this:** when Harry mentions a purchase or asks what to buy, check this table for the merchant first.
+- Found in **Online offers** → tell him the cash-back rate AND that he needs to start the purchase via the Capital One Offers portal, not buy direct.
+- Found in **In-Store offers** → tell him the cash-back rate AND that he needs to activate it on capitaloneoffers.com before he goes, and to check he has a free slot (max 3 at once).
 
 
 ### In-Store offers — need manual activation, max 3 concurrent (36)
