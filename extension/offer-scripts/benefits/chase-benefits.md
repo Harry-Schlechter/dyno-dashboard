@@ -40,7 +40,7 @@ this looks stale.
 **Membership perks:**
 - Apple TV subscription — $156/yr value — **Activation required, not activated**
 - Complimentary DashPass membership — **Activated**
-- DoorDash non-restaurant promo — **Activated**
+- DoorDash non-restaurant promo — **Activated, Harry actively uses this for ~$10/mo (~$120/yr) on grocery orders through DoorDash** — this is the real dollar-value benefit, separate from the free DashPass subscription itself
 
 **Other card benefits:**
 - Transfer points (to the 13 partners below)

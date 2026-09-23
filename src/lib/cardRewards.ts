@@ -122,6 +122,7 @@ export const CARD_BENEFIT_VALUE: Record<CardId, BenefitValueLine[]> = {
   chase_sapphire_preferred: [
     { label: '$100 annual Chase Travel hotel credit', annualValue: 100, status: 'automatic' },
     { label: 'Global Entry/TSA PreCheck credit ($120 every 4yrs)', annualValue: 30, status: 'automatic' },
+    { label: 'DoorDash non-restaurant promo (grocery orders, ~$10/mo)', annualValue: 120, status: 'enrolled' }, // Harry confirmed active use 2026-09-22
     { label: 'Apple TV subscription ($156/yr value)', annualValue: 0, status: 'unenrolled' }, // NOT counted — not activated
     { label: '10% anniversary points bonus', annualValue: 0, status: 'automatic' }, // depends on points earned, not a flat credit
   ],
@@ -130,6 +131,7 @@ export const CARD_BENEFIT_VALUE: Record<CardId, BenefitValueLine[]> = {
     { label: '$100 Resy Credit', annualValue: 100, status: 'enrolled' },
     { label: '$84 Dunkin Credit', annualValue: 0, status: 'enrolled' }, // enrolled but $0 used YTD — counted as unrealized, see UI note
     { label: '$120 Dining Credit', annualValue: 0, status: 'enrolled' }, // enrolled but usage not confirmed — conservative $0
+    { label: '$120 Uber Cash on Gold', annualValue: 120, status: 'enrolled' }, // Harry confirmed 2026-09-22 he's actively using this — the capture read "Enroll" on the page but that was stale/wrong
   ],
   citi_custom_cash: [],
   capone_venture_x: [

@@ -33,7 +33,7 @@ this column, it's accurate as of the capture date above.
 | $120 Dining Credit | Dining | **Enrolled** | Up to $10/mo at participating partners (up to $120/yr) |
 | Link Your Resy Profile | Dining | Linked | View Resy reservations/recs when logged in |
 | The Hotel Collection | Travel | Enroll-optional (always usable) | 1,400+ hotels, book via AmexTravel.com |
-| $120 Uber Cash on Gold | Travel | **Enroll** (not yet enrolled) | $10/mo Uber Cash if you add the Gold Card to Uber |
+| $120 Uber Cash on Gold | Travel | **Enrolled — Harry confirmed actively using this (2026-09-22)** | $10/mo Uber Cash, Gold Card added to Uber account. Note: the live page read "Enroll" during this capture, which was stale/wrong — trust Harry's confirmation over the scraped status here. |
 | Hertz Five Star® Status | Travel | **Enroll** (not yet enrolled) | Upgraded Hertz status |
 | Premium Car Rental Protection | Travel/Services | **Enroll** (not yet enrolled) | Primary damage/theft + AD&D coverage on rentals |
 | No Foreign Transaction Fees | Travel | Always on | No FX fees |
