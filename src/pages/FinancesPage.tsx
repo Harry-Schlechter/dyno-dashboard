@@ -26,6 +26,7 @@ import CategoryTrendsCard from '../components/finance/CategoryTrendsCard';
 import SpendingIntelligence from '../components/finance/SpendingIntelligence';
 import InvestmentsPanel from '../components/finance/InvestmentsPanel';
 import PlanTab from '../components/finance/PlanTab';
+import RewardsTab from '../components/finance/RewardsTab';
 import { computeNetWorthBreakdown, computeNetWorthTotal } from '../lib/finance';
 
 const CATEGORIES = ['Food & Dining', 'Groceries', 'Shopping', 'Transportation', 'Entertainment', 'Bills & Utilities', 'Health & Medical', 'Travel', 'Subscriptions', 'Personal', 'Gifts', 'Education', 'Income', 'Transfer', 'Credit Card Payment', 'Investment', 'Other'];
@@ -257,6 +258,7 @@ const FinancesPage: React.FC = () => {
         <Tab label="Investments" />
         <Tab label="Transactions" />
         <Tab label="Plan" />
+        <Tab label="Rewards" />
       </Tabs>
 
       {/* ═══════════════ OVERVIEW ═══════════════ */}
@@ -591,6 +593,11 @@ const FinancesPage: React.FC = () => {
           accounts={accounts}
           monthlySpending={monthlySpending}
         />
+      )}
+
+      {/* ═══════════════ REWARDS ═══════════════ */}
+      {tab === 4 && (
+        <RewardsTab transactions={transactions} />
       )}
 
     </Box>
