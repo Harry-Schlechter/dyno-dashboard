@@ -36,6 +36,16 @@ export interface GeneratedPageEntry {
 
 export const GENERATED_PAGES: GeneratedPageEntry[] = [
   {
+    slug: 'arizona-dec-2026',
+    title: 'Arizona — Dec 27–Jan 2, 2027',
+    emoji: '🌵',
+    kind: 'trip',
+    author: 'travel-agent',
+    createdAt: '2026-10-19',
+    summary: 'Harry + Sydney · Dec 27–Jan 2 · Sedona + Scottsdale + Tucson day trip, 7 days.',
+    component: React.lazy(() => import('./arizona-dec-2026')),
+  },
+  {
     slug: 'dec-2026-trip-options',
     title: 'Dec 26 – Jan 2: 6 Trip Options',
     emoji: '🌴',
