@@ -140,3 +140,39 @@ export const CARD_BENEFIT_VALUE: Record<CardId, BenefitValueLine[]> = {
     { label: 'Global Entry/TSA PreCheck credit ($120 every 4yrs)', annualValue: 30, status: 'automatic' },
   ],
 };
+
+// Amex Membership Rewards transfer partners, captured from Harry's live
+// account 2026-10-28. `to` is partner points received per `from` MR points.
+// `promo` ratios are limited-time bonuses — check the end date on Amex's
+// Transfer Points page before relying on them (standard ratio is 1:1).
+export interface TransferPartner {
+  name: string;
+  type: 'airline' | 'hotel';
+  from: number;
+  to: number;
+  promo?: boolean;
+  note?: string;
+}
+
+export const AMEX_TRANSFER_PARTNERS: TransferPartner[] = [
+  { name: 'Aeromexico Rewards', type: 'airline', from: 1000, to: 1920, promo: true },
+  { name: 'Air France-KLM Flying Blue', type: 'airline', from: 1000, to: 1250, promo: true },
+  { name: 'Aer Lingus AerClub', type: 'airline', from: 1000, to: 1000, note: 'Avios' },
+  { name: 'Air Canada Aeroplan', type: 'airline', from: 1000, to: 1000 },
+  { name: 'ANA Mileage Club', type: 'airline', from: 1000, to: 1000 },
+  { name: 'Avianca LifeMiles', type: 'airline', from: 1000, to: 1000 },
+  { name: 'Delta SkyMiles', type: 'airline', from: 1000, to: 1000 },
+  { name: 'Iberia Club', type: 'airline', from: 1000, to: 1000, note: 'Avios' },
+  { name: 'Qatar Airways Privilege Club', type: 'airline', from: 1000, to: 1000, note: 'Avios' },
+  { name: 'Singapore Airlines KrisFlyer', type: 'airline', from: 1000, to: 1000 },
+  { name: 'British Airways Club', type: 'airline', from: 1000, to: 1000, note: 'Avios' },
+  { name: 'Virgin Atlantic Flying Club', type: 'airline', from: 1000, to: 1000 },
+  { name: 'Qantas Frequent Flyer', type: 'airline', from: 500, to: 500, note: '500-point minimum block' },
+  { name: 'Cathay Pacific Asia Miles', type: 'airline', from: 1000, to: 800 },
+  { name: 'Emirates Skywards', type: 'airline', from: 1000, to: 800 },
+  { name: 'JetBlue TrueBlue', type: 'airline', from: 250, to: 200, note: 'Already linked' },
+  { name: 'Hilton Honors', type: 'hotel', from: 1000, to: 2000 },
+  { name: 'Marriott Bonvoy', type: 'hotel', from: 1000, to: 1350, promo: true },
+  { name: 'Choice Privileges', type: 'hotel', from: 1000, to: 1000 },
+  { name: 'Leading Hotels Leaders Club', type: 'hotel', from: 1000, to: 250, note: 'Poor value' },
+];

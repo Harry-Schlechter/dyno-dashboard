@@ -55,23 +55,45 @@ this column, it's accurate as of the capture date above.
 
 ## Transfer partners
 
-**NOT captured** — Amex's transfer-partner widget (`rewards/transfer` page)
-never finished loading in the automated browser session (stuck on an
-infinite spinner on two separate attempts, including a full reload). This
-looks like a third-party widget that doesn't render under browser
-automation, not a login/auth issue. Known Amex Membership Rewards transfer
-partners publicly (unconfirmed against Harry's live account — treat as
-general knowledge, not verified for his account specifically): airlines
-including Delta, ANA, Air Canada Aeroplan, British Airways, Air France/KLM
-Flying Blue, Emirates, Virgin Atlantic, Singapore Airlines, Cathay Pacific,
-Etihad, Hawaiian Airlines; hotels including Marriott Bonvoy and Choice
-Privileges. **Do not treat this list as authoritative** — if Harry needs a
-real transfer decision made (e.g. pricing an award flight), tell him to
-check `Rewards & Benefits → Earn and Redeem → Transfer Points` himself, or
-flag that this needs a manual re-check next time someone's logged in.
+Captured from Harry's live Amex account on 2026-10-28. Ratio is Membership
+Rewards points : partner points. Rows marked **promo** show a limited-time
+bonus on his account; the bonus expires, so check the offer end date on
+the Transfer Points page before relying on it (standard ratio is 1:1).
+
+### Airlines
+| Partner | Ratio | Note |
+|---|---|---|
+| Aeromexico Rewards | 1,000 : 1,920 | **promo** |
+| Air France-KLM Flying Blue | 1,000 : 1,250 | **promo** |
+| Aer Lingus AerClub | 1,000 : 1,000 Avios | |
+| Air Canada Aeroplan | 1,000 : 1,000 | |
+| ANA Mileage Club | 1,000 : 1,000 | |
+| Avianca LifeMiles | 1,000 : 1,000 | |
+| Delta SkyMiles | 1,000 : 1,000 | |
+| Iberia Club | 1,000 : 1,000 Avios | |
+| Qatar Airways Privilege Club | 1,000 : 1,000 Avios | |
+| Singapore Airlines KrisFlyer | 1,000 : 1,000 | |
+| British Airways Club | 1,000 : 1,000 Avios | |
+| Virgin Atlantic Flying Club | 1,000 : 1,000 | |
+| Qantas Frequent Flyer | 500 : 500 | 500-point minimum block |
+| Cathay Pacific Asia Miles | 1,000 : 800 | |
+| Emirates Skywards | 1,000 : 800 | |
+| JetBlue TrueBlue | 250 : 200 | already linked on his account |
+
+### Hotels
+| Partner | Ratio | Note |
+|---|---|---|
+| Hilton Honors | 1,000 : 2,000 | |
+| Marriott Bonvoy | 1,000 : 1,350 | **promo** |
+| Choice Privileges | 1,000 : 1,000 | |
+| Leading Hotels of the World Leaders Club | 1,000 : 250 | poor value |
+
+Not on his list (so not available to him): Hawaiian Airlines, Etihad.
+Avios partners (Aer Lingus, Iberia, Qatar, British Airways) share one
+currency and can be pooled.
 
 ## For travel-agent
 
 259,347 Membership Rewards points is the number to work with for award
-travel value discussions. Transfer partner list above is unverified — see
-note.
+travel value discussions. Transfer partner list above is verified against his live
+account (2026-10-28).

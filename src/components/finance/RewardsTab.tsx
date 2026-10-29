@@ -7,7 +7,7 @@ import { TrendingUp } from '@mui/icons-material';
 import { Transaction } from '../../hooks/useFinances';
 import { formatCurrency } from '../../lib/formatters';
 import { isRealSpend, SpendCategory } from '../../lib/finance';
-import { CARD_LIST, CARD_BENEFIT_VALUE, CardMeta } from '../../lib/cardRewards';
+import { CARD_LIST, CARD_BENEFIT_VALUE, CardMeta, AMEX_TRANSFER_PARTNERS } from '../../lib/cardRewards';
 
 // Live point balances — not in Supabase (no schema for it), updated by hand
 // alongside the benefits/*.md captures. Last refreshed 2026-09-22.
@@ -291,6 +291,47 @@ const RewardsTab: React.FC<Props> = ({ transactions }) => {
           <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
             "Extra value" = (best rate − next best rate) × category spend × the best card's point value. This is the annual upside of always using the winning card for that category instead of the next-best one.
           </Typography>
+        </CardContent>
+      </Card>
+
+      {/* ═══════════════ AMEX TRANSFER PARTNERS ═══════════════ */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Typography variant="h6">Amex transfer partners</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            {POINT_BALANCES.amex_gold.toLocaleString()} Membership Rewards points. Ratio is MR points to partner points; "Promo" is a limited-time bonus, so check its end date before transferring.
+          </Typography>
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Partner</TableCell>
+                  <TableCell>Type</TableCell>
+                  <TableCell align="right">Ratio</TableCell>
+                  <TableCell align="right">Your points become</TableCell>
+                  <TableCell>Note</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {AMEX_TRANSFER_PARTNERS.map(p => (
+                  <TableRow key={p.name}>
+                    <TableCell>{p.name}</TableCell>
+                    <TableCell sx={{ textTransform: 'capitalize' }}>{p.type}</TableCell>
+                    <TableCell align="right">
+                      {p.from.toLocaleString()} : {p.to.toLocaleString()}{' '}
+                      {p.promo && <Chip size="small" color="warning" label="Promo" />}
+                    </TableCell>
+                    <TableCell align="right">
+                      {Math.floor((POINT_BALANCES.amex_gold / p.from) * p.to).toLocaleString()}
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary">{p.note || ''}</Typography>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </CardContent>
       </Card>
 
