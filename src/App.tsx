@@ -10,7 +10,7 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from './lib/auth';
 import HomePage from './pages/HomePage';
 import NutritionPage from './pages/NutritionPage';
-import CutPage from './pages/generated/CutPage';
+import CutPage from './pages/CutPage';
 import WorkoutsPage from './pages/WorkoutsPage';
 import SleepPage from './pages/SleepPage';
 import FinancesPage from './pages/FinancesPage';

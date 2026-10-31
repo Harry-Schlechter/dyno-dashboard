@@ -8,7 +8,7 @@ import {
   ResponsiveContainer, CartesianGrid, ReferenceLine, ReferenceArea, Cell, Legend,
 } from 'recharts';
 import { format, differenceInDays, addDays, parseISO } from 'date-fns';
-import { useSupabase } from '../../hooks/useSupabase';
+import { useSupabase } from '../hooks/useSupabase';
 
 // ── Cut parameters ──────────────────────────────────────────────────────────
 const CUT_START      = '2026-10-26';
