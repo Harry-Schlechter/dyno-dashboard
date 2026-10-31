@@ -13,9 +13,8 @@ import { useSupabase } from '../hooks/useSupabase';
 // ── Cut parameters ──────────────────────────────────────────────────────────
 const CUT_START      = '2026-10-26';
 const CUT_END        = '2026-12-25';
-const START_WEIGHT   = 172.6;
+const START_WEIGHT   = 173.5;
 const TARGET_WEIGHT  = 160;
-const CAL_FLOOR      = 2000;
 const CAL_CEILING    = 2200;
 const PROTEIN_TARGET = 150;
 
@@ -233,7 +232,7 @@ const CutPage: React.FC = () => {
         <Box>
           <Typography variant="h4" fontWeight={700}>The Cut</Typography>
           <Typography variant="body2" color="text.secondary">
-            Oct 26 – Dec 25 · {START_WEIGHT} → {TARGET_WEIGHT} lbs · {CAL_FLOOR}–{CAL_CEILING} cal · {PROTEIN_TARGET}g+ protein
+            Oct 26 – Dec 25 · {START_WEIGHT} → {TARGET_WEIGHT} lbs · ≤{CAL_CEILING} cal · {PROTEIN_TARGET}g+ protein
           </Typography>
         </Box>
         <Box flex={1} />
@@ -292,7 +291,7 @@ const CutPage: React.FC = () => {
           <StatCard
             label="Avg calories"
             value={avgCal != null ? `${avgCal}` : '—'}
-            sub={avgCal != null ? (avgCal <= CAL_CEILING ? `✓ Within ${CAL_FLOOR}–${CAL_CEILING} target` : `↑ ${avgCal - CAL_CEILING} over ceiling`) : 'No logs yet'}
+            sub={avgCal != null ? (avgCal <= CAL_CEILING ? `✓ Under ${CAL_CEILING} cal target` : `↑ ${avgCal - CAL_CEILING} over target`) : 'No logs yet'}
             color={avgCal != null && avgCal <= CAL_CEILING ? '#a5d6a7' : '#ef9a9a'}
             icon={<LocalFireDepartment fontSize="small" />}
           />
@@ -363,20 +362,18 @@ const CutPage: React.FC = () => {
                     <XAxis dataKey="label" tick={{ fill: '#9e9e9e', fontSize: 11 }} interval="preserveStartEnd" />
                     <YAxis domain={[0, 3000]} tick={{ fill: '#9e9e9e', fontSize: 11 }} width={38} />
                     <Tooltip content={<NutrTooltip />} />
-                    <ReferenceArea y1={CAL_FLOOR} y2={CAL_CEILING} fill="#a5d6a7" fillOpacity={0.07} />
-                    <ReferenceLine y={CAL_CEILING} stroke="#a5d6a7" strokeDasharray="4 2" strokeWidth={1} />
-                    <ReferenceLine y={CAL_FLOOR}   stroke="#a5d6a7" strokeDasharray="4 2" strokeWidth={1} />
+                    <ReferenceLine y={CAL_CEILING} stroke="#a5d6a7" strokeDasharray="4 2" strokeWidth={1.5}
+                      label={{ value: `${CAL_CEILING}`, fill: '#a5d6a7', fontSize: 11, position: 'insideTopRight' }} />
                     <Bar dataKey="calories" radius={[3, 3, 0, 0]} name="Calories">
                       {nutritionData.map((d, i) => (
-                        <Cell key={i} fill={d.calories > CAL_CEILING ? '#ef9a9a' : d.calories < CAL_FLOOR && d.calories > 0 ? '#ffb74d' : '#42a5f5'} />
+                        <Cell key={i} fill={d.calories > CAL_CEILING ? '#ef9a9a' : '#42a5f5'} />
                       ))}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
                 <Stack direction="row" spacing={2} mt={1}>
-                  <Typography variant="caption" sx={{ color: '#42a5f5' }}>■ In range</Typography>
-                  <Typography variant="caption" sx={{ color: '#ffb74d' }}>■ Under floor</Typography>
-                  <Typography variant="caption" sx={{ color: '#ef9a9a' }}>■ Over ceiling</Typography>
+                  <Typography variant="caption" sx={{ color: '#42a5f5' }}>■ On track (≤{CAL_CEILING})</Typography>
+                  <Typography variant="caption" sx={{ color: '#ef9a9a' }}>■ Over target</Typography>
                 </Stack>
               </CardContent>
             </Card>
@@ -439,7 +436,7 @@ const CutPage: React.FC = () => {
                           const w = wtByDate.get(date) ?? null;
                           const delta = w != null && prevWeight != null ? w - prevWeight : null;
                           if (w != null) prevWeight = w;
-                          const calOk = n ? n.calories >= CAL_FLOOR && n.calories <= CAL_CEILING : null;
+                          const calOk = n ? n.calories <= CAL_CEILING : null;
                           const proOk = n ? n.protein >= PROTEIN_TARGET : null;
                           const anyData = w != null || n != null;
                           return (
@@ -455,7 +452,7 @@ const CutPage: React.FC = () => {
                                 {delta != null ? (delta < 0 ? `−${Math.abs(delta).toFixed(1)}` : `+${delta.toFixed(1)}`) : '—'}
                               </td>
                               <td style={{ padding: '5px 12px', fontSize: 13, borderBottom: '1px solid rgba(255,255,255,0.04)',
-                                color: n ? (calOk ? '#42a5f5' : '#ffb74d') : '#555' }}>
+                                color: n ? (calOk ? '#42a5f5' : '#ef9a9a') : '#555' }}>
                                 {n ? n.calories : '—'}
                               </td>
                               <td style={{ padding: '5px 12px', fontSize: 13, borderBottom: '1px solid rgba(255,255,255,0.04)',
