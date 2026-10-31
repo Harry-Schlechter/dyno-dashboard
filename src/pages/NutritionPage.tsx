@@ -20,8 +20,8 @@ import ActivityHeatmap, { HeatmapEntry } from '../components/common/ActivityHeat
 type Window = '7d' | '30d' | '90d';
 const WINDOW_DAYS: Record<Window, number> = { '7d': 7, '30d': 30, '90d': 90 };
 
-const PROTEIN_TARGET = 170;
-const CALORIE_TARGET = 2400; // upper bound for cutting / maintenance
+const PROTEIN_TARGET = 150;
+const CALORIE_TARGET = 2200; // upper bound for cut
 
 interface Meal {
   id: string;

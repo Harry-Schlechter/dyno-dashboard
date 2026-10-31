@@ -17,6 +17,7 @@ import {
 import {
   Home,
   Restaurant,
+  TrendingDown,
   FitnessCenter,
   Bedtime,
   AccountBalance,
@@ -37,6 +38,7 @@ const DRAWER_WIDTH = 200;
 const ALL_NAV_ITEMS = [
   { label: 'Home', path: '/', icon: Home },
   { label: 'Nutrition', path: '/nutrition', icon: Restaurant },
+  { label: 'Cut', path: '/cut', icon: TrendingDown },
   { label: 'Fitness', path: '/fitness', icon: FitnessCenter },
   { label: 'Sleep', path: '/sleep', icon: Bedtime },
   { label: 'Reflections', path: '/journal', icon: Book },

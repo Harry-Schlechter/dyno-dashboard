@@ -10,6 +10,7 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from './lib/auth';
 import HomePage from './pages/HomePage';
 import NutritionPage from './pages/NutritionPage';
+import CutPage from './pages/CutPage';
 import WorkoutsPage from './pages/WorkoutsPage';
 import SleepPage from './pages/SleepPage';
 import FinancesPage from './pages/FinancesPage';
@@ -90,6 +91,7 @@ const DashboardRoutes: React.FC = () => {
     <Routes>
       <Route path="/" element={isGuest ? <Navigate to="/spaces" replace /> : <HomePage />} />
       <Route path="/nutrition"     element={ownerOnly(<NutritionPage />)} />
+      <Route path="/cut"           element={ownerOnly(<CutPage />)} />
       <Route path="/fitness"       element={ownerOnly(<WorkoutsPage />)} />
       <Route path="/workouts"      element={<Navigate to="/fitness" replace />} />
       <Route path="/sleep"         element={ownerOnly(<SleepPage />)} />
