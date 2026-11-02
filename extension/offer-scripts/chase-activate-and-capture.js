@@ -7,6 +7,8 @@
 // citi-activate-and-capture.js for the fuller design writeup of why
 // combined-per-offer beats separate activate-then-capture sweeps.
 //
+// NOTE 2026-11: Chase renamed the account-picker test ids (select-credit-card-account -> account-selector-trigger,
+// user-account-option-N -> account-option-N). Both spellings are accepted below.
 // Chase specifics (confirmed by hand before writing this):
 //  - The "Not added" checkbox filter on the offerCategoriesPage view is the
 //    reliable way to see the TRUE remaining count -- the small featured
@@ -28,13 +30,17 @@
 //
 // Usage: node chase-activate-and-capture.js [maxPerAccount]
 
-const { chromium } = require('playwright');
+// On the VPS (Steel cloud browser) only playwright-core is installed; locally the full package is.
+const { chromium } = (() => { try { return require('playwright'); } catch (e) { return require('playwright-core'); } })();
 const fs = require('fs');
 const { execFileSync } = require('child_process');
 const { todayIso, loadPriorState, findMostRecentArchive } = require('./incremental');
 
 const VPS_HOST = 'dyno';
 const VPS_OFFERS_DIR = '/root/openclaw/personas/financial-advisor/offers';
+// CDP_URL: Steel session connectUrl (wss://...) or local Chrome (default). ON_VPS=1: write straight to the
+// VPS offers dir (OFFERS_DIR) and skip the ssh/scp deploy step.
+const CDP_URL = process.env.CDP_URL || 'http://localhost:9333';
 const MAX_PER_ACCOUNT = parseInt(process.argv[2] || '200', 10);
 
 const ACCOUNTS = [
@@ -44,6 +50,13 @@ const ACCOUNTS = [
 
 function log(...args) {
   console.log(new Date().toISOString().slice(11, 19), ...args);
+}
+
+// daysLeft is as of capturedOn; carried-forward rows were captured weeks ago, so show what is left TODAY.
+function remainingDays(o) {
+  if (o.daysLeft == null || !o.capturedOn) return o.daysLeft;
+  const elapsed = Math.round((new Date(todayIso() + 'T00:00:00') - new Date(o.capturedOn + 'T00:00:00')) / 86400000);
+  return o.daysLeft - elapsed;
 }
 
 function parseDetailText(text) {
@@ -115,12 +128,28 @@ async function getAllTiles(page) {
 
 async function processAccount(page, account, skipMerchants) {
   log(`\n=== ${account.label} ===`);
+  await page.setViewportSize({ width: 1440, height: 900 }).catch(() => {});
   await page.goto('https://secure.chase.com/web/auth/dashboard#/dashboard/merchantOffers/offer-hub');
-  await page.waitForTimeout(2000);
-  await page.locator('[data-testid="select-credit-card-account"]').first().click();
-  await page.waitForTimeout(800);
-  await page.locator(`[data-testid="user-account-option-${account.testIdIndex}"]`).first().click();
-  await page.waitForTimeout(1500);
+  await page.waitForTimeout(4000);
+  try {
+    await page.locator('[data-testid="account-selector-trigger"], [data-testid="select-credit-card-account"]').first().click({ timeout: 20000 });
+    await page.waitForTimeout(800);
+    await page.locator(`[data-testid="account-option-${account.testIdIndex}"], [data-testid="user-account-option-${account.testIdIndex}"]`).first().click({ timeout: 10000 });
+    await page.waitForTimeout(1500);
+  } catch (e) {
+    // Say WHY, not just "timeout": expired login, bank verification page, or changed layout.
+    const url = page.url();
+    const body = await page.evaluate(() => document.body.innerText.slice(0, 400).replace(/\s+/g, ' ')).catch(() => '');
+    const shot = (process.env.OFFERS_DIR ? '/tmp' : __dirname) + '/chase-debug.png';
+    await page.screenshot({ path: shot }).catch(() => {});
+    const loggedOut = /logon|auth\/\?|signin/i.test(url) && !/dashboard/.test(url);
+    log(`DIAGNOSTIC: could not reach the Chase offers page for ${account.label}.`);
+    log(`  url: ${url}`);
+    log(`  page text: ${body}`);
+    log(`  screenshot: ${shot}`);
+    log(loggedOut ? '  LIKELY CAUSE: login expired -- Harry needs to log in again.' : '  LIKELY CAUSE: bank verification page or a changed page layout.');
+    throw new Error(loggedOut ? 'LOGIN_EXPIRED' : 'OFFERS_PAGE_NOT_REACHED');
+  }
 
   const accountIdMatch = page.url().match(/accountId=(\d+)/);
   const accountId = accountIdMatch ? accountIdMatch[1] : null;
@@ -203,16 +232,24 @@ async function processAccount(page, account, skipMerchants) {
   // Skips anything already known-valid from a prior run (skipMerchants) or
   // already captured in Pass 1 this run.
   await navigateToAllOffers(page, accountId, false);
-  const addedChipPresent = await page.evaluate(() =>
-    !!Array.from(document.querySelectorAll('button, [role="button"], span'))
-      .find(e => e.textContent?.trim() === 'Added to card' && e.querySelector('svg')));
-  if (!addedChipPresent) {
-    try {
-      await page.getByText('Added to card', { exact: true }).first().click();
-      await page.waitForTimeout(1500);
-    } catch (e) {
-      log('  (could not click Added to card filter)', e.message.split('\n')[0]);
-    }
+  // Chase remembers the offer-status filter between navigations, so Pass 1's "Not added" checkbox is still
+  // ticked here. Set the filter state explicitly: "Added to card" on, "Not added" off (a ticked "Not added"
+  // shows 0 results once everything is added, which made every Pass 2 click fail).
+  try {
+    // The inputs are visually hidden; read .checked and click the wrapping <label> to toggle.
+    const setBox = async (testId, want) => {
+      const input = page.locator(`input[data-testid="${testId}"]`).first();
+      const now = await input.evaluate(el => el.checked).catch(() => null);
+      if (now !== null && now !== want) {
+        await page.locator(`label:has(input[data-testid="${testId}"])`).first().click({ timeout: 8000 });
+        await page.waitForTimeout(1500);
+      }
+    };
+    await setBox('Not added', false);
+    await setBox('Added to card', true);
+    await page.waitForTimeout(3000);
+  } catch (e) {
+    log('  (could not set the Added-to-card filter)', e.message.split('\n')[0]);
   }
   const addedTiles = await getAllTiles(page);
   log(`  Found ${addedTiles.length} currently-added tiles on the page.`);
@@ -222,7 +259,9 @@ async function processAccount(page, account, skipMerchants) {
     const { merchant } = parseMerchantAndReward(tile.label);
     if (seenThisPass.has(merchant) || skipMerchants.has(merchant)) continue; // already have it (Pass 1 or carried forward)
     try {
-      const el = page.locator(`[data-testid="commerce-tile"][id="${tile.id}"]`).first();
+      // Chase re-renders the grid after the filter, so the ids from the first read can go stale: find the tile
+      // by its merchant name in the aria-label (the "N of M" prefix changes, the name does not).
+      const el = page.locator(`[data-testid="commerce-tile"][aria-label*=" ${merchant.replace(/["\\]/g, '\\$&')} "]`).first();
       await el.click({ timeout: 10000 });
       await page.waitForURL(/offer-activated|offer-detail/, { timeout: 10000 }).catch(() => {});
       await page.waitForTimeout(700);
@@ -239,7 +278,12 @@ async function processAccount(page, account, skipMerchants) {
       if (addedCaptured % 10 === 0) log(`  ...${addedCaptured} already-active offers captured so far`);
     } catch (e) {
       addedFailed++;
-      log(`  ⚠️  capture failed on "${merchant}": ${e.message.split('\n')[0]}`);
+      if (addedFailed === 1) {
+        const n = await page.locator('[data-testid="commerce-tile"]').count().catch(() => -1);
+        log(`  DEBUG at first failure: url=${page.url()} tiles-now=${n}`);
+        await page.screenshot({ path: '/tmp/chase-fail.png' }).catch(() => {});
+      }
+      log(`  ⚠️  capture failed on "${merchant}": ${addedFailed <= 1 ? e.message.slice(0, 900) : e.message.split('\n')[0]}`);
     }
     if (/offer-activated|offer-detail/.test(page.url())) {
       await page.goBack();
@@ -278,25 +322,25 @@ function buildMarkdown(all, capturedDate) {
   md += `**How to use this:** when Harry mentions a purchase or asks what to buy, check this table for the merchant first — if there's an active offer, tell him which card and the effective discount. Days-left sorted so the most time-sensitive ones surface first. A blank Spend Min / Max Cash Back means no minimum / uncapped for that field.\n`;
 
   for (const [card, offers] of Object.entries(byCard)) {
-    const sorted = offers.filter(o => o.daysLeft != null).sort((a, b) => a.daysLeft - b.daysLeft);
+    const sorted = offers.filter(o => o.daysLeft != null).sort((a, b) => remainingDays(a) - remainingDays(b));
     const noExpiry = offers.filter(o => o.daysLeft == null);
     md += `\n### ${card} (${offers.length} offers)\n\n`;
     md += '| Merchant | Reward | Spend Min | Max Cash Back | Expires | Days Left |\n';
     md += '|---|---|---|---|---|---|\n';
     for (const o of [...sorted, ...noExpiry]) {
-      md += `| ${o.merchant} | ${o.reward} | ${fmtMoney(o.spendMin)} | ${fmtMoney(o.cashBackMax)} | ${o.expires || '—'} | ${o.daysLeft ?? '—'} |\n`;
+      md += `| ${o.merchant} | ${o.reward} | ${fmtMoney(o.spendMin)} | ${fmtMoney(o.cashBackMax)} | ${o.expires || '—'} | ${remainingDays(o) ?? '—'} |\n`;
     }
   }
   return md;
 }
 
 (async () => {
-  const browser = await chromium.connectOverCDP('http://localhost:9333');
+  const browser = await chromium.connectOverCDP(CDP_URL);
   const context = browser.contexts()[0];
   const pages = context.pages();
-  const page = pages[pages.length - 1];
+  const page = pages.find(p => p.url().includes('chase.com')) || pages[pages.length - 1]; // pick the bank's own tab, not just the newest one
 
-  const OFFERS_DIR = __dirname + '/offers';
+  const OFFERS_DIR = process.env.OFFERS_DIR || __dirname + '/offers';
   const priorArchive = findMostRecentArchive(OFFERS_DIR, null); // Chase's archive files have no bank prefix (legacy: <YYYY-MM>.json)
   const { valid: carriedForward } = loadPriorState(priorArchive);
   const skipMerchants = new Set(carriedForward.map(r => r.merchant));
@@ -322,7 +366,7 @@ function buildMarkdown(all, capturedDate) {
   log(`\nTotal: ${all.length} offers (${allNew.length} newly activated/captured this run).`);
   log(`Written to offers/current.md, offers/archive/${yearMonth}.md/.json (commit these to the repo).`);
 
-  try {
+  if (!process.env.ON_VPS) try {
     log(`\nDeploying to ${VPS_HOST}...`);
     execFileSync('ssh', [VPS_HOST, `mkdir -p ${VPS_OFFERS_DIR}/archive`]);
     execFileSync('scp', [OFFERS_DIR + '/current.md', `${VPS_HOST}:${VPS_OFFERS_DIR}/current.md`]);

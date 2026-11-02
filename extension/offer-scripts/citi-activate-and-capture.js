@@ -160,7 +160,12 @@ async function runCombinedPass(page, skipMerchants) {
 
   await forceFullLoad(page);
 
-  const { pending, activated } = await readVisibleOffers(page);
+  const visible = await readVisibleOffers(page);
+  const { pending } = visible;
+  // Citi (2026-11) now puts a "<reward> for <Merchant>" aria-label on every tile, pending or not, so that label
+  // shape no longer means "activated". A merchant that still has an "Enroll in Offer" button is NOT activated.
+  const pendingMerchants = new Set(pending.map(p => p.merchant));
+  const activated = visible.activated.filter(a => !pendingMerchants.has(a.merchant));
   log(`Found ${activated.length} already-activated, ${pending.length} pending on the page (raw counts, pre-de-dupe). ${skipMerchants.size} known-valid from last capture, skipping those entirely.`);
 
   // Record already-activated offers seen on the page, but SKIP re-recording
@@ -221,8 +226,16 @@ async function runCombinedPass(page, skipMerchants) {
   return Array.from(byMerchant.values());
 }
 
+// daysLeft is as of capturedOn; carried-forward rows were captured weeks ago, so show what is left TODAY.
+function remainingDays(o) {
+  if (o.daysLeft == null || !o.capturedOn) return o.daysLeft;
+  const elapsed = Math.round((new Date(todayIso() + 'T00:00:00') - new Date(o.capturedOn + 'T00:00:00')) / 86400000);
+  return o.daysLeft - elapsed;
+}
+
 function fmtOffer(o) {
-  return `| ${o.merchant} | ${o.reward || '—'} | ${o.category} | ${o.daysLeft != null ? o.daysLeft + 'd' : '—'} |`;
+  const d = remainingDays(o);
+  return `| ${o.merchant} | ${o.reward || '—'} | ${o.category} | ${d != null ? d + 'd' : '—'} |`;
 }
 
 function buildMarkdown(offers, capturedDate) {
@@ -241,7 +254,7 @@ function buildMarkdown(offers, capturedDate) {
   for (const cat of order) {
     const list = byCategory[cat];
     if (!list || list.length === 0) continue;
-    const sorted = [...list].sort((a, b) => (a.daysLeft ?? 999) - (b.daysLeft ?? 999));
+    const sorted = [...list].sort((a, b) => (remainingDays(a) ?? 999) - (remainingDays(b) ?? 999));
     md += `\n### ${cat} (${list.length} offers)\n\n`;
     md += '| Merchant | Reward | Category | Days Left |\n';
     md += '|---|---|---|---|\n';
@@ -260,7 +273,7 @@ function buildMarkdown(offers, capturedDate) {
 (async () => {
   const browser = await chromium.connectOverCDP('http://localhost:9333');
   const context = browser.contexts()[0];
-  const page = context.pages()[context.pages().length - 1];
+  const page = context.pages().find(p => p.url().includes('citi.com')) || context.pages()[context.pages().length - 1]; // pick the bank's own tab, not just the newest one
 
   const OFFERS_DIR = __dirname + '/offers';
   const priorArchive = findMostRecentArchive(OFFERS_DIR, 'citi');

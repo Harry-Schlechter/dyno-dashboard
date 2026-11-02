@@ -175,7 +175,7 @@ function buildMarkdown(offers, capturedDate) {
 (async () => {
   const browser = await chromium.connectOverCDP('http://localhost:9333');
   const context = browser.contexts()[0];
-  const page = context.pages()[context.pages().length - 1];
+  const page = context.pages().find(p => p.url().includes('americanexpress.com')) || context.pages()[context.pages().length - 1]; // pick the bank's own tab, not just the newest one
 
   const OFFERS_DIR = __dirname + '/offers';
   const priorArchive = findMostRecentArchive(OFFERS_DIR, 'amex');
