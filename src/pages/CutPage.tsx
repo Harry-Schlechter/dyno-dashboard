@@ -9,6 +9,10 @@ import {
 } from 'recharts';
 import { format, differenceInDays, addDays, parseISO } from 'date-fns';
 import { useSupabase } from '../hooks/useSupabase';
+import {
+  BURN_FACTOR, KCAL_PER_LB, WEIGHT_BAND_LBS, VitalsRow,
+  buildDailyBalance, avgDeficit, smoothWeights, modelWeight, modelEtaDay, impliedBurnFactor,
+} from '../lib/energyBalance';
 
 // ── Cut parameters ──────────────────────────────────────────────────────────
 const CUT_START      = '2026-10-26';
@@ -98,6 +102,14 @@ const CutPage: React.FC = () => {
     limit: 2000,
   });
 
+  const { data: vitalsRows, loading: vitalsLoading } = useSupabase<VitalsRow>({
+    table: 'daily_vitals',
+    select: 'date,calories_total',
+    filters: { date: { gte: CUT_START } },
+    order: { column: 'date', ascending: true },
+    limit: 200,
+  });
+
   // ── Weight data ─────────────────────────────────────────────────────────
   const weightData = useMemo(() => {
     const cut = weightRows.filter(r => r.date >= CUT_START && r.weight_lbs != null);
@@ -109,24 +121,52 @@ const CutPage: React.FC = () => {
     }));
   }, [weightRows]);
 
-  // Linear regression on actual weight points
-  const regression = useMemo(() => linearRegression(weightData.map(p => ({ x: p.day, y: p.weight }))), [weightData]);
+  // Scale-only regression: a handful of weigh-ins is mostly noise, so hide it until there are
+  // 4+ weigh-ins spanning a week.
+  const regression = useMemo(() => {
+    if (weightData.length < 4) return null;
+    if (weightData[weightData.length - 1].day - weightData[0].day < 7) return null;
+    return linearRegression(weightData.map(p => ({ x: p.day, y: p.weight })));
+  }, [weightData]);
 
-  // Generate ideal pace & trend projection lines across entire cut window
+  // 7-day trailing average of weigh-ins (damps water/sodium swings)
+  const smoothed = useMemo(
+    () => smoothWeights(weightData.map(p => ({ date: p.date, weight: p.weight }))),
+    [weightData],
+  );
+
+  // ── Energy balance: adjusted Fitbit burn vs logged intake ────────────────
+  const balance = useMemo(
+    () => buildDailyBalance({ vitals: vitalsRows, meals: mealRows, since: CUT_START, today }),
+    [vitalsRows, mealRows, today],
+  );
+  const avgDef7  = useMemo(() => avgDeficit(balance, 7), [balance]);
+  const avgDef14 = useMemo(() => avgDeficit(balance, 14), [balance]);
+  const forwardDef = avgDef14 ?? avgDef7;
+  const NEEDED_DEFICIT = (IDEAL_RATE * KCAL_PER_LB);
+
+  // Generate ideal pace, regression and energy-balance projection across the whole cut
   const weightChartData = useMemo(() => {
-    const rows: { date: string; label: string; day: number; weight?: number; ideal: number; trend?: number }[] = [];
-    const cutDays = Math.min(differenceInDays(parseISO(today), parseISO(CUT_START)) + 5, CUT_TOTAL_DAYS);
+    const rows: {
+      date: string; label: string; day: number; weight?: number; smooth?: number;
+      ideal: number; trend?: number; model?: number;
+    }[] = [];
     const weightByDay = new Map(weightData.map(p => [p.day, p.weight]));
+    const smoothByDay = new Map(smoothed.map(p => [differenceInDays(parseISO(p.date), parseISO(CUT_START)), p.smooth]));
 
-    for (let d = 0; d <= cutDays; d++) {
+    for (let d = 0; d <= CUT_TOTAL_DAYS; d++) {
       const date = format(addDays(parseISO(CUT_START), d), 'yyyy-MM-dd');
       const ideal = START_WEIGHT - IDEAL_RATE * d;
       const weight = weightByDay.get(d);
+      const smooth = smoothByDay.get(d);
       const trend = regression ? regression.slope * d + regression.intercept : undefined;
-      rows.push({ date, label: toShortDate(date), day: d, weight, ideal, trend });
+      const model = balance.length
+        ? Math.round(modelWeight(START_WEIGHT, balance, d, forwardDef) * 10) / 10
+        : undefined;
+      rows.push({ date, label: toShortDate(date), day: d, weight, smooth, ideal, trend, model });
     }
     return rows;
-  }, [weightData, regression, today]);
+  }, [weightData, smoothed, regression, balance, forwardDef]);
 
   // ── Nutrition data ───────────────────────────────────────────────────────
   const nutritionData = useMemo(() => {
@@ -173,15 +213,16 @@ const CutPage: React.FC = () => {
     return Math.round(logged.reduce((s, d) => s + d.protein, 0) / logged.length);
   }, [nutritionData]);
 
-  // Projected finish weight based on regression slope
+  // Projected finish weight: energy-balance model first, scale regression as fallback
   const projectedFinishWeight = useMemo(() => {
+    if (balance.length) {
+      return Math.round(modelWeight(START_WEIGHT, balance, CUT_TOTAL_DAYS, forwardDef) * 10) / 10;
+    }
     if (!regression) return null;
-    const finishDay = CUT_TOTAL_DAYS;
-    const w = regression.slope * finishDay + regression.intercept;
-    return Math.round(w * 10) / 10;
-  }, [regression]);
+    return Math.round((regression.slope * CUT_TOTAL_DAYS + regression.intercept) * 10) / 10;
+  }, [balance, forwardDef, regression]);
 
-  // Days to target at current pace
+  // Days to target at the regression pace (secondary check)
   const daysToTarget = useMemo(() => {
     if (!regression || regression.slope >= 0) return null;
     const day = (TARGET_WEIGHT - regression.intercept) / regression.slope;
@@ -191,12 +232,33 @@ const CutPage: React.FC = () => {
 
   const pacePerWeek = regression ? Math.abs(regression.slope * 7) : null;
 
+  // Model ETA to goal from the average deficit
+  const modelEta = useMemo(() => {
+    const day = modelEtaDay(START_WEIGHT, TARGET_WEIGHT, balance, forwardDef);
+    return day == null ? null : format(addDays(parseISO(CUT_START), day), 'MMM d');
+  }, [balance, forwardDef]);
+  const modelPacePerWeek = avgDef7 != null ? (avgDef7 * 7) / KCAL_PER_LB : null;
+
+  // Predicted vs scale (against the smoothed weight, with a tolerance band for normal swings)
+  const modelCheck = useMemo(() => {
+    if (!balance.length || !smoothed.length) return null;
+    const last = smoothed[smoothed.length - 1];
+    const day = differenceInDays(parseISO(last.date), parseISO(CUT_START));
+    const predicted = modelWeight(START_WEIGHT, balance, day, forwardDef);
+    const gap = last.smooth - predicted; // + = scale heavier than the model says
+    return { predicted, smooth: last.smooth, gap, onModel: Math.abs(gap) <= WEIGHT_BAND_LBS };
+  }, [balance, smoothed, forwardDef]);
+  const impliedFactor = useMemo(
+    () => impliedBurnFactor(balance, smoothed, START_WEIGHT),
+    [balance, smoothed],
+  );
+
   // Progress bar
   const progressPct = latestWeight != null
     ? Math.min(100, Math.max(0, ((START_WEIGHT - latestWeight) / (START_WEIGHT - TARGET_WEIGHT)) * 100))
     : 0;
 
-  const loading = weightLoading || mealLoading;
+  const loading = weightLoading || mealLoading || vitalsLoading;
 
   // ── Custom tooltip ────────────────────────────────────────────────────────
   const WeightTooltip = ({ active, payload }: any) => {
@@ -206,8 +268,25 @@ const CutPage: React.FC = () => {
       <Box sx={{ background: '#1e1e2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 1, p: 1.5 }}>
         <Typography variant="caption" color="text.secondary">{d?.date}</Typography>
         {d?.weight   != null && <Typography variant="body2" sx={{ color: '#90caf9' }}>Actual: {d.weight} lbs</Typography>}
+        {d?.smooth   != null && <Typography variant="body2" sx={{ color: '#4fc3f7' }}>7-day avg: {(Math.round(d.smooth * 10) / 10)} lbs</Typography>}
+        {d?.model    != null && <Typography variant="body2" sx={{ color: '#ffb74d' }}>Model: {d.model} lbs</Typography>}
         {d?.trend    != null && <Typography variant="body2" sx={{ color: '#ce93d8' }}>Trend: {(Math.round(d.trend * 10) / 10)} lbs</Typography>}
         {d?.ideal    != null && <Typography variant="body2" sx={{ color: '#a5d6a7' }}>Pace: {(Math.round(d.ideal * 10) / 10)} lbs</Typography>}
+      </Box>
+    );
+  };
+
+  const BalanceTooltip = ({ active, payload }: any) => {
+    if (!active || !payload?.length) return null;
+    const d = payload[0]?.payload;
+    return (
+      <Box sx={{ background: '#1e1e2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 1, p: 1.5 }}>
+        <Typography variant="caption" color="text.secondary">{d?.date}</Typography>
+        <Typography variant="body2" sx={{ color: '#42a5f5' }}>Intake: {d?.intake}</Typography>
+        <Typography variant="body2" sx={{ color: '#ffb74d' }}>Burn: {d?.burnAdj} (Fitbit {d?.burnRaw})</Typography>
+        <Typography variant="body2" sx={{ color: d?.deficit >= 0 ? '#a5d6a7' : '#ef9a9a' }}>
+          {d?.deficit >= 0 ? 'Deficit' : 'Surplus'}: {Math.abs(d?.deficit ?? 0)}
+        </Typography>
       </Box>
     );
   };
@@ -282,7 +361,7 @@ const CutPage: React.FC = () => {
           <StatCard
             label="Pace"
             value={pacePerWeek != null ? `${pacePerWeek.toFixed(1)} lbs/wk` : '—'}
-            sub={daysToTarget ? `On track to hit 160 by ${daysToTarget}` : 'Need more data'}
+            sub={daysToTarget ? `Scale trend hits ${TARGET_WEIGHT} by ${daysToTarget}` : 'Scale trend needs 4+ weigh-ins over a week'}
             color={pacePerWeek != null && pacePerWeek >= 1.0 ? '#a5d6a7' : '#ffb74d'}
             icon={<TrendingDown fontSize="small" />}
           />
@@ -303,6 +382,43 @@ const CutPage: React.FC = () => {
             sub={avgProtein != null ? (avgProtein >= PROTEIN_TARGET ? `✓ Above ${PROTEIN_TARGET}g target` : `↓ ${PROTEIN_TARGET - avgProtein}g short`) : 'No logs yet'}
             color={avgProtein != null && avgProtein >= PROTEIN_TARGET ? '#a5d6a7' : '#ef9a9a'}
             icon={<FitnessCenter fontSize="small" />}
+          />
+        </Grid>
+      </Grid>
+
+      {/* Energy balance cards */}
+      <Grid container spacing={2} mb={3}>
+        <Grid size={{ xs: 12, sm: 4 }}>
+          <StatCard
+            label="Avg daily deficit (7d)"
+            value={avgDef7 != null ? `${Math.round(avgDef7)} cal` : '—'}
+            sub={avgDef7 != null
+              ? `Need ~${Math.round(NEEDED_DEFICIT)}/day for ${TARGET_WEIGHT} by Dec 25 · ≈ ${modelPacePerWeek!.toFixed(1)} lb/wk`
+              : 'Needs a day with burn + logged meals'}
+            color={avgDef7 != null && avgDef7 >= NEEDED_DEFICIT ? '#a5d6a7' : '#ffb74d'}
+            icon={<LocalFireDepartment fontSize="small" />}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 4 }}>
+          <StatCard
+            label="Model vs scale"
+            value={modelCheck ? `${modelCheck.gap > 0 ? '+' : ''}${modelCheck.gap.toFixed(1)} lb` : '—'}
+            sub={modelCheck
+              ? `Model ${modelCheck.predicted.toFixed(1)} · 7-day avg ${modelCheck.smooth.toFixed(1)} · ${modelCheck.onModel ? 'within normal swing' : modelCheck.gap > 0 ? 'scale heavier than model' : 'scale lighter than model'}`
+              : 'Needs weigh-ins + deficit data'}
+            color={modelCheck ? (modelCheck.onModel ? '#90caf9' : '#ffb74d') : '#90caf9'}
+            icon={<Straighten fontSize="small" />}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 4 }}>
+          <StatCard
+            label="Model ETA to goal"
+            value={modelEta ?? '—'}
+            sub={modelEta
+              ? `At ${Math.round(forwardDef!)} cal/day avg deficit · Dec 25 projection ${projectedFinishWeight} lb`
+              : 'Needs a positive average deficit'}
+            color="#ce93d8"
+            icon={<TrendingDown fontSize="small" />}
           />
         </Grid>
       </Grid>
@@ -340,13 +456,45 @@ const CutPage: React.FC = () => {
                       label={{ value: `Goal ${TARGET_WEIGHT}`, fill: '#a5d6a7', fontSize: 11, position: 'insideBottomRight' }} />
                     {/* Ideal pace */}
                     <Line dataKey="ideal" stroke="#a5d6a7" strokeWidth={1.5} strokeDasharray="4 2" dot={false} name="Ideal pace" />
-                    {/* Regression trend */}
-                    {regression && <Line dataKey="trend" stroke="#ce93d8" strokeWidth={1.5} strokeDasharray="6 2" dot={false} name="Trend" />}
-                    {/* Actual weight — only plotted where weight exists */}
-                    <Line dataKey="weight" stroke="#90caf9" strokeWidth={2.5} dot={{ r: 4, fill: '#90caf9' }} connectNulls={false} name="Actual" />
+                    {/* Energy-balance projection (adjusted Fitbit burn − intake) */}
+                    <Line dataKey="model" stroke="#ffb74d" strokeWidth={2} dot={false} name="Model (burn − intake)" />
+                    {/* Scale-only regression — secondary check, hidden until enough weigh-ins */}
+                    {regression && <Line dataKey="trend" stroke="#ce93d8" strokeWidth={1.5} strokeDasharray="6 2" dot={false} name="Scale trend" />}
+                    {/* 7-day average of weigh-ins */}
+                    <Line dataKey="smooth" stroke="#4fc3f7" strokeWidth={2.5} dot={false} connectNulls name="7-day avg" />
+                    {/* Raw weigh-ins */}
+                    <Line dataKey="weight" stroke="#90caf9" strokeWidth={0} dot={{ r: 3, fill: '#90caf9' }} connectNulls={false} name="Weigh-in" />
                     <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
                   </ComposedChart>
                 </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Intake vs burn */}
+          <Grid size={{ xs: 12 }}>
+            <Card sx={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <CardContent sx={{ p: 2.5 }}>
+                <Typography fontWeight={600} mb={0.5}>Intake vs burn</Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+                  Burn = Fitbit total × {BURN_FACTOR} (12% haircut). Days without logged meals or a burn reading are left out, and today is excluded until it's over.
+                </Typography>
+                <ResponsiveContainer width="100%" height={220}>
+                  <ComposedChart data={balance.map(b => ({ ...b, label: toShortDate(b.date) }))} margin={{ top: 4, right: 12, bottom: 0, left: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                    <XAxis dataKey="label" tick={{ fill: '#9e9e9e', fontSize: 11 }} interval="preserveStartEnd" />
+                    <YAxis domain={[1000, 3500]} tick={{ fill: '#9e9e9e', fontSize: 11 }} width={42} />
+                    <Tooltip content={<BalanceTooltip />} />
+                    <Bar dataKey="intake" fill="#42a5f5" radius={[3, 3, 0, 0]} name="Intake" />
+                    <Line dataKey="burnAdj" stroke="#ffb74d" strokeWidth={2.5} dot={{ r: 3, fill: '#ffb74d' }} name="Burn (adj)" />
+                    <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
+                  </ComposedChart>
+                </ResponsiveContainer>
+                {impliedFactor != null && (
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                    Calibration hint: the scale implies a burn factor of ~{impliedFactor.toFixed(2)} (currently {BURN_FACTOR}).
+                  </Typography>
+                )}
               </CardContent>
             </Card>
           </Grid>
@@ -416,7 +564,7 @@ const CutPage: React.FC = () => {
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
                       <tr>
-                        {['Date', 'Weight', 'Δ', 'Calories', 'Protein', 'Status'].map(h => (
+                        {['Date', 'Weight', 'Δ', 'Calories', 'Burn (adj)', 'Deficit', 'Protein', 'Status'].map(h => (
                           <th key={h} style={{ textAlign: 'left', padding: '6px 12px', color: '#9e9e9e', fontSize: 12, fontWeight: 500, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>{h}</th>
                         ))}
                       </tr>
@@ -425,6 +573,7 @@ const CutPage: React.FC = () => {
                       {(() => {
                         const nutrByDate = new Map(nutritionData.map(d => [d.date, d]));
                         const wtByDate   = new Map(weightData.map(d => [d.date, d.weight]));
+                        const balByDate  = new Map(balance.map(b => [b.date, b]));
                         // All dates from cut start to today
                         const days = [];
                         for (let i = 0; i <= daysIn; i++) {
@@ -436,6 +585,7 @@ const CutPage: React.FC = () => {
                           const w = wtByDate.get(date) ?? null;
                           const delta = w != null && prevWeight != null ? w - prevWeight : null;
                           if (w != null) prevWeight = w;
+                          const bal = balByDate.get(date);
                           const calOk = n ? n.calories <= CAL_CEILING : null;
                           const proOk = n ? n.protein >= PROTEIN_TARGET : null;
                           const anyData = w != null || n != null;
@@ -454,6 +604,14 @@ const CutPage: React.FC = () => {
                               <td style={{ padding: '5px 12px', fontSize: 13, borderBottom: '1px solid rgba(255,255,255,0.04)',
                                 color: n ? (calOk ? '#42a5f5' : '#ef9a9a') : '#555' }}>
                                 {n ? n.calories : '—'}
+                              </td>
+                              <td style={{ padding: '5px 12px', fontSize: 13, borderBottom: '1px solid rgba(255,255,255,0.04)',
+                                color: bal ? '#ffb74d' : '#555' }}>
+                                {bal ? bal.burnAdj : '—'}
+                              </td>
+                              <td style={{ padding: '5px 12px', fontSize: 13, borderBottom: '1px solid rgba(255,255,255,0.04)',
+                                color: bal ? (bal.deficit >= 0 ? '#a5d6a7' : '#ef9a9a') : '#555' }}>
+                                {bal ? (bal.deficit >= 0 ? `−${bal.deficit}` : `+${Math.abs(bal.deficit)}`) : '—'}
                               </td>
                               <td style={{ padding: '5px 12px', fontSize: 13, borderBottom: '1px solid rgba(255,255,255,0.04)',
                                 color: n ? (proOk ? '#80cbc4' : '#ce93d8') : '#555' }}>
