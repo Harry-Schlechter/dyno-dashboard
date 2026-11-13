@@ -31,8 +31,10 @@ const VoiceButton: React.FC = () => {
       spacing={1}
       sx={{
         position: 'fixed',
-        bottom: { xs: 12, sm: 16 },
-        right: { xs: 12, sm: 16 },
+        // Below md these live in the nav drawer instead (Sidebar) — the corner belongs to the menu button.
+        display: { xs: 'none', md: 'flex' },
+        bottom: 16,
+        right: 16,
         zIndex: (theme) => theme.zIndex.drawer + 2,
       }}
     >

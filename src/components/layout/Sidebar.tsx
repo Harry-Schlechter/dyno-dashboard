@@ -27,11 +27,14 @@ import {
   Book,
   StickyNote2,
   Insights,
+  Mic,
+  ChatBubbleOutline,
   AutoAwesome,
   Settings as SettingsIcon,
   Menu as MenuIcon,
 } from '@mui/icons-material';
 import { useAuth, isDemo } from '../../lib/auth';
+import { useChat } from '../chat/ChatContext';
 
 const DRAWER_WIDTH = 200;
 
@@ -70,6 +73,9 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, onOpen }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { user } = useAuth();
+  const { openChat } = useChat();
+  // Phone/tablet: chat + voice live in the menu (their floating buttons collided with the menu button)
+  const showAssistantTabs = isMobile && user?.role === 'owner' && !isDemo();
 
   const navItems = user?.role === 'guest' ? GUEST_NAV_ITEMS : ALL_NAV_ITEMS;
 
@@ -97,6 +103,31 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, onOpen }) => {
       </Box>
 
       <Divider sx={{ mb: 2, opacity: 0.1 }} />
+
+      {showAssistantTabs && (
+        <>
+          <List sx={{ py: 0, mb: 1 }}>
+            {[
+              { label: 'Chat with Dyno', icon: ChatBubbleOutline, onClick: () => { openChat({ agent: 'general', label: 'Dyno' }); onClose(); } },
+              { label: 'Talk to Dyno', icon: Mic, onClick: () => handleNav('/voice') },
+            ].map(({ label, icon: TabIcon, onClick }) => (
+              <ListItem key={label} disablePadding sx={{ mb: 0.5 }}>
+                <ListItemButton
+                  onClick={onClick}
+                  selected={label === 'Talk to Dyno' && location.pathname.startsWith('/voice')}
+                  sx={{ borderRadius: '12px', py: 1, px: 1.5, minHeight: 0 }}
+                >
+                  <ListItemIcon sx={{ minWidth: 32, color: 'primary.main', '& .MuiSvgIcon-root': { fontSize: '1.25rem' } }}>
+                    <TabIcon />
+                  </ListItemIcon>
+                  <ListItemText primary={label} primaryTypographyProps={{ fontWeight: 600, fontSize: '0.9375rem' }} />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+          <Divider sx={{ mb: 1.5, opacity: 0.1 }} />
+        </>
+      )}
 
       <List sx={{ py: 0 }}>
         {navItems.map((item) => {
