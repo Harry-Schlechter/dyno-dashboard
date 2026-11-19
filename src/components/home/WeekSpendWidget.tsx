@@ -6,12 +6,13 @@ import { useFinances } from '../../hooks/useFinances';
 import { isRealSpend, filterTransactionsByRange } from '../../lib/finance';
 import { formatCurrency } from '../../lib/formatters';
 
+import { etNow } from '../../lib/et';
 const WeekSpendWidget: React.FC = () => {
   const { transactions, loading } = useFinances();
 
   const stats = useMemo(() => {
     if (transactions.length === 0) return null;
-    const today = new Date();
+    const today = etNow();
     const weekStart = format(startOfWeek(today, { weekStartsOn: 1 }), 'yyyy-MM-dd');
     const todayStr = format(today, 'yyyy-MM-dd');
     const inWeek = filterTransactionsByRange(transactions, weekStart, todayStr).filter(isRealSpend);

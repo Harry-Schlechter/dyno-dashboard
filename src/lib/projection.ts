@@ -1,3 +1,4 @@
+import { etNow } from './et';
 // Financial-future projection engine — a life-stage budget allocator.
 //
 // Income is FIXED in code (Harry's raise schedule + Sydney's med-career arc).
@@ -127,7 +128,7 @@ function monthlyAlloc(a: Alloc, maxAnnual: number): number {
 }
 
 export function runProjection(inp: ProjectionInputs): ProjectionResult {
-  const now = new Date();
+  const now = etNow();
   const startYear = inp.anchorYM ? inp.anchorYM[0] : now.getFullYear();
   const startMonth = inp.anchorYM ? inp.anchorYM[1] : now.getMonth() + 1;
   const endYear = 2036;

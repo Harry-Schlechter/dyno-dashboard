@@ -13,6 +13,7 @@ import {
 import { FinancialAccount } from '../../hooks/useFinances';
 import { useProjectionSnapshots, ProjectionSnapshotRow } from '../../hooks/useProjectionSnapshots';
 
+import { etNow } from '../../lib/et';
 const fmtK = (v: number) => `$${Math.round(v / 1000).toLocaleString()}k`;
 const fmtFull = (v: number) => `$${Math.round(v).toLocaleString()}`;
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -163,7 +164,7 @@ const ProjectionTool: React.FC<{ accounts: FinancialAccount[] }> = ({ accounts }
   const sydneyEarns = activeStage !== 'now';
 
   const nowYM = useMemo(() => {
-    const d = new Date();
+    const d = etNow();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   }, []);
 

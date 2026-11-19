@@ -2,9 +2,10 @@ import React from 'react';
 import { Card, CardContent, Typography, Box, Chip, Tooltip, LinearProgress } from '@mui/material';
 import { TrendingUp, TrendingDown } from '@mui/icons-material';
 import { LineChart, Line, ResponsiveContainer, YAxis } from 'recharts';
-import { isToday, differenceInCalendarDays } from 'date-fns';
+import { isToday, differenceInCalendarDays, parseISO } from 'date-fns';
 import { useRecovery } from '../../hooks/useRecovery';
 
+import { etNow } from '../../lib/et';
 // Whoop-style recovery ring: a single 0-100 score with band color, the top
 // drivers that moved it, and a confidence badge so a thin-data day reads honestly.
 
@@ -52,8 +53,8 @@ const RecoveryRing: React.FC = () => {
 
   const drivers = (latest.drivers ?? []).slice(0, 3);
   const bandLabel = latest.band === 'green' ? 'Recovered' : latest.band === 'yellow' ? 'Moderate' : 'Strained';
-  const daysOld = differenceInCalendarDays(new Date(), new Date(latest.date));
-  const stale = !isToday(new Date(latest.date));
+  const daysOld = differenceInCalendarDays(etNow(), parseISO(latest.date));
+  const stale = !isToday(parseISO(latest.date));
 
   return (
     <Card sx={{ height: '100%' }}>

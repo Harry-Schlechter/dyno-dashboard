@@ -1,5 +1,6 @@
 import { format, formatDistanceToNow, parseISO, isToday, isYesterday, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, differenceInDays, isValid } from 'date-fns';
 
+import { etNow, hasTz, wallET } from './et';
 const parseDateValue = (value: string | Date | null | undefined): Date | null => {
   if (!value) return null;
 
@@ -11,7 +12,8 @@ const parseDateValue = (value: string | Date | null | undefined): Date | null =>
   if (!trimmedValue) return null;
 
   const isoParsedDate = parseISO(trimmedValue);
-  if (isValid(isoParsedDate)) return isoParsedDate;
+  // An instant (has Z / offset) is shown in Eastern wall-clock time; a date-only string is a calendar day and stays as is.
+  if (isValid(isoParsedDate)) return hasTz(trimmedValue) ? wallET(isoParsedDate) : isoParsedDate;
 
   const fallbackParsedDate = new Date(trimmedValue);
   return isValid(fallbackParsedDate) ? fallbackParsedDate : null;
@@ -61,13 +63,13 @@ export const formatDuration = (minutes: number): string => {
 };
 
 export const getDateRange = (range: '7d' | '30d' | '90d') => {
-  const end = new Date();
+  const end = etNow();
   const days = range === '7d' ? 7 : range === '30d' ? 30 : 90;
   const start = subDays(end, days);
   return { start: format(start, 'yyyy-MM-dd'), end: format(end, 'yyyy-MM-dd') };
 };
 
-export const getToday = (): string => format(new Date(), 'yyyy-MM-dd');
+export const getToday = (): string => format(etNow(), 'yyyy-MM-dd');
 
 export const formatMonth = (dateStr: string): string => {
   const parsed = parseDateValue(dateStr);

@@ -13,6 +13,7 @@ import { isRealSpend, trailingMonthlyAvgSpend, spendByCategory, expectedMonthlyI
 import { useContributions } from '../../hooks/useContributions';
 import ProjectionTool from './ProjectionTool';
 
+import { etNow } from '../../lib/et';
 // ─── Constants ──────────────────────────────────────────────────────────────
 // Take-home is the real net paycheck (after 401k + HSA pre-tax deductions),
 // pulled from the shared income constant so a raise updates it in one place.
@@ -74,7 +75,7 @@ interface PlanTabProps {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 const PlanTab: React.FC<PlanTabProps> = ({ transactions, accounts, monthlySpending }) => {
-  const today = useMemo(() => new Date(), []);
+  const today = useMemo(() => etNow(), []);
   const currentMonthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
   const { byMonth: contributions } = useContributions();
 

@@ -5,15 +5,16 @@ import { format } from 'date-fns';
 import { useJournal } from '../../hooks/useJournal';
 import { useSupabase } from '../../hooks/useSupabase';
 
+import { etNow } from '../../lib/et';
 // Streak badges for the MANUAL habits — the ones that don't log themselves
 // (journaling, food logging) — as opposed to sleep/recovery/workouts which
 // sync automatically from the watch and don't need a "did I do this" nudge.
 // Sits top-right next to the greeting/date.
 
 const consecutiveStreak = (dates: Set<string>): { current: number; doneToday: boolean } => {
-  const todayISO = format(new Date(), 'yyyy-MM-dd');
+  const todayISO = format(etNow(), 'yyyy-MM-dd');
   const doneToday = dates.has(todayISO);
-  const cursor = new Date();
+  const cursor = etNow();
   if (!doneToday) cursor.setDate(cursor.getDate() - 1);
   let count = 0;
   for (;;) {

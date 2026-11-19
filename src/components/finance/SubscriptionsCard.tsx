@@ -8,6 +8,7 @@ import { Transaction } from '../../hooks/useFinances';
 import { Subscription, useSubscriptions } from '../../hooks/useSubscriptions';
 import { formatCurrency, formatDateShort } from '../../lib/formatters';
 
+import { etToday } from '../../lib/et';
 interface Props {
   transactions: Transaction[];
 }
@@ -42,7 +43,7 @@ const SubscriptionsCard: React.FC<Props> = ({ transactions }) => {
   const { subscriptions, loading } = useSubscriptions();
   const [filter, setFilter] = useState<'active' | 'all'>('active');
 
-  const todayISO = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const todayISO = useMemo(() => etToday(), []);
 
   const rows = useMemo<Row[]>(() => {
     if (!subscriptions) return [];

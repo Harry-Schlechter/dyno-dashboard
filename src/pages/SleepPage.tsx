@@ -25,6 +25,7 @@ import StageTrendChart from '../components/sleep/StageTrendChart';
 import SleepDebtCard from '../components/sleep/SleepDebtCard';
 import PeriodAveragesCard from '../components/sleep/PeriodAveragesCard';
 
+import { etNow } from '../lib/et';
 type Window = '7d' | '30d' | '90d' | '1y';
 const WINDOW_DAYS: Record<Window, number> = { '7d': 7, '30d': 30, '90d': 90, '1y': 365 };
 
@@ -79,7 +80,7 @@ const SleepPage: React.FC = () => {
     limit: 500,
   });
 
-  const today = useMemo(() => new Date(), []);
+  const today = useMemo(() => etNow(), []);
   const windowStart = useMemo(() => format(subDays(today, WINDOW_DAYS[win] - 1), 'yyyy-MM-dd'), [today, win]);
 
   const detailedNight = useMemo(() => detailed.find((s) => s.hours != null) ?? null, [detailed]);

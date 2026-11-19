@@ -22,6 +22,7 @@ import JournalStreakCard from '../components/journal/JournalStreakCard';
 import RecurrenceCard from '../components/journal/RecurrenceCard';
 import RecentEntriesCard from '../components/journal/RecentEntriesCard';
 
+import { etNow } from '../lib/et';
 const moodColors: Record<number, string> = { 1: '#F44336', 2: '#FF9800', 3: '#FFB74D', 4: '#5B8DEF', 5: '#4CAF50' };
 
 const JournalPage: React.FC = () => {
@@ -30,7 +31,7 @@ const JournalPage: React.FC = () => {
   const { data: sleepData } = useSleep(range);
   const journal = useJournal();
   const [selectedLog, setSelectedLog] = useState<DailyLog | null>(null);
-  const [calMonth, setCalMonth] = useState(new Date());
+  const [calMonth, setCalMonth] = useState(etNow());
 
   // Mood heatmap (1-5 scale → already a great heatmap value)
   const moodHeatmap: HeatmapEntry[] = useMemo(() => {

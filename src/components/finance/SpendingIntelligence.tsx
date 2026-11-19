@@ -5,6 +5,7 @@ import { formatCurrency } from '../../lib/formatters';
 import { isRealSpend, trailingMonthlyAvgSpend } from '../../lib/finance';
 import { Transaction } from '../../hooks/useFinances';
 
+import { etNow } from '../../lib/et';
 // This-month spending vs recent average + top category movers. Lives in the
 // Finances → Overview (spend-tracking), not the Plan tab (which is now purely
 // projection/allocation).
@@ -12,7 +13,7 @@ const SpendingIntelligence: React.FC<{
   transactions: Transaction[];
   monthlySpending: Array<{ month: string; category: string; total: number }>;
 }> = ({ transactions, monthlySpending }) => {
-  const today = useMemo(() => new Date(), []);
+  const today = useMemo(() => etNow(), []);
   const currentMonthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
 
   const actualSpendThisMonth = useMemo(() =>

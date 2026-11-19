@@ -16,6 +16,7 @@ import LoadingSkeleton from '../components/common/LoadingSkeleton';
 import ErrorMessage from '../components/common/ErrorMessage';
 import { colorSystem, glassmorphism } from '../theme/designSystem';
 
+import { etNow } from '../lib/et';
 const priorityLabels: Record<number, string> = { 1: 'P1 — High', 2: 'P2 — Medium', 3: 'P3 — Low' };
 const priorityColors: Record<number, string> = { 1: colorSystem.priority.high, 2: colorSystem.priority.medium, 3: colorSystem.priority.low };
 
@@ -55,14 +56,14 @@ const TasksPage: React.FC = () => {
     const completed = tasks.filter(t => t.status === 'completed').length;
     const overdue = tasks.filter(t => {
       if (!t.due_date || t.status === 'completed') return false;
-      return parseISO(t.due_date) < new Date();
+      return parseISO(t.due_date) < etNow();
     }).length;
     return { total: tasks.length, pending, completed, overdue };
   }, [tasks]);
 
   const isOverdue = (task: Task) => {
     if (!task.due_date || task.status === 'completed') return false;
-    return parseISO(task.due_date) < new Date();
+    return parseISO(task.due_date) < etNow();
   };
 
   // Context for "Ask Assistant" — before any early return.

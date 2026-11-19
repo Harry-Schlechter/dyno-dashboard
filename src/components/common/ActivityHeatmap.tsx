@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Box, Typography, Tooltip, Stack } from '@mui/material';
 import { format, startOfDay, subDays, addDays } from 'date-fns';
 
+import { etNow } from '../../lib/et';
 export interface HeatmapEntry {
   date: string;        // 'yyyy-MM-dd'
   value: number;       // raw value (calories, hours, etc.)
@@ -57,7 +58,7 @@ const ActivityHeatmap: React.FC<Props> = ({
   };
 
   const cells = useMemo(() => {
-    const today = startOfDay(new Date());
+    const today = startOfDay(etNow());
     const start = subDays(today, days - 1);
     // align to Sunday
     const startDay = start.getDay(); // 0 = Sun

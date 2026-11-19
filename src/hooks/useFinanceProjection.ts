@@ -10,6 +10,7 @@ import {
   isRealSpend,
 } from '../lib/finance';
 
+import { etNow } from '../lib/et';
 interface Options {
   semiMonthlyPaycheck?: number;
   today?: Date;
@@ -28,7 +29,7 @@ interface FinanceProjection {
 
 export const useFinanceProjection = ({
   semiMonthlyPaycheck = DEFAULT_SEMI_MONTHLY_PAYCHECK,
-  today = new Date(),
+  today = etNow(),
 }: Options = {}): FinanceProjection => {
   const { transactions, loading, error, refetch } = useFinances();
 

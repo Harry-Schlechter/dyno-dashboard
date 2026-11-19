@@ -1,9 +1,10 @@
 import React from 'react';
 import { Card, CardContent, Typography, Box, Chip, Stack } from '@mui/material';
 import { Map as MapIcon } from '@mui/icons-material';
-import { differenceInDays } from 'date-fns';
+import { differenceInDays, parseISO } from 'date-fns';
 import { useForecast } from '../../hooks/useForecast';
 
+import { etNow } from '../../lib/et';
 const READ_COLOR: Record<string, string> = {
   confirmed_light: '#4CAF50', confirmed_busy: '#FF9800', likely_unknown: '#7d8590',
 };
@@ -28,8 +29,8 @@ const MonthlyPanel: React.FC = () => {
   }
 
   const monthByMonth = (latestMonthly.basis?.month_by_month as Array<{ month: string; read: string; note: string }>) || [];
-  const targetDate = latestMonthly.target_date ? new Date(latestMonthly.target_date) : null;
-  const daysOld = targetDate ? differenceInDays(new Date(), targetDate) : 0;
+  const targetDate = latestMonthly.target_date ? parseISO(latestMonthly.target_date) : null;
+  const daysOld = targetDate ? differenceInDays(etNow(), targetDate) : 0;
   const stale = daysOld > 35;
 
   return (

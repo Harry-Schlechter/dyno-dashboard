@@ -4,6 +4,7 @@ import { Bedtime } from '@mui/icons-material';
 import { useSupabase } from '../../hooks/useSupabase';
 import { format, subDays } from 'date-fns';
 
+import { etNow } from '../../lib/et';
 interface SleepRow {
   date: string;
   hours: number | null;
@@ -21,7 +22,7 @@ const SleepWidget: React.FC = () => {
   const lastNight = data[0] ?? null;
 
   const avg7d = useMemo(() => {
-    const cutoff = format(subDays(new Date(), 7), 'yyyy-MM-dd');
+    const cutoff = format(subDays(etNow(), 7), 'yyyy-MM-dd');
     const recent = data.filter(s => s.date >= cutoff && s.hours != null);
     if (recent.length === 0) return null;
     return recent.reduce((s, r) => s + (r.hours as number), 0) / recent.length;

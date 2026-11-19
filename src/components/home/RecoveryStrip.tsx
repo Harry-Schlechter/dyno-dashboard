@@ -5,6 +5,7 @@ import { format, subDays } from 'date-fns';
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
 import { useVitals, VitalsEntry } from '../../hooks/useVitals';
 
+import { etNow } from '../../lib/et';
 // Recovery-focused vitals from Fitbit/Pixel: the signals that actually answer
 // "should I train hard or take it easy today?" — resting HR, HRV, SpO2, breathing.
 // Mirrors VitalsStrip's tile look but uses daily latest + 7d-baseline framing.
@@ -97,7 +98,7 @@ const Tile: React.FC<{ spec: Spec }> = ({ spec }) => {
 
 const RecoveryStrip: React.FC = () => {
   const { data, latest, recovery } = useVitals('30d');
-  const end = useMemo(() => new Date(), []);
+  const end = useMemo(() => etNow(), []);
 
   const specs = useMemo<Spec[]>(() => {
     if (!latest) return [];

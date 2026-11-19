@@ -9,6 +9,7 @@ import { formatCurrency } from '../../lib/formatters';
 import { isRealSpend, SpendCategory } from '../../lib/finance';
 import { CARD_LIST, CARD_BENEFIT_VALUE, CardMeta, AMEX_TRANSFER_PARTNERS } from '../../lib/cardRewards';
 
+import { etNow, ymd } from '../../lib/et';
 // Live point balances — not in Supabase (no schema for it), updated by hand
 // alongside the benefits/*.md captures. Last refreshed 2026-09-22.
 const POINT_BALANCES: Record<string, number> = {
@@ -32,9 +33,9 @@ interface CardSpendRow {
 const RewardsTab: React.FC<Props> = ({ transactions }) => {
   // Trailing 12 months of real spend, split by card and category.
   const cardSpend: CardSpendRow[] = useMemo(() => {
-    const cutoff = new Date();
+    const cutoff = etNow();
     cutoff.setMonth(cutoff.getMonth() - 12);
-    const cutoffStr = cutoff.toISOString().slice(0, 10);
+    const cutoffStr = ymd(cutoff);
 
     return CARD_LIST.map(card => {
       const cardTxns = transactions.filter(

@@ -4,6 +4,7 @@ import { Restaurant } from '@mui/icons-material';
 import { useSupabase } from '../../hooks/useSupabase';
 import { format } from 'date-fns';
 
+import { etNow } from '../../lib/et';
 interface MealRow {
   date: string;
   meal_type: string | null;
@@ -13,7 +14,7 @@ interface MealRow {
 }
 
 const MealsCaloriesWidget: React.FC = () => {
-  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const todayStr = format(etNow(), 'yyyy-MM-dd');
   const { data, loading } = useSupabase<MealRow>({
     table: 'meals',
     order: { column: 'date', ascending: false },

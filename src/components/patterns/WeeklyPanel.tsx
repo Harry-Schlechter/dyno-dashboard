@@ -1,9 +1,10 @@
 import React from 'react';
 import { Card, CardContent, Typography, Box, Chip, Stack } from '@mui/material';
 import { CalendarViewWeek } from '@mui/icons-material';
-import { differenceInDays } from 'date-fns';
+import { differenceInDays, parseISO } from 'date-fns';
 import { useForecast } from '../../hooks/useForecast';
 
+import { etNow } from '../../lib/et';
 const STATUS_COLOR: Record<string, string> = { ahead: '#4CAF50', on_track: '#5B8DEF', behind: '#FF9800' };
 const metricLabel: Record<string, string> = {
   spend_pacing: 'Spend', sleep_pacing: 'Sleep', training_pacing: 'Training',
@@ -25,8 +26,8 @@ const WeeklyPanel: React.FC = () => {
     );
   }
 
-  const targetDate = latestWeekly[0]?.target_date ? new Date(latestWeekly[0].target_date) : null;
-  const daysOld = targetDate ? differenceInDays(new Date(), targetDate) : 0;
+  const targetDate = latestWeekly[0]?.target_date ? parseISO(latestWeekly[0].target_date) : null;
+  const daysOld = targetDate ? differenceInDays(etNow(), targetDate) : 0;
   const stale = daysOld > 8;
 
   return (

@@ -9,6 +9,7 @@ import { useFinances } from '../../hooks/useFinances';
 import { isRealSpend } from '../../lib/finance';
 import { formatCurrency } from '../../lib/formatters';
 
+import { etNow } from '../../lib/et';
 const fmt = (d: Date) => format(d, 'yyyy-MM-dd');
 const COMPLETE_DAY_CALORIE_THRESHOLD = 1500;
 
@@ -17,7 +18,7 @@ const COMPLETE_DAY_CALORIE_THRESHOLD = 1500;
 // the separate VitalsStrip grid on the home page. A 2x3 grid reads better in
 // a narrow widget column than a horizontal divided strip did.
 const YesterdayAndAveragesWidget: React.FC = () => {
-  const today = useMemo(() => new Date(), []);
+  const today = useMemo(() => etNow(), []);
   const yesterday = useMemo(() => fmt(subDays(today, 1)), [today]);
   const cur7 = useMemo(() => ({ start: fmt(subDays(today, 7)), end: yesterday }), [today, yesterday]);
 

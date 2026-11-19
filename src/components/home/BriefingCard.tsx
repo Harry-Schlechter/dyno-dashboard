@@ -6,6 +6,7 @@ import { CheckCircleOutline, RemoveCircleOutline, NotificationsActiveOutlined, C
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { useBriefings, Briefing, BriefingSection, BriefingAsk } from '../../hooks/useBriefings';
 
+import { etNow } from '../../lib/et';
 const kindIcon = (kind: string): React.ReactNode => {
   switch (kind) {
     case 'morning': return <WbSunny sx={{ fontSize: 18, color: '#FFB74D' }} />;
@@ -110,7 +111,7 @@ const BriefingCard: React.FC = () => {
   // wrote duplicate same-kind rows; this guards the display even though the
   // DB now has a unique(user_id, for_date, kind) constraint preventing new ones.
   const todays = useMemo(() => {
-    const today = format(new Date(), 'yyyy-MM-dd');
+    const today = format(etNow(), 'yyyy-MM-dd');
     const seen = new Set<string>();
     const out: Briefing[] = [];
     for (const b of briefings) {
@@ -125,7 +126,7 @@ const BriefingCard: React.FC = () => {
   // Default selection: pick most relevant kind based on time of day, fall back to most recent.
   const defaultBriefing = useMemo<Briefing | null>(() => {
     if (todays.length === 0) return briefings[0] ?? null;
-    const hour = new Date().getHours();
+    const hour = etNow().getHours();
     const preferKind = hour >= 18 ? 'evening' : 'morning';
     const preferred = todays.find(b => b.kind === preferKind);
     return preferred ?? todays[0];

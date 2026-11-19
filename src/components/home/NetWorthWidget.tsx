@@ -7,6 +7,7 @@ import { useFinanceProjection } from '../../hooks/useFinanceProjection';
 import { savedLastMonth, expectedMonthlyIncome, isRealSpend, filterTransactionsByRange } from '../../lib/finance';
 import { formatCurrency } from '../../lib/formatters';
 
+import { etNow } from '../../lib/et';
 const fmt = (d: Date) => format(d, 'yyyy-MM-dd');
 
 const NetWorthWidget: React.FC = () => {
@@ -15,7 +16,7 @@ const NetWorthWidget: React.FC = () => {
 
   const current = netWorth[0] ?? null;
 
-  const today = useMemo(() => new Date(), []);
+  const today = useMemo(() => etNow(), []);
   const startLastMonth = useMemo(() => fmt(startOfMonth(subMonths(today, 1))), [today]);
   const endLastMonth = useMemo(() => fmt(endOfMonth(subMonths(today, 1))), [today]);
 

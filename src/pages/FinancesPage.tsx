@@ -29,6 +29,7 @@ import PlanTab from '../components/finance/PlanTab';
 import RewardsTab from '../components/finance/RewardsTab';
 import { computeNetWorthBreakdown, computeNetWorthTotal } from '../lib/finance';
 
+import { etToday } from '../lib/et';
 const CATEGORIES = ['Food & Dining', 'Groceries', 'Shopping', 'Transportation', 'Entertainment', 'Bills & Utilities', 'Health & Medical', 'Travel', 'Subscriptions', 'Personal', 'Gifts', 'Education', 'Income', 'Transfer', 'Credit Card Payment', 'Investment', 'Other'];
 const CHART_COLORS = ['#5B8DEF', '#764ba2', '#4CAF50', '#FF9800', '#F44336', '#90CAF9', '#FFB74D', '#81C784', '#E57373', '#64B5F6', '#CE93D8', '#A5D6A7'];
 
@@ -80,7 +81,7 @@ const FinancesPage: React.FC = () => {
   // Live net worth from current account balances (SimpleFIN + manual, both in
   // financial_accounts) — the source of truth. Avoids showing a stale snapshot.
   const liveNetWorth = useMemo(() => computeNetWorthTotal(accounts as any), [accounts]);
-  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const todayStr = useMemo(() => etToday(), []);
   // Change = live now vs the most recent snapshot from a PRIOR day (so today's
   // just-written snapshot doesn't make the delta read ~0).
   const priorSnapshot = useMemo(() => {

@@ -1,3 +1,4 @@
+import { parseISO } from 'date-fns';
 import React from 'react';
 import { Box, Typography, Grid, Card, CardContent, Chip, Avatar, Stack, Alert } from '@mui/material';
 import { People, Cake, Schedule } from '@mui/icons-material';
@@ -5,6 +6,7 @@ import { useSupabase } from '../hooks/useSupabase';
 import { formatDate } from '../lib/formatters';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
 
+import { etNow } from '../lib/et';
 interface Contact {
   id: string;
   name: string;
@@ -45,7 +47,7 @@ const ContactsPage: React.FC = () => {
     );
   }
 
-  const now = new Date();
+  const now = etNow();
   const isOverdue = (contact: Contact) => {
     if (!contact.last_interaction || !contact.check_in_frequency_days) return false;
     const last = new Date(contact.last_interaction);
@@ -55,7 +57,7 @@ const ContactsPage: React.FC = () => {
 
   const getUpcomingBirthday = (contact: Contact) => {
     if (!contact.birthday) return null;
-    const bday = new Date(contact.birthday);
+    const bday = parseISO(contact.birthday);
     const thisYear = new Date(now.getFullYear(), bday.getMonth(), bday.getDate());
     if (thisYear < now) thisYear.setFullYear(thisYear.getFullYear() + 1);
     const daysUntil = Math.floor((thisYear.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));

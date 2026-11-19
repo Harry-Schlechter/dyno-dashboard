@@ -11,8 +11,9 @@ import BriefingCard from '../components/home/BriefingCard';
 import TopRecommendations from '../components/home/TopRecommendations';
 import StreakBadges from '../components/home/StreakBadges';
 
+import { etNow } from '../lib/et';
 const getGreeting = (): string => {
-  const hour = new Date().getHours();
+  const hour = etNow().getHours();
   if (hour >= 4 && hour < 12) return 'Good morning';
   if (hour >= 12 && hour < 18) return 'Good afternoon';
   if (hour >= 18 && hour < 22) return 'Good evening';
@@ -29,7 +30,7 @@ const HomePage: React.FC = () => {
             {getGreeting()}, Harry
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            {format(new Date(), 'EEEE, MMMM d, yyyy')}
+            {format(etNow(), 'EEEE, MMMM d, yyyy')}
           </Typography>
         </Box>
         <StreakBadges />

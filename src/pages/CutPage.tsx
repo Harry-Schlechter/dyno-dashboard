@@ -14,6 +14,7 @@ import {
   buildDailyBalance, avgDeficit, smoothWeights, modelWeight, modelEtaDay, impliedBurnFactor,
 } from '../lib/energyBalance';
 
+import { etNow } from '../lib/et';
 // ── Cut parameters ──────────────────────────────────────────────────────────
 const CUT_START      = '2026-10-26';
 const CUT_END        = '2026-12-25';
@@ -85,7 +86,7 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, sub, color = '#90caf9
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 const CutPage: React.FC = () => {
-  const today = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
+  const today = useMemo(() => format(etNow(), 'yyyy-MM-dd'), []);
 
   const { data: weightRows, loading: weightLoading } = useSupabase<DailyLog>({
     table: 'daily_logs',

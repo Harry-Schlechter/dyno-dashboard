@@ -25,6 +25,7 @@ import RecoveryRing from '../components/home/RecoveryRing';
 import RecoveryStrip from '../components/home/RecoveryStrip';
 import LatestWorkoutCard from '../components/workouts/LatestWorkoutCard';
 
+import { etNow } from '../lib/et';
 // Activity type matchers — keep in sync with metricResolver.ts
 const isBasketball = (n: string | null) => !!n && /basketball/i.test(n);
 const isClimbing   = (n: string | null) => !!n && /climb|boulder/i.test(n);
@@ -54,7 +55,7 @@ const SportWidget: React.FC<{
   workouts: Workout[];
   matcher: (n: string | null) => boolean;
 }> = ({ icon, label, color, workouts, matcher }) => {
-  const today = useMemo(() => new Date(), []);
+  const today = useMemo(() => etNow(), []);
   const filt = workouts.filter(w => matcher(w.name));
 
   const cnt = (days: number) => {

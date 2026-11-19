@@ -8,6 +8,7 @@ import { Transaction } from '../../hooks/useFinances';
 import { isRealSpend } from '../../lib/finance';
 import { formatCurrency } from '../../lib/formatters';
 
+import { etNow } from '../../lib/et';
 interface Props {
   transactions: Transaction[];
   // startDate / endDate / rangeLabel are accepted for API parity with the
@@ -41,7 +42,7 @@ const normalizeCategory = (cat: string | null): string => {
 
 const CategoryTrendsCard: React.FC<Props> = ({ transactions }) => {
   const { rows, currentMonthKey, priorMonthKey } = useMemo(() => {
-    const today = new Date();
+    const today = etNow();
     const currentMonthKey = monthKeyOf(today);
     const priorDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
     const priorMonthKey = monthKeyOf(priorDate);

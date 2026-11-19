@@ -17,6 +17,7 @@ import { isRealSpend } from '../lib/finance';
 import { formatCurrency } from '../lib/formatters';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
 
+import { etNow } from '../lib/et';
 interface CalendarEvent {
   id: string;
   title: string;
@@ -62,7 +63,7 @@ const scoreAccent = (score: number | null): string => {
 };
 
 const CalendarPage: React.FC = () => {
-  const [cursor, setCursor] = useState(new Date());
+  const [cursor, setCursor] = useState(etNow());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
 
@@ -205,7 +206,7 @@ const CalendarPage: React.FC = () => {
             <ChevronLeft fontSize="small" />
           </IconButton>
           <Box
-            onClick={() => setCursor(new Date())}
+            onClick={() => setCursor(etNow())}
             sx={{
               px: 1.5, py: 0.4, borderRadius: 1.25, cursor: 'pointer',
               bgcolor: 'rgba(91,141,239,0.12)',

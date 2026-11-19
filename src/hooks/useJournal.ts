@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useSupabase } from './useSupabase';
 import { differenceInCalendarDays, format } from 'date-fns';
 
+import { etNow } from '../lib/et';
 export interface JournalEntry {
   id: string;
   date: string;
@@ -35,11 +36,11 @@ export const useJournal = () => {
 
   // "On this day": prior entries sharing today's MM-DD.
   const onThisDay = useMemo(() => {
-    const todayMMDD = format(new Date(), 'MM-dd');
-    const todayISO = format(new Date(), 'yyyy-MM-dd');
+    const todayMMDD = format(etNow(), 'MM-dd');
+    const todayISO = format(etNow(), 'yyyy-MM-dd');
     return entries
       .filter((e) => e.date.slice(5) === todayMMDD && e.date < todayISO)
-      .map((e) => ({ ...e, daysAgo: differenceInCalendarDays(new Date(), new Date(e.date + 'T00:00:00')) }))
+      .map((e) => ({ ...e, daysAgo: differenceInCalendarDays(etNow(), new Date(e.date + 'T00:00:00')) }))
       .sort((a, b) => b.date.localeCompare(a.date));
   }, [entries]);
 
@@ -47,10 +48,10 @@ export const useJournal = () => {
   const streak = useMemo(() => {
     if (entries.length === 0) return { current: 0, journaledToday: false, lastDate: null as string | null };
     const dates = new Set(entries.map((e) => e.date));
-    const todayISO = format(new Date(), 'yyyy-MM-dd');
+    const todayISO = format(etNow(), 'yyyy-MM-dd');
     const journaledToday = dates.has(todayISO);
     // Count back from today (or yesterday if not yet journaled today).
-    let cursor = new Date();
+    let cursor = etNow();
     if (!journaledToday) cursor.setDate(cursor.getDate() - 1);
     let count = 0;
     for (;;) {

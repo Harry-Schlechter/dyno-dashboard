@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Box, ToggleButton, ToggleButtonGroup, TextField, Stack } from '@mui/material';
 import { format, startOfMonth, endOfMonth, subMonths, startOfYear } from 'date-fns';
 
+import { etNow } from '../../lib/et';
 export type DateRangePreset = 'this_month' | 'last_month' | 'last_3_months' | 'ytd' | 'custom';
 
 export interface DateRange {
@@ -12,7 +13,7 @@ export interface DateRange {
 
 const fmt = (d: Date) => format(d, 'yyyy-MM-dd');
 
-export const computeRange = (preset: DateRangePreset, customStart?: string, customEnd?: string, today = new Date()): DateRange => {
+export const computeRange = (preset: DateRangePreset, customStart?: string, customEnd?: string, today = etNow()): DateRange => {
   switch (preset) {
     case 'this_month':
       return { preset, start: fmt(startOfMonth(today)), end: fmt(today) };

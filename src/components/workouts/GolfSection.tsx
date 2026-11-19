@@ -13,6 +13,7 @@ import { format, parseISO } from 'date-fns';
 import { useGolfRounds, GolfRound, GolfHoleDetail } from '../../hooks/useGolfRounds';
 import { formatDateShort } from '../../lib/formatters';
 
+import { etNow } from '../../lib/et';
 const GOLF_GREEN = '#43A047';
 const GOLF_AMBER = '#FFB74D';
 const GOLF_RED = '#EF5350';
@@ -132,7 +133,7 @@ const GolfSection: React.FC = () => {
       .sort((a, b) => a.hole - b.hole);
 
     // Practice session counts (last 30/90/365)
-    const today = new Date();
+    const today = etNow();
     const cutoff = (days: number) => format(new Date(today.getTime() - (days - 1) * 86400_000), 'yyyy-MM-dd');
     const practiceCount = (days: number) => practice.filter(p => p.date >= cutoff(days)).length;
 

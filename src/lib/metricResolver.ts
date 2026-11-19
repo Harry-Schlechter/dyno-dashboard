@@ -5,6 +5,7 @@
 import { Transaction } from '../hooks/useFinances';
 import { isRealSpend, isRealIncome } from './finance';
 
+import { ymd } from './et';
 export interface LifeEvent {
   id: string;
   user_id: string;
@@ -114,7 +115,7 @@ const enumerateDates = (range: DateRange): string[] => {
   const start = new Date(range.start + 'T00:00:00');
   const end = new Date(range.end + 'T00:00:00');
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    out.push(d.toISOString().slice(0, 10));
+    out.push(ymd(d));
   }
   return out;
 };
@@ -284,7 +285,7 @@ export const resolveMetric = (source: string, bundle: MetricBundle, range: DateR
       if (!latestRow) return null;
       const target = new Date(latestRow.date + 'T00:00:00');
       target.setDate(target.getDate() - 7);
-      const targetStr = target.toISOString().slice(0, 10);
+      const targetStr = ymd(target);
       const past = [...bundle.dailyLogs]
         .filter(d => d.weight_lbs != null && d.date <= targetStr)
         .sort((a, b) => b.date.localeCompare(a.date))[0];

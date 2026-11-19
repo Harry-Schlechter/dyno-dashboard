@@ -17,6 +17,7 @@ import InsightsFeed from '../components/home/InsightsFeed';
 import CollapsibleSection from '../components/common/CollapsibleSection';
 import ActivityHeatmap, { HeatmapEntry } from '../components/common/ActivityHeatmap';
 
+import { etNow } from '../lib/et';
 type Window = '7d' | '30d' | '90d';
 const WINDOW_DAYS: Record<Window, number> = { '7d': 7, '30d': 30, '90d': 90 };
 
@@ -42,7 +43,7 @@ const NutritionPage: React.FC = () => {
     limit: 1000,
   });
 
-  const today = useMemo(() => new Date(), []);
+  const today = useMemo(() => etNow(), []);
   const windowStart = useMemo(() => format(subDays(today, WINDOW_DAYS[win] - 1), 'yyyy-MM-dd'), [today, win]);
   const filtered = useMemo(() => data.filter(m => m.date >= windowStart), [data, windowStart]);
 

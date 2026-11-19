@@ -5,6 +5,7 @@ import { format, parseISO, isToday, isTomorrow, isPast, differenceInCalendarDays
 import { useSupabase } from '../../hooks/useSupabase';
 import { useTasks } from '../../hooks/useTasks';
 
+import { etNow } from '../../lib/et';
 interface CalendarEvent {
   id: string;
   title: string;
@@ -42,7 +43,7 @@ const TodayPanel: React.FC = () => {
   });
   const { data: tasks, loading: tasksLoading, completeTask } = useTasks();
 
-  const now = useMemo(() => new Date(), []);
+  const now = useMemo(() => etNow(), []);
   const todayKey = format(now, 'yyyy-MM-dd');
 
   // Today's events (anything starting today, ordered by start time, future-first)

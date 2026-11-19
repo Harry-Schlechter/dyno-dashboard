@@ -1,3 +1,4 @@
+import { ymd } from './et';
 // Pearson correlation + helpers for aligning daily series across domains.
 // All functions operate on Map<dateString, number> so callers can mix tables.
 
@@ -41,7 +42,7 @@ export const laggedPearson = (a: DailySeries, b: DailySeries, lagDays: number): 
   for (const [d, v] of a) {
     const shifted = new Date(d + 'T00:00:00');
     shifted.setDate(shifted.getDate() + lagDays);
-    aShifted.set(shifted.toISOString().slice(0, 10), v);
+    aShifted.set(ymd(shifted), v);
   }
   const { x, y } = alignSeries(aShifted, b);
   return pearson(x, y);
