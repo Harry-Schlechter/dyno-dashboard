@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import {
-  Box, Typography, Grid, Card, CardContent, Stack, Chip, TextField, InputAdornment,
+  Box, Typography, Grid, Card, CardContent, Stack, Chip, TextField, InputAdornment, LinearProgress,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, ToggleButton, ToggleButtonGroup,
 } from '@mui/material';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, Cell } from 'recharts';
@@ -33,6 +33,8 @@ const SpendingTab: React.FC<Props> = ({ refreshKey = 0 }) => {
   const [raw, setRaw] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [budgetTargets, setBudgetTargets] = useState<Record<string, number>>({});
+  const [reimbursementOutstanding, setReimbursementOutstanding] = useState<number | null>(null);
 
   const [target, setTarget] = useState<string>(() => lsGet('spend.target') || '');
   const [selected, setSelected] = useState<string>(currentMonth);
@@ -59,6 +61,34 @@ const SpendingTab: React.FC<Props> = ({ refreshKey = 0 }) => {
         if (!data || data.length < PAGE) break;
       }
       setRaw(all);
+
+      // Budget targets from DB
+      const { data: targets } = await supabase
+        .from('budget_targets')
+        .select('category, monthly_target')
+        .eq('user_id', USER_ID);
+      if (targets) {
+        setBudgetTargets(Object.fromEntries((targets as any[]).map(t => [t.category, Number(t.monthly_target)])));
+      }
+
+      // All-time reimbursement bucket — not limited to 13-month window
+      const { data: reimTxs } = await supabase
+        .from('financial_transactions')
+        .select('amount, original_amount, tags')
+        .eq('user_id', USER_ID)
+        .or('original_amount.not.is.null,tags.cs.{reimbursement_in}');
+      if (reimTxs) {
+        const expected = (reimTxs as any[]).reduce((sum, t) => {
+          const orig = Math.abs(Number(t.original_amount));
+          const amt = Math.abs(Number(t.amount));
+          return orig > amt + 0.01 ? sum + (orig - amt) : sum;
+        }, 0);
+        const received = (reimTxs as any[]).reduce((sum, t) => {
+          return Array.isArray(t.tags) && t.tags.includes('reimbursement_in') && Number(t.amount) > 0
+            ? sum + Number(t.amount) : sum;
+        }, 0);
+        setReimbursementOutstanding(Math.max(0, expected - received));
+      }
     } catch (e: any) {
       setError(e.message || 'Failed to load transactions');
     } finally {
@@ -169,6 +199,25 @@ const SpendingTab: React.FC<Props> = ({ refreshKey = 0 }) => {
           </CardContent>
         </Card>
       </Grid>
+
+      {/* ── reimbursement bucket ── */}
+      {reimbursementOutstanding !== null && (
+        <Grid size={{ xs: 12 }}>
+          {reimbursementOutstanding > 10 ? (
+            <Box sx={{ px: 2, py: 1.25, borderRadius: 2, bgcolor: 'rgba(255,152,0,0.07)', border: '1px solid rgba(255,152,0,0.25)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="body2">
+                <span style={{ color: '#FF9800' }}>⚠️ <strong>{fmt0(reimbursementOutstanding)}</strong></span>
+                <span style={{ color: 'rgba(255,255,255,0.55)' }}> owed back to you — fronted for group dinners, therapy, etc. (all-time running total)</span>
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ ml: 2, whiteSpace: 'nowrap' }}>not in your spend</Typography>
+            </Box>
+          ) : (
+            <Box sx={{ px: 2, py: 1, borderRadius: 2, bgcolor: 'rgba(76,175,80,0.05)', border: '1px solid rgba(76,175,80,0.2)', display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="body2" color="#4CAF50">✓ Reimbursements clear</Typography>
+            </Box>
+          )}
+        </Grid>
+      )}
 
       {/* ── monthly stacked bars ── */}
       <Grid size={{ xs: 12 }}>
@@ -302,6 +351,52 @@ const SpendingTab: React.FC<Props> = ({ refreshKey = 0 }) => {
           </CardContent>
         </Card>
       </Grid>
+
+      {/* ── budget vs actuals ── */}
+      {Object.keys(budgetTargets).length > 0 && (() => {
+        const everydayCatMap = monthTxs
+          .filter(t => t.bucket === 'everyday')
+          .reduce((m, t) => { m.set(t.category, (m.get(t.category) || 0) + t.amount); return m; }, new Map<string, number>());
+        const budgetRows = Object.entries(budgetTargets)
+          .filter(([, tgt]) => tgt > 0)
+          .map(([cat, tgt]) => ({ cat, actual: everydayCatMap.get(cat) || 0, tgt }))
+          .filter(r => r.actual > 0 || r.tgt > 0)
+          .sort((a, b) => (b.actual / Math.max(b.tgt, 1)) - (a.actual / Math.max(a.tgt, 1)));
+        if (!budgetRows.length) return null;
+        return (
+          <Grid size={{ xs: 12 }}>
+            <Card sx={{ '&:hover': { transform: 'none' } }}>
+              <CardContent>
+                <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
+                  {formatMonth(`${selected}-01`)} — Budget vs actuals
+                  <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>everyday bucket only</Typography>
+                </Typography>
+                <Stack spacing={1.25}>
+                  {budgetRows.map(({ cat, actual, tgt }) => {
+                    const pct = Math.min((actual / tgt) * 100, 110);
+                    const color = pct > 100 ? '#F44336' : pct > 80 ? '#FF9800' : '#4CAF50';
+                    return (
+                      <Box key={cat} onClick={() => setCatFilter(catFilter === cat ? null : cat)}
+                        sx={{ cursor: 'pointer', opacity: catFilter && catFilter !== cat ? 0.5 : 1 }}>
+                        <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.4 }}>
+                          <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>{cat}</Typography>
+                          <Typography variant="body2" fontWeight={600}>
+                            <span style={{ color }}>{fmt0(actual)}</span>
+                            <span style={{ color: 'rgba(255,255,255,0.35)' }}> / {fmt0(tgt)}</span>
+                          </Typography>
+                        </Stack>
+                        <LinearProgress variant="determinate" value={Math.min(pct, 100)}
+                          sx={{ height: 5, borderRadius: 3, bgcolor: 'rgba(255,255,255,0.05)',
+                            '& .MuiLinearProgress-bar': { bgcolor: color, borderRadius: 3 } }} />
+                      </Box>
+                    );
+                  })}
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+        );
+      })()}
 
       {/* ── where to trim ── */}
       <Grid size={{ xs: 12, md: 7 }}>
