@@ -36,6 +36,13 @@ const SpendingTab: React.FC<Props> = ({ refreshKey = 0 }) => {
   const [budgetTargets, setBudgetTargets] = useState<Record<string, number>>({});
   const [reimbursementOutstanding, setReimbursementOutstanding] = useState<number | null>(null);
 
+  interface RecurringCharge {
+    id: string; name: string; amount: number; frequency: string;
+    category: string; merchant_pattern: string | null; amount_tolerance: number;
+    day_of_month: number | null; notes: string | null;
+  }
+  const [recurringCharges, setRecurringCharges] = useState<RecurringCharge[]>([]);
+
   const [target, setTarget] = useState<string>(() => lsGet('spend.target') || '');
   const [selected, setSelected] = useState<string>(currentMonth);
   const [bucketFilter, setBucketFilter] = useState<Bucket[]>(['everyday', 'oneoff', 'travel']);
@@ -70,6 +77,14 @@ const SpendingTab: React.FC<Props> = ({ refreshKey = 0 }) => {
       if (targets) {
         setBudgetTargets(Object.fromEntries((targets as any[]).map(t => [t.category, Number(t.monthly_target)])));
       }
+
+      // Known recurring charges for prediction
+      const { data: recur } = await supabase
+        .from('recurring_charges')
+        .select('id,name,amount,frequency,category,merchant_pattern,amount_tolerance,day_of_month,notes')
+        .eq('user_id', USER_ID)
+        .eq('active', true);
+      if (recur) setRecurringCharges(recur as any[]);
 
       // All-time reimbursement bucket — not limited to 13-month window
       const { data: reimTxs } = await supabase
@@ -199,6 +214,46 @@ const SpendingTab: React.FC<Props> = ({ refreshKey = 0 }) => {
           </CardContent>
         </Card>
       </Grid>
+
+      {/* ── upcoming recurring charges ── */}
+      {recurringCharges.length > 0 && (() => {
+        const monthStr = currentMonth;
+        const thisMonthTxs = raw.filter(t => t.date.startsWith(monthStr));
+        const upcoming = recurringCharges
+          .filter(r => r.frequency === 'monthly' || r.frequency === 'annual')
+          .map(r => {
+            const pattern = (r.merchant_pattern || '').toLowerCase();
+            const posted = pattern
+              ? thisMonthTxs.some(t =>
+                  ((t.merchant_name || '') + ' ' + (t.description || '')).toLowerCase().includes(pattern) &&
+                  Math.abs(Math.abs(Number(t.amount)) - r.amount) <= (r.amount_tolerance ?? 5)
+                )
+              : false;
+            return { ...r, posted };
+          })
+          .filter(r => !r.posted && r.amount > 0);
+        if (!upcoming.length) return null;
+        const upcomingTotal = upcoming.reduce((s, r) => s + r.amount, 0);
+        return (
+          <Grid size={{ xs: 12 }}>
+            <Box sx={{ px: 2, py: 1.25, borderRadius: 2, bgcolor: 'rgba(91,141,239,0.07)', border: '1px solid rgba(91,141,239,0.2)' }}>
+              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 0.5 }}>
+                <Typography variant="body2" color="#5B8DEF" fontWeight={600}>
+                  🔄 {fmt0(upcomingTotal)} in known recurring charges still to post this month
+                </Typography>
+                <Typography variant="caption" color="text.secondary">not in budget yet</Typography>
+              </Stack>
+              <Stack direction="row" spacing={1.5} flexWrap="wrap">
+                {upcoming.map(r => (
+                  <Typography key={r.id} variant="caption" color="text.secondary">
+                    {r.name} {fmt0(r.amount)}
+                  </Typography>
+                ))}
+              </Stack>
+            </Box>
+          </Grid>
+        );
+      })()}
 
       {/* ── reimbursement bucket ── */}
       {reimbursementOutstanding !== null && (
