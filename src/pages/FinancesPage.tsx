@@ -27,6 +27,7 @@ import SpendingIntelligence from '../components/finance/SpendingIntelligence';
 import InvestmentsPanel from '../components/finance/InvestmentsPanel';
 import PlanTab from '../components/finance/PlanTab';
 import RewardsTab from '../components/finance/RewardsTab';
+import SpendingTab from '../components/finance/SpendingTab';
 import { computeNetWorthBreakdown, computeNetWorthTotal } from '../lib/finance';
 
 const CATEGORIES = ['Food & Dining', 'Groceries', 'Shopping', 'Transportation', 'Entertainment', 'Bills & Utilities', 'Health & Medical', 'Travel', 'Subscriptions', 'Personal', 'Gifts', 'Education', 'Income', 'Transfer', 'Credit Card Payment', 'Investment', 'Other'];
@@ -66,7 +67,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 const FinancesPage: React.FC = () => {
   const { accounts, transactions, holdings, netWorth, monthlySpending, investmentActivity, loading, error, updateTransactionCategory, refetch } = useFinances();
-  const [tab, setTab] = useState(0);
+  const [tab, setTab] = useState(5); // 5 = Spending (listed first)
   const [searchTerm, setSearchTerm] = useState('');
   const [accountFilter, setAccountFilter] = useState<string>('all');
   const [dateRange, setDateRange] = useState<DateRange>(() => computeRange('this_month'));
@@ -254,12 +255,15 @@ const FinancesPage: React.FC = () => {
       </Box>
 
       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3 }}>
-        <Tab label="Overview" />
-        <Tab label="Investments" />
-        <Tab label="Transactions" />
-        <Tab label="Plan" />
-        <Tab label="Rewards" />
+        <Tab value={5} label="Spending" />
+        <Tab value={0} label="Overview" />
+        <Tab value={1} label="Investments" />
+        <Tab value={2} label="Transactions" />
+        <Tab value={3} label="Plan" />
+        <Tab value={4} label="Rewards" />
       </Tabs>
+
+      {tab === 5 && <SpendingTab />}
 
       {/* ═══════════════ OVERVIEW ═══════════════ */}
       {tab === 0 && (
