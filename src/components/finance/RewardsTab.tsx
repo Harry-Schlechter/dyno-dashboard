@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   Box, Typography, Grid, Card, CardContent, Stack, Chip, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, Divider, Alert,
@@ -8,6 +8,7 @@ import { Transaction } from '../../hooks/useFinances';
 import { formatCurrency } from '../../lib/formatters';
 import { isRealSpend, SpendCategory } from '../../lib/finance';
 import { CARD_LIST, CARD_BENEFIT_VALUE, CardMeta, AMEX_TRANSFER_PARTNERS } from '../../lib/cardRewards';
+import { supabase, USER_ID } from '../../lib/supabase';
 
 import { etNow, ymd } from '../../lib/et';
 // Live point balances — not in Supabase (no schema for it), updated by hand
@@ -30,7 +31,29 @@ interface CardSpendRow {
   categorySpend: Partial<Record<SpendCategory, number>>;
 }
 
+interface BenefitUsageRow { card_id: string; benefit_label: string; total_used: number; }
+
 const RewardsTab: React.FC<Props> = ({ transactions }) => {
+  const [benefitUsage, setBenefitUsage] = useState<BenefitUsageRow[]>([]);
+  const thisYear = new Date().getFullYear().toString();
+
+  useEffect(() => {
+    supabase
+      .from('card_benefit_usage')
+      .select('card_id, benefit_label, amount, date_used')
+      .eq('user_id', USER_ID)
+      .gte('date_used', `${thisYear}-01-01`)
+      .then(({ data }: { data: any[] | null }) => {
+        if (!data) return;
+        const agg: Record<string, BenefitUsageRow> = {};
+        (data as any[]).forEach(r => {
+          const k = `${r.card_id}||${r.benefit_label}`;
+          agg[k] = agg[k] || { card_id: r.card_id, benefit_label: r.benefit_label, total_used: 0 };
+          agg[k].total_used += Number(r.amount);
+        });
+        setBenefitUsage(Object.values(agg));
+      });
+  }, [thisYear]);
   // Trailing 12 months of real spend, split by card and category.
   const cardSpend: CardSpendRow[] = useMemo(() => {
     const cutoff = etNow();
@@ -202,21 +225,36 @@ const RewardsTab: React.FC<Props> = ({ transactions }) => {
                   <>
                     <Table size="small">
                       <TableBody>
-                        {c.benefitLines.map(line => (
-                          <TableRow key={line.label} sx={{ '& td': { border: 0, py: 0.25 } }}>
-                            <TableCell sx={{ pl: 0 }}>
-                              <Typography variant="body2" color={line.status === 'unenrolled' ? 'text.secondary' : 'text.primary'}>
-                                {line.label}
-                                {line.status === 'unenrolled' && ' (not activated)'}
-                              </Typography>
-                            </TableCell>
-                            <TableCell align="right" sx={{ pr: 0 }}>
-                              <Typography variant="body2" fontWeight={600}>
-                                {line.annualValue > 0 ? formatCurrency(line.annualValue) : '—'}
-                              </Typography>
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                        {c.benefitLines.map(line => {
+                          const used = benefitUsage
+                            .filter(u => u.card_id === c.card.id && u.benefit_label === line.label)
+                            .reduce((s, u) => s + u.total_used, 0);
+                          const maxVal = line.annualValue;
+                          const pctUsed = maxVal > 0 ? Math.min(used / maxVal, 1) : 0;
+                          const usageColor = pctUsed >= 1 ? '#4CAF50' : pctUsed > 0 ? '#FF9800' : (line.status === 'unenrolled' ? 'text.secondary' : '#5B8DEF');
+                          return (
+                            <TableRow key={line.label} sx={{ '& td': { border: 0, py: 0.25 } }}>
+                              <TableCell sx={{ pl: 0 }}>
+                                <Typography variant="body2" color={line.status === 'unenrolled' ? 'text.secondary' : 'text.primary'}>
+                                  {line.label}
+                                  {line.status === 'unenrolled' && ' (not activated)'}
+                                </Typography>
+                              </TableCell>
+                              <TableCell align="right" sx={{ pr: 0 }}>
+                                <Typography variant="body2" fontWeight={600}>
+                                  {line.annualValue > 0 ? (
+                                    used > 0 ? (
+                                      <span style={{ color: usageColor }}>
+                                        {formatCurrency(used)}{pctUsed < 1 && <span style={{ color: 'rgba(255,255,255,0.4)', fontWeight: 400 }}> / {formatCurrency(maxVal)}</span>}
+                                        {pctUsed >= 1 && ' ✓'}
+                                      </span>
+                                    ) : formatCurrency(maxVal)
+                                  ) : '—'}
+                                </Typography>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                     <Divider sx={{ my: 1 }} />
